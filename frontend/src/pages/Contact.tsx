@@ -1,8 +1,8 @@
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import SiteHeader from '@/components/SiteHeader';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Button } from '../components/ui/button';
+import SiteHeader from '../components/SiteHeader';
 
 const bgStyle: React.CSSProperties = {
   background: `radial-gradient(1200px 800px at -10% -10%, #8dd5ff55 0%, transparent 60%),

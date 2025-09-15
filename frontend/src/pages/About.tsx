@@ -1,5 +1,5 @@
 import React from 'react';
-import SiteHeader from '@/components/SiteHeader';
+import SiteHeader from '../components/SiteHeader';
 
 const bgStyle: React.CSSProperties = {
   background: `radial-gradient(1200px 800px at -10% -10%, #8dd5ff55 0%, transparent 60%),

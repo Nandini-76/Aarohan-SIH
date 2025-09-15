@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { Button } from './ui/button';
+import { useAuth } from '../contexts/AuthContext';
 
 const SiteHeader: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();

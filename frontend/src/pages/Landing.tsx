@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Button } from '../components/ui/button';
 import { UserRound } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 // NOTE: Replace placeholder images and text styles with exact Figma assets and classes.
