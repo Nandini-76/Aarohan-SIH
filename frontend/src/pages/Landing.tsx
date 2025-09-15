@@ -35,7 +35,13 @@ const Landing: React.FC = () => {
       {/* Top header */}
       <header className="container mx-auto px-4 md:px-8 py-4 md:py-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-sky-100/90 font-semibold tracking-widest">25102</span>
+          <img 
+            src="/assets/logo.svg" 
+            alt="AAROHAN Logo" 
+            className="w-8 h-8"
+          />
+          <span className="text-white font-bold text-xl tracking-wide">AAROHAN</span>
+          <span className="text-sky-100/70 font-medium text-sm">| 25102</span>
         </div>
         <nav className="hidden md:flex items-center gap-6 text-white/90">
           <Link to="/" className="hover:text-white">Home</Link>
@@ -73,11 +79,25 @@ const Landing: React.FC = () => {
       <main className="container mx-auto px-4 md:px-8">
         <section className="grid md:grid-cols-2 gap-10 items-center py-6 md:py-10 lg:py-14">
           <div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight [text-shadow:_0_3px_0_rgba(0,0,0,.25)]">
-              <span className="block">Predict. Prevent. Protect</span>
+            <div className="mb-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-white/90 mb-2">Welcome to</h2>
+              <div className="flex items-center gap-3 mb-4">
+                <img 
+                  src="/assets/logo.svg" 
+                  alt="AAROHAN Logo" 
+                  className="w-12 h-12 md:w-16 md:h-16"
+                />
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white">
+                  AAROHAN
+                </h1>
+              </div>
+            </div>
+            <h3 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight [text-shadow:_0_3px_0_rgba(0,0,0,.25)] mb-4">
+              <span className="block text-gradient bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent">Predict. Prevent. Protect</span>
               <span className="block">Student's Futures</span>
-            </h1>
-            <p className="mt-3 md:mt-4 text-base md:text-lg italic text-white/85">Behind every dropout is a story untold</p>
+            </h3>
+            <p className="mt-3 md:mt-4 text-base md:text-lg italic text-white/85">AI-powered Student Dropout Prevention System</p>
+            <p className="text-sm md:text-base text-white/75 mt-2">Behind every dropout is a story untold</p>
 
             <div className="mt-8">
               <Button

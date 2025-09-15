@@ -24,20 +24,24 @@ const Sidebar: React.FC = () => {
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center space-x-3 mb-2">
           <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-            <GraduationCap className="w-6 h-6 text-white" />
+            <img 
+              src="/assets/logo.svg" 
+              alt="AAROHAN Logo" 
+              className="w-6 h-6"
+            />
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">
-              Student Guardian
+              AAROHAN
             </h1>
             <p className="text-xs text-white/70">
-              Risk Prediction System
+              Student Success Platform
             </p>
           </div>
         </div>
         <div className="flex items-center space-x-2 mt-3 px-2 py-1 bg-white/10 rounded-md">
           <Shield className="w-3 h-3 text-white/70" />
-          <span className="text-xs text-white/70">Government of Rajasthan</span>
+          <span className="text-xs text-white/70">Government of Rajasthan | 25102</span>
         </div>
       </div>
 

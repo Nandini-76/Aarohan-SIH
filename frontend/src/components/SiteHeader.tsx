@@ -20,7 +20,15 @@ const SiteHeader: React.FC = () => {
   return (
     <header className="container mx-auto px-4 md:px-8 py-4 md:py-6 flex items-center justify-between text-white">
       <div className="flex items-center gap-3">
-        <Link to="/" className="text-sky-100/90 font-semibold tracking-widest">25102</Link>
+        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <img 
+            src="/assets/logo.svg" 
+            alt="AAROHAN Logo" 
+            className="w-8 h-8"
+          />
+          <span className="text-white font-bold text-xl tracking-wide">AAROHAN</span>
+          <span className="text-sky-100/70 font-medium text-sm">| 25102</span>
+        </Link>
       </div>
       <nav className="hidden md:flex items-center gap-6 text-white/90">
         <Link to="/" className="hover:text-white">Home</Link>

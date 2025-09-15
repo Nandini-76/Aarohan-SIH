@@ -13,12 +13,22 @@ const About: React.FC = () => {
       <SiteHeader />
       <main className="container mx-auto px-4 md:px-8 py-8 md:py-12">
         <header className="mb-10 md:mb-12">
-          <h1 className="text-4xl md:text-5xl font-extrabold leading-tight [text-shadow:_0_3px_0_rgba(0,0,0,.25)]">
-            About Aarohan
-          </h1>
-          <p className="mt-3 md:mt-4 text-white/90 max-w-3xl">
-            Aarohan is an AI-based dropout prediction and counseling system, developed as part of the Smart India
-            Hackathon for the Government of Rajasthan. Our goal is to identify students at risk of dropping out and
+          <div className="flex items-center gap-4 mb-6">
+            <img 
+              src="/assets/logo.svg" 
+              alt="AAROHAN Logo" 
+              className="w-16 h-16 md:w-20 md:h-20"
+            />
+            <div>
+              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight [text-shadow:_0_3px_0_rgba(0,0,0,.25)]">
+                About AAROHAN
+              </h1>
+              <p className="text-lg md:text-xl text-blue-200 font-medium">AI-Powered Student Success Platform</p>
+            </div>
+          </div>
+          <p className="mt-3 md:mt-4 text-white/90 max-w-3xl text-lg">
+            AAROHAN is an advanced AI-based dropout prediction and counseling system, developed as part of the Smart India
+            Hackathon for the Government of Rajasthan. Our mission is to identify students at risk of dropping out and
             provide timely support through teachers, parents, and counselors.
           </p>
         </header>
@@ -30,9 +40,9 @@ const About: React.FC = () => {
                  background: 'linear-gradient(160deg, rgba(99,102,241,0.95) 0%, rgba(59,130,246,0.95) 100%)',
                }}>
             <div className="bg-white/10 rounded-xl p-5 md:p-6">
-              <h2 className="text-2xl md:text-3xl font-bold">About Us</h2>
+              <h2 className="text-2xl md:text-3xl font-bold">About AAROHAN</h2>
               <p className="mt-3 text-white/90">
-                Using data-driven insights, Aarohan generates a simple color-coded risk score to track student
+                Using data-driven insights, AAROHAN generates a simple color-coded risk score to track student
                 performance, attendance, financial challenges, and other key factors. This helps schools intervene
                 early and ensure every child continues their education without unnecessary hurdles.
               </p>

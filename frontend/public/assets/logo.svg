@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="32" viewBox="0 0 128 32" fill="none">
   <rect width="32" height="32" rx="6" fill="#4F46E5"/>
   <path d="M6 14l10-5 10 5-10 5-10-5zm3 3l7 3.5 7-3.5v4l-7 3.5-7-3.5v-4z" fill="#fff"/>
-  <text x="40" y="22" font-family="Inter, Arial" font-size="16" fill="#111827">Student Guardian</text>
+  <text x="40" y="22" font-family="Inter, Arial" font-size="16" font-weight="700" fill="#111827">AAROHAN</text>
 </svg>

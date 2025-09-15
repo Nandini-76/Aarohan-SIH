@@ -144,10 +144,10 @@ const Simulation: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold flex items-center space-x-2">
               <Sliders className="h-8 w-8 text-primary" />
-              <span>Risk Simulation</span>
+              <span>AAROHAN Risk Simulation</span>
             </h1>
             <p className="text-white/90">
-              Adjust parameters to predict student dropout risk
+              AI-powered dropout risk prediction and analysis
             </p>
           </div>
         </div>
