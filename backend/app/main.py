@@ -96,10 +96,18 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS middleware for frontend integration
+# CORS middleware for frontend integration (env-driven)
+# Set FRONTEND_URL to your deployed frontend origin (e.g., https://your-app.vercel.app)
+FRONTEND_URL = os.getenv("FRONTEND_URL", "*")
+if FRONTEND_URL.strip() == "*":
+    allowed_origins = ["*"]
+else:
+    # Support comma-separated list of origins
+    allowed_origins = [o.strip() for o in FRONTEND_URL.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
