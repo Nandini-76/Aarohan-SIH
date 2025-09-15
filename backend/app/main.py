@@ -97,21 +97,26 @@ app = FastAPI(
 )
 
 # CORS middleware for frontend integration (env-driven)
-# Set FRONTEND_URL to your deployed frontend origin (e.g., https://your-app.vercel.app)
+# FRONTEND_URL: comma-separated origins. FRONTEND_URL_REGEX: optional regex for origins (e.g., ^https://.*vercel\.app$)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "*")
+FRONTEND_URL_REGEX = os.getenv("FRONTEND_URL_REGEX")
+
 if FRONTEND_URL.strip() == "*":
     allowed_origins = ["*"]
 else:
-    # Support comma-separated list of origins
     allowed_origins = [o.strip() for o in FRONTEND_URL.split(",") if o.strip()]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
+cors_kwargs = dict(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+if FRONTEND_URL_REGEX:
+    cors_kwargs["allow_origin_regex"] = FRONTEND_URL_REGEX
+else:
+    cors_kwargs["allow_origins"] = allowed_origins
+
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 
 # MongoDB client initialization
 mongo_client = None
