@@ -12,7 +12,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { studentApi } from '../services/api';
 import { Student, DashboardStats } from '../types';
 import { useToast } from '../hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.ts';
 import { useAuth } from '../contexts/AuthContext';
 import SiteHeader from '@/components/SiteHeader';
 

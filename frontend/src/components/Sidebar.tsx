@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, FlaskConical, User, LogOut, GraduationCap, Shield } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.ts';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
 
