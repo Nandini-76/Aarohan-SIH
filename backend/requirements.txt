@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+pandas
+motor
+pymongo
+python-multipart
+pydantic
+python-dotenv
+# ML dependencies
+scikit-learn
+joblib
+numpy
+requests

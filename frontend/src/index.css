@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Student Dropout Prediction Dashboard Design System
+Following the blue-themed Figma design with gradient accents
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 220 30% 97%;
+    --foreground: 220 20% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 15%;
+
+    /* Primary blue theme from Figma */
+    --primary: 220 80% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 220 90% 65%;
+    
+    /* Dashboard specific colors */
+    --dashboard-bg: 220 25% 96%;
+    --sidebar-bg: 220 80% 20%;
+    --sidebar-accent: 220 85% 60%;
+
+    --secondary: 220 15% 85%;
+    --secondary-foreground: 220 20% 15%;
+
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 260 85% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Risk Level Colors */
+    --success: 140 70% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 95% 55%;
+    --warning-foreground: 220 20% 15%;
+    --orange: 25 95% 55%;
+    --orange-foreground: 0 0% 100%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(220, 80%, 50%), hsl(220, 90%, 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(260, 85%, 65%), hsl(280, 80%, 70%));
+    --gradient-hero: linear-gradient(135deg, hsl(220, 80%, 20%), hsl(220, 85%, 35%));
+    
+    /* Shadows with primary color */
+    --shadow-elegant: 0 10px 30px -10px hsl(220 80% 50% / 0.3);
+    --shadow-glow: 0 0 40px hsl(220 90% 65% / 0.4);
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 220 15% 90%;
+
+    --card: 220 25% 10%;
+    --card-foreground: 220 15% 90%;
+
+    --popover: 220 25% 10%;
+    --popover-foreground: 220 15% 90%;
+
+    --primary: 220 90% 65%;
+    --primary-foreground: 220 25% 8%;
+    --primary-glow: 220 95% 75%;
+
+    --dashboard-bg: 220 25% 6%;
+    --sidebar-bg: 220 30% 12%;
+    --sidebar-accent: 220 85% 60%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 220 15% 90%;
+
+    --muted: 220 20% 15%;
+    --muted-foreground: 220 10% 60%;
+
+    --accent: 260 85% 65%;
+    --accent-foreground: 220 25% 8%;
+
+    --success: 140 65% 50%;
+    --warning: 45 90% 60%;
+    --orange: 25 90% 60%;
+    --destructive: 0 70% 60%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
