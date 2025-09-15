@@ -16,7 +16,7 @@ import { studentApi } from '../services/api';
 import { SimulationData, SimulationResult, Student } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '../lib/utils';
 import SiteHeader from '@/components/SiteHeader';
 
 const Simulation: React.FC = () => {
