@@ -1,5 +1,6 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.ts';
+import { Badge } from './ui/badge';
 import { AlertTriangle } from 'lucide-react';
 
 interface RiskBadgeProps {
