@@ -21,7 +21,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import uvicorn
-from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import FastAPI, HTTPException, Query, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -98,23 +98,41 @@ app = FastAPI(
 
 # CORS middleware for frontend integration (env-driven)
 # FRONTEND_URL: comma-separated origins. FRONTEND_URL_REGEX: optional regex for origins (e.g., ^https://.*vercel\.app$)
-FRONTEND_URL = os.getenv("FRONTEND_URL", "*")
-FRONTEND_URL_REGEX = os.getenv("FRONTEND_URL_REGEX")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000,http://localhost:5173,https://arohann.vercel.app,https://aarohan.vercel.app")
+FRONTEND_URL_REGEX = os.getenv("FRONTEND_URL_REGEX")  # Don't set default regex
+
+# Default allowed origins for development and production
+default_origins = [
+    "http://localhost:3000",  # React dev server
+    "http://localhost:5173",  # Vite dev server
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "https://arohann.vercel.app",  # Production frontend
+    "https://aarohan.vercel.app",  # Alternative production frontend
+]
 
 if FRONTEND_URL.strip() == "*":
-    allowed_origins = ["*"]
+    # Use default origins instead of wildcard to allow credentials
+    allowed_origins = default_origins
 else:
-    allowed_origins = [o.strip() for o in FRONTEND_URL.split(",") if o.strip()]
+    # Parse custom origins from environment
+    custom_origins = [o.strip() for o in FRONTEND_URL.split(",") if o.strip()]
+    allowed_origins = list(set(default_origins + custom_origins))
 
 cors_kwargs = dict(
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
-if FRONTEND_URL_REGEX:
-    cors_kwargs["allow_origin_regex"] = FRONTEND_URL_REGEX
+
+# Use regex pattern to allow Vercel preview deployments (only if explicitly set)
+if FRONTEND_URL_REGEX and FRONTEND_URL_REGEX.strip():
+    cors_kwargs["allow_origin_regex"] = FRONTEND_URL_REGEX.strip()
+    # When using regex, don't set allow_origins
+    logger.info(f"CORS configured with regex pattern: {FRONTEND_URL_REGEX}")
 else:
     cors_kwargs["allow_origins"] = allowed_origins
+    logger.info(f"CORS configured with specific origins: {allowed_origins}")
 
 app.add_middleware(CORSMiddleware, **cors_kwargs)
 
@@ -596,6 +614,35 @@ async def root():
 async def root_head():
     """HEAD health check for platform probes (returns 200 without body)."""
     return Response(status_code=200)
+
+
+@app.options("/{full_path:path}")
+async def preflight_handler(request: Request, full_path: str):
+    """Handle CORS preflight requests"""
+    origin = request.headers.get("origin", "*")
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept, Origin, X-Requested-With",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
+
+
+@app.get("/cors-test")
+async def cors_test(request: Request):
+    """Test endpoint to check CORS configuration"""
+    origin = request.headers.get("origin")
+    return {
+        "message": "CORS test endpoint",
+        "origin": origin,
+        "allowed_origins": allowed_origins if 'allowed_origins' in globals() else "Not set",
+        "user_agent": request.headers.get("user-agent"),
+        "headers": dict(request.headers)
+    }
 
 
 @app.get("/students", summary="Get All Students")
