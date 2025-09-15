@@ -7,7 +7,7 @@ python-multipart
 pydantic
 python-dotenv
 # ML dependencies
-scikit-learn
+scikit-learn==1.7.1
 joblib
 numpy
 requests

@@ -21,7 +21,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import uvicorn
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -585,6 +585,12 @@ async def root():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
+
+
+@app.head("/")
+async def root_head():
+    """HEAD health check for platform probes (returns 200 without body)."""
+    return Response(status_code=200)
 
 
 @app.get("/students", summary="Get All Students")
