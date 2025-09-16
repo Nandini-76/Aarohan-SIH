@@ -727,6 +727,20 @@ async def root_head():
     return Response(status_code=200)
 
 
+@app.get("/health", summary="Health Check for Keep-Alive")
+async def health_check():
+    """Lightweight health check endpoint for keep-alive pings"""
+    try:
+        return {
+            "status": "healthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "uptime": "running"
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        raise HTTPException(status_code=500, detail="Health check failed")
+
+
 @app.options("/{full_path:path}")
 async def preflight_handler(request: Request, full_path: str):
     """Handle CORS preflight requests"""

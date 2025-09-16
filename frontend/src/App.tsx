@@ -17,6 +17,10 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import RenderPingStatus from "./components/RenderPingStatus";
+
+// Import render ping service to keep backend alive
+import "./services/renderPing";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +76,8 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          {/* Development-only ping status indicator */}
+          <RenderPingStatus />
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

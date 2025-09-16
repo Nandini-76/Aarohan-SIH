@@ -3,7 +3,7 @@ import { Student, SimulationData, SimulationResult } from '../types';
 
 // Get API base URL from environment variables with fallback logic
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.DEV ? 'http://127.0.0.1:8000' : 'https://arohann.vercel.app/api');
+  (import.meta.env.DEV ? 'http://127.0.0.1:8000' : 'https://arohann.onrender.com');
 
 console.log('API Base URL:', API_BASE_URL); // Debug log
 
