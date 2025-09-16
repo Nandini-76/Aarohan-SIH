@@ -167,10 +167,11 @@ def apply_red_zone_rules(student_data: Dict[str, Any]) -> Tuple[str, str]:
         A = data.get("attendance", 100)
         B = data.get("backlogs", 0)
         C = data.get("cgpa", 10)
-        F = data.get("fees_flag", 1)
+        F = data.get("fees_flag", 0)  # Fixed: 0 = paid, 1 = unpaid
         S = data.get("suspension_flag", 0)
 
-        # RULES (original extensive logic)
+        # RULES (corrected fees_flag logic)
+        # Note: F = 0 means fees paid, F = 1 means fees unpaid
         if A < 35: return "Attendance < 35"
         if B > 7: return "Backlogs > 7"
         if A < 45 and B > 5: return "Low attendance & high backlogs"
@@ -179,15 +180,16 @@ def apply_red_zone_rules(student_data: Dict[str, Any]) -> Tuple[str, str]:
         if S >= 2 and A < 50: return "Multiple suspensions & low attendance"
         if S >= 2 and B > 3: return "Multiple suspensions & backlogs"
         if S >= 3 and C < 5: return "Multiple suspensions & low CGPA"
-        if F == 0 and B > 2: return "Fee default & backlogs"
-        if F == 0 and C < 4.5: return "Fee default & very low CGPA"
-        if F == 0 and A < 50: return "Fee default & low attendance"
+        # Fixed fees_flag conditions (F == 1 means unpaid fees)
+        if F == 1 and B > 2: return "Unpaid fees & backlogs"
+        if F == 1 and C < 4.5: return "Unpaid fees & very low CGPA"
+        if F == 1 and A < 50: return "Unpaid fees & poor attendance"
         if A < 45 and C < 5 and B > 3: return "Low attendance, low CGPA, high backlogs"
-        if C < 5.5 and F == 0 and B > 2: return "Low CGPA, fee default & backlogs"
+        if C < 5.5 and F == 1 and B > 2: return "Low CGPA, unpaid fees & backlogs"
         if A < 45 and S > 2 and B > 3: return "Low attendance, suspensions & backlogs"
-        if C < 5.5 and F == 0 and A < 45: return "Low CGPA, fee default & low attendance"
-        if A < 45 and C < 5 and B > 5 and F == 0: return "Severe academic issues"
-        if F == 0 and S > 3 and A < 50 and C < 4.5: return "Fee default, suspensions, very weak academics"
+        if C < 5.5 and F == 1 and A < 45: return "Low CGPA, unpaid fees & poor attendance"
+        if A < 45 and C < 5 and B > 5 and F == 1: return "Severe academic & financial issues"
+        if F == 1 and S > 3 and A < 50 and C < 4.5: return "Unpaid fees, suspensions, very weak academics"
 
         return None  # Not Red-Zone
     

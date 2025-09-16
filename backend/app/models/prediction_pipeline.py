@@ -65,7 +65,7 @@ def apply_rules(row):
     C = row.get('cgpa', 0)
     B = row.get('backlogs', 0)
     S = row.get('suspension_flag', 0)
-    F = row.get('fees_flag', 1)  # Default = 1 (paid), 0 = default
+    F = row.get('fees_flag', 0)  # Default = 0 (paid), 1 = unpaid fees
     
     # ============ RED ZONE RULES (HIGHEST PRIORITY) ============
     if A < 50:
@@ -76,9 +76,9 @@ def apply_rules(row):
         return "Red", "Very low CGPA & high backlogs"
     if S >= 3:
         return "Red", "Multiple suspensions (≥3)"
-    if F == 0 and A < 60:
+    if F == 1 and A < 60:
         return "Red", "Fee default & poor attendance"
-    if F == 0 and C < 4.5:
+    if F == 1 and C < 4.5:
         return "Red", "Fee default & very weak CGPA"
     if A < 45 and C < 5 and B > 3:
         return "Red", "Severe academic issues (low attendance, low CGPA, high backlogs)"
@@ -92,7 +92,7 @@ def apply_rules(row):
         return "Orange", "Repeated discipline issues"
     if C < 6 and B > 4:
         return "Orange", "Low CGPA with backlogs"
-    if A < 65 and F == 0:
+    if A < 65 and F == 1:
         return "Orange", "Fee default & low attendance"
     
     # ============ YELLOW ZONE RULES ============
@@ -102,7 +102,7 @@ def apply_rules(row):
         return "Yellow", "Slightly weak academics (CGPA 6–7, low backlogs)"
     if S == 1 and A >= 70:
         return "Yellow", "Minor disciplinary issue"
-    if F == 0 and A >= 70:
+    if F == 1 and A >= 70:
         return "Yellow", "Fee default but attendance acceptable"
     
     # ============ GREEN ZONE RULES ============
