@@ -295,78 +295,147 @@ def apply_unified_override_rules(row):
     
     # ============ RED ZONE RULES (HIGHEST PRIORITY) ============
     # Critical attendance issues
-    if A < 50:
-        return "Red", "Critical attendance (<50%)"
-    
+    if A < 35:
+        return "Red", "Critical attendance (<35%)"
+
+    # Extremely poor attendance even if CGPA is high
+    if A < 40:
+        return "Red", "Extremely poor attendance (<40%)"
+
     # Severe backlog issues
     if B > 7:
         return "Red", "Severe backlogs (>7)"
-    
+
+    # Critical backlog count
+    if B >= 10:
+        return "Red", "Critical backlog count (≥10)"
+
+    # Very low CGPA
+    if C < 4:
+        return "Red", "Very low CGPA (<4.0)"
+
+    # Severe academic issues
+    if A < 45 and C < 4.5:
+        return "Red", "Severe academic issues (low attendance, low CGPA)"
+
     # Combined academic failures
     if C < 4.5 and B > 5:
         return "Red", "Very low CGPA & high backlogs"
-    
-    if A < 45 and C < 5 and B > 3:
+
+    if A < 45 and C < 4.5 and B > 3:
         return "Red", "Severe academic issues (low attendance, low CGPA, high backlogs)"
-    
+
+    # CGPA + backlog + attendance all weak
+    if A < 50 and C < 5 and B >= 5:
+        return "Red", "Very weak academics across all metrics"
+
     # Disciplinary issues
     if S >= 3:
         return "Red", "Multiple suspensions (≥3)"
-    
+
+    if S >= 3 and B > 3:
+        return "Red", "Multiple suspensions (≥3) & high backlogs"
+
     # Financial + academic combinations
-    if F == 1 and A < 60:
+    if F == 1 and A < 50:
         return "Red", "Fee default & poor attendance"
-    
+
     if F == 1 and C < 4.5:
         return "Red", "Fee default & very weak CGPA"
-    
+
+    # Financial + disciplinary combo
+    if F == 1 and S >= 2:
+        return "Red", "Fee default & multiple suspensions"
+
+    # One suspension + severe academics
+    if S == 1 and A < 40 and C < 5:
+        return "Red", "Suspension with severe academic risk"
+
     # ============ ORANGE ZONE RULES ============
     # Moderate attendance issues
-    if 60 <= A <= 69:
-        return "Orange", "Attendance in risk range (60–69%)"
-    
+    if 50 <= A <= 59:
+        return "Orange", "Attendance in risk range (50–59%)"
+
+    # Attendance borderline 45–49
+    if 45 <= A < 50:
+        return "Orange", "Very low attendance (45–49%)"
+
     # Academic concerns
-    if 5 <= C < 6 and 2 <= B <= 4:
+    if 4.5 <= C < 5.5 and 2 <= B <= 4:
         return "Orange", "Low CGPA with moderate backlogs"
-    
-    if C < 6 and B > 4:
+
+    if C < 5.5 and B > 4:
         return "Orange", "Low CGPA with backlogs"
-    
+
+    # CGPA borderline 5.0–5.5 with few backlogs
+    if 5.0 <= C < 5.5 and B <= 2:
+        return "Orange", "Borderline CGPA with limited backlogs"
+
+    # CGPA okay but backlog pressure
+    if C >= 6 and 3 <= B <= 5:
+        return "Orange", "Moderate backlogs despite acceptable CGPA"
+
     # Disciplinary concerns
-    if S == 2 and A < 70:
+    if S == 2 and A < 60:
         return "Orange", "Repeated discipline issues"
-    
+
+    if S == 1 and 60 <= A < 70:
+        return "Orange", "Disciplinary issue with average attendance"
+
     # Financial concerns
-    if A < 65 and F == 1:
+    if 45 < A < 60 and F == 1:
         return "Orange", "Fee default & low attendance"
-    
+
+    if F == 1 and 6 <= C < 7:
+        return "Orange", "Fee default with weak academics"
+
     # ============ YELLOW ZONE RULES ============
     # Caution level attendance
-    if 70 <= A <= 79:
-        return "Yellow", "Attendance in caution range (70–79%)"
-    
+    if 70 <= A <= 79 and 5 < C < 6:
+        return "Yellow", "Attendance in caution range (70–79%) with weak academic performance"
+
+    # Attendance borderline 65–69
+    if 65 <= A < 70:
+        return "Yellow", "Attendance below target (65–69%)"
+
     # Minor academic concerns
     if 6 <= C < 7 and B <= 2:
         return "Yellow", "Slightly weak academics (CGPA 6–7, low backlogs)"
-    
+
+    # Single backlog with CGPA 6–7
+    if 6 <= C < 7 and B == 1:
+        return "Yellow", "Weak CGPA with one backlog"
+
     # Minor disciplinary issues
     if S == 1 and A >= 70:
         return "Yellow", "Minor disciplinary issue"
-    
+
     # Financial with acceptable performance
     if F == 1 and A >= 70:
         return "Yellow", "Fee default but attendance acceptable"
-    
+
+    if F == 1 and C >= 7:
+        return "Yellow", "Fee default but strong academics"
+
     # ============ GREEN ZONE RULES ============
     # Excellence indicators
-    if A >= 90:
+    if A >= 90 and C > 6.5:
         return "Green", "Excellent attendance"
-    
+
     if A >= 85 and C >= 8:
         return "Green", "Strong academics (high attendance & CGPA)"
-    
+
     if A >= 80 and C >= 7 and B == 0 and S == 0:
         return "Green", "Good performance & discipline"
+
+    # Good CGPA even with average attendance
+    if 75 <= A < 85 and C >= 8 and B <= 1 and S == 0:
+        return "Green", "High CGPA offsets average attendance"
+
+    # Outstanding CGPA with clean record
+    if C >= 9 and B == 0 and S == 0:
+        return "Green", "Outstanding CGPA with clean record"
+
     
     # No override → keep ML prediction
     return None, None
