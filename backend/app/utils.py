@@ -527,10 +527,49 @@ def predict_with_unified_system(student_data: Dict[str, Any], ml_model=None, ml_
                 
                 # Add engineered features to match training data
                 try:
-                    from models.feature_utils import add_engineered_features
-                    single_student_df = add_engineered_features(single_student_df)
-                except ImportError:
-                    logger.warning("Feature engineering not available for ML prediction")
+                    # Try multiple import paths for different environments
+                    add_engineered_features = None
+                    
+                    # Attempt 1: Direct import (if models dir is in path)
+                    try:
+                        from models.feature_utils import add_engineered_features
+                    except ImportError:
+                        pass
+                    
+                    # Attempt 2: Import from app.models (production path)
+                    if add_engineered_features is None:
+                        try:
+                            from app.models.feature_utils import add_engineered_features
+                        except ImportError:
+                            pass
+                    
+                    # Attempt 3: Relative import
+                    if add_engineered_features is None:
+                        try:
+                            import sys
+                            import os
+                            # Add both possible model directories to path
+                            model_paths = [
+                                os.path.join(os.path.dirname(__file__), "models"),
+                                os.path.join(os.path.dirname(__file__), "..", "models"),
+                                "/opt/render/project/src/backend/app/models"  # Render production path
+                            ]
+                            for path in model_paths:
+                                if os.path.exists(path) and path not in sys.path:
+                                    sys.path.insert(0, path)
+                            from feature_utils import add_engineered_features
+                        except ImportError:
+                            pass
+                    
+                    # Apply feature engineering if available
+                    if add_engineered_features is not None:
+                        single_student_df = add_engineered_features(single_student_df)
+                        logger.debug("✅ Feature engineering applied successfully")
+                    else:
+                        logger.warning("Feature engineering not available for ML prediction")
+                        
+                except Exception as e:
+                    logger.warning(f"Feature engineering failed: {e}")
                 
                 # Get ML prediction (model handles preprocessing internally)
                 y_pred = pipeline.predict(single_student_df)[0]
@@ -597,12 +636,36 @@ def run_batch_prediction_pipeline():
     df = basic_clean(df)
     
     # 3. Add engineered features (if feature_utils is available)
+    add_engineered_features = None
+    
+    # Try multiple import paths for different environments
     try:
         from models.feature_utils import add_engineered_features
+    except ImportError:
+        try:
+            from app.models.feature_utils import add_engineered_features
+        except ImportError:
+            try:
+                import sys
+                import os
+                # Add both possible model directories to path
+                model_paths = [
+                    os.path.join(os.path.dirname(__file__), "models"),
+                    os.path.join(os.path.dirname(__file__), "..", "models"),
+                    "/opt/render/project/src/backend/app/models"  # Render production path
+                ]
+                for path in model_paths:
+                    if os.path.exists(path) and path not in sys.path:
+                        sys.path.insert(0, path)
+                from feature_utils import add_engineered_features
+            except ImportError:
+                pass
+    
+    if add_engineered_features is not None:
         logger.info("⚙️ Adding engineered features...")
         df = add_engineered_features(df)
         logger.info(f"Dataset after feature engineering: {len(df.columns)} columns")
-    except ImportError:
+    else:
         logger.warning("Feature engineering not available, using basic features")
 
     # 4. Load ML model
