@@ -454,7 +454,13 @@ def load_ml_model():
         if not MODEL_PATH.exists():
             logger.warning(f"Model file not found: {MODEL_PATH}")
             return None, None
-            
+        
+        # Add models directory to Python path for feature_utils import
+        import sys
+        models_dir = CURRENT_DIR / "models"
+        if str(models_dir) not in sys.path:
+            sys.path.insert(0, str(models_dir))
+        
         obj = joblib.load(MODEL_PATH)
         
         if isinstance(obj, dict):
@@ -465,11 +471,17 @@ def load_ml_model():
             pipeline = obj
             phase_map = {0: "Green", 1: "Yellow", 2: "Orange", 3: "Red"}
         
-        logger.info("✅ Model loaded successfully")
-        return pipeline, phase_map
+        # Validate pipeline has required methods
+        if pipeline is not None and hasattr(pipeline, 'predict'):
+            logger.info("✅ Model loaded successfully")
+            return pipeline, phase_map
+        else:
+            logger.warning(f"Invalid pipeline object: {type(pipeline)}")
+            return None, None
         
     except Exception as e:
         logger.error(f"❌ Error loading model: {e}")
+        logger.info("📋 Falling back to rule-based predictions only")
         return None, None
 
 
@@ -494,34 +506,45 @@ def predict_with_unified_system(student_data: Dict[str, Any], ml_model=None, ml_
     
     # Try ML prediction if model is available
     if ml_model is not None:
-        pipeline, phase_map = ml_model
-        try:
-            # Prepare features for ML model
-            feature_columns = ['attendance', 'cgpa', 'backlogs', 'marks_10th', 'marks_12th', 
-                             'fees_flag', 'suspension_flag', 'gender', 'age_at_enrollment']
-            
-            # Create feature vector (handle missing columns)
-            feature_vector = []
-            for col in feature_columns:
-                if col in features:
-                    feature_vector.append(features[col])
-                else:
-                    feature_vector.append(0)  # Default value
-            
-            # Reshape for model
-            X = np.array(feature_vector).reshape(1, -1)
-            
-            # Get ML prediction
-            y_pred = pipeline.predict(X)[0]
-            model_phase = phase_map.get(y_pred, "Green")
-            
-            # Get probability if available
-            if hasattr(pipeline, 'predict_proba'):
-                y_proba = pipeline.predict_proba(X)
-                ml_probability = float(y_proba[0][1]) if y_proba.shape[1] > 1 else None
+        # Handle different model formats
+        if isinstance(ml_model, tuple) and len(ml_model) == 2:
+            # New format: (pipeline, phase_map)
+            pipeline, phase_map = ml_model
+        elif isinstance(ml_model, dict):
+            # Dictionary format with pipeline and phase_map
+            pipeline = ml_model.get("pipeline")
+            phase_map = ml_model.get("phase_map", {0: "Green", 1: "Yellow", 2: "Orange", 3: "Red"})
+        else:
+            # Direct pipeline format (legacy from main.py)
+            pipeline = ml_model
+            phase_map = {0: "Green", 1: "Yellow", 2: "Orange", 3: "Red"}
+        
+        # Only proceed if we have a valid pipeline
+        if pipeline is not None and hasattr(pipeline, 'predict'):
+            try:
+                # Create a DataFrame with the single student's data (model expects DataFrame)
+                single_student_df = pd.DataFrame([features])
                 
-        except Exception as e:
-            logger.warning(f"ML prediction failed: {e}, using default")
+                # Add engineered features to match training data
+                try:
+                    from models.feature_utils import add_engineered_features
+                    single_student_df = add_engineered_features(single_student_df)
+                except ImportError:
+                    logger.warning("Feature engineering not available for ML prediction")
+                
+                # Get ML prediction (model handles preprocessing internally)
+                y_pred = pipeline.predict(single_student_df)[0]
+                model_phase = phase_map.get(y_pred, "Green")
+                
+                # Get probability if available
+                if hasattr(pipeline, 'predict_proba'):
+                    y_proba = pipeline.predict_proba(single_student_df)
+                    ml_probability = float(y_proba[0][1]) if y_proba.shape[1] > 1 else None
+                    
+            except Exception as e:
+                logger.warning(f"ML prediction failed: {e}, using default")
+        else:
+            logger.warning(f"Invalid pipeline object: {type(pipeline)}, using default")
     
     # Apply unified override rules
     override_phase, override_reason = apply_unified_override_rules(features)
