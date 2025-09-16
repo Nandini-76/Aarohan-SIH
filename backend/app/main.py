@@ -46,18 +46,20 @@ except ImportError:
 try:
     # Try relative import first (for local development from app directory)
     from utils import (
-        apply_red_zone_rules,
         process_single_prediction, 
         add_predictions_to_dataset,
-        validate_student_input
+        validate_student_input,
+        predict_with_unified_system,
+        run_batch_prediction_pipeline
     )
 except ImportError:
     # Fall back to app.utils for deployed environment
     from app.utils import (
-        apply_red_zone_rules,
         process_single_prediction, 
         add_predictions_to_dataset,
-        validate_student_input
+        validate_student_input,
+        predict_with_unified_system,
+        run_batch_prediction_pipeline
     )
 
 # Helper functions for API
@@ -1100,14 +1102,12 @@ async def merge_datasets():
 @app.get("/predict", response_model=PredictResponse, summary="Run Prediction Pipeline")
 async def predict_students():
     """
-    Run the prediction pipeline to generate dropout predictions.
+    Run the unified prediction pipeline to generate dropout predictions.
     
     This endpoint:
-    1. Loads the merged dataset
-    2. Applies data cleaning and feature engineering
-    3. Runs ML model predictions
-    4. Applies red-zone override rules
-    5. Saves results to merged_with_predictions.csv
+    1. Uses the unified prediction system from utils.py
+    2. Loads the merged dataset and applies ML model + rule overrides
+    3. Saves results to merged_with_predictions.csv
     
     Returns:
         Prediction results with phase distribution and preview
@@ -1116,42 +1116,24 @@ async def predict_students():
         HTTPException: If prediction operation fails
     """
     try:
-        logger.info("🤖 Starting prediction pipeline via API endpoint")
+        logger.info("🤖 Starting unified prediction pipeline via API endpoint")
         
-        # Check if merged dataset exists
-        merged_data_path = Path(DATA_FILE_PATH)
-        if not merged_data_path.exists():
-            raise HTTPException(status_code=404, detail="Merged dataset not found. Run /merge first.")
-        
-        # Load dataset
-        df = pd.read_csv(merged_data_path)
-        logger.info(f"Loaded {len(df)} students")
-        
-        # Apply predictions using existing utility functions
-        df_with_predictions = add_predictions_to_dataset(df, ml_model, ml_scaler)
-        
-        # Save results
-        output_path = merged_data_path.parent / "merged_with_predictions.csv"
-        df_with_predictions.to_csv(output_path, index=False)
-        
-        # Generate summary
-        final_phase_counts = df_with_predictions["final_phase"].value_counts().to_dict()
-        model_phase_counts = df_with_predictions["model_phase"].value_counts().to_dict()
-        red_zone_count = len(df_with_predictions[df_with_predictions["rule_override"] == True])
+        # Use the unified batch prediction system
+        results = run_batch_prediction_pipeline()
         
         return PredictResponse(
             status="success",
-            total_students=len(df_with_predictions),
-            phase_distribution=final_phase_counts,
-            model_phase_distribution=model_phase_counts,
-            red_zone_overrides=red_zone_count,
-            ml_model_used=model_loaded,
-            output_path=str(output_path),
-            preview=df_with_predictions[["enrollment_no", "model_phase", "final_phase", "override_reason", "ml_probability", "rule_override"]].head().to_dict('records')
+            total_students=results["total_students"],
+            phase_distribution=results["final_phase_distribution"],
+            model_phase_distribution=results["ml_phase_distribution"],
+            red_zone_overrides=results["rule_overrides"],
+            ml_model_used=results["ml_model_used"],
+            output_path=results["output_path"],
+            preview=results["preview"]
         )
         
     except Exception as e:
-        logger.error(f"Prediction endpoint failed: {e}")
+        logger.error(f"Unified prediction endpoint failed: {e}")
         raise HTTPException(status_code=500, detail=f"Prediction operation failed: {str(e)}")
 
 

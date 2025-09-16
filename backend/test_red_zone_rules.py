@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script to verify the updated red zone rules function works correctly.
+Test script to verify the unified override rules function works correctly.
 """
 
 import sys
@@ -10,12 +10,12 @@ import pandas as pd
 # Add the app directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
 
-from app.utils import apply_red_zone_rules_to_phase
+from app.utils import apply_unified_override_rules
 
-def test_red_zone_rules():
-    """Test the updated red zone rules with various student scenarios"""
+def test_unified_override_rules():
+    """Test the unified override rules with various student scenarios"""
     
-    print("🧪 Testing Updated Red Zone Rules")
+    print("🧪 Testing Unified Override Rules")
     print("=" * 50)
     
     # Test cases with expected results
@@ -115,8 +115,16 @@ def test_red_zone_rules():
         # Create pandas Series from test data
         row = pd.Series(test_case['data'])
         
-        # Apply the function
-        final_phase, red_reason = apply_red_zone_rules_to_phase(row, test_case['model_phase'])
+        # Apply the unified override function
+        override_phase, override_reason = apply_unified_override_rules(row)
+        
+        # If no override, use model prediction
+        if override_phase is None:
+            final_phase = test_case['model_phase']
+            red_reason = ""
+        else:
+            final_phase = override_phase
+            red_reason = override_reason
         
         # Check results
         phase_correct = final_phase == test_case['expected_final']
@@ -158,4 +166,4 @@ def test_red_zone_rules():
     return failed == 0
 
 if __name__ == "__main__":
-    test_red_zone_rules()
+    test_unified_override_rules()

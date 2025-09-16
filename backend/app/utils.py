@@ -1,17 +1,32 @@
 """
-Utility functions for student dropout prediction system.
-Includes red-zone rule engine and helper functions.
+Unified prediction and override system for student dropout prediction.
+Includes ML pipeline, red-zone rule engine, and helper functions.
+Handles both batch and live predictions through the same logic.
 
 Author: AI Assistant
-Date: September 15, 2025
+Date: September 16, 2025
 """
 
 import pandas as pd
 import numpy as np
+import joblib
 import logging
-from typing import Dict, Any, Tuple
+from pathlib import Path
+from typing import Dict, Any, Tuple, Optional
+import sys
+import os
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ---------- PIPELINE CONFIG ----------
+CURRENT_DIR = Path(__file__).parent
+MERGED_DATA_PATH = CURRENT_DIR / "data" / "merged_dataset.csv"
+OUTPUT_PATH = CURRENT_DIR / "data" / "merged_with_predictions.csv"
+MODEL_PATH = CURRENT_DIR / "models" / "rf_pipeline_broad.joblib"
+KEY = "enrollment_no"
+# ------------------------------------
 
 
 def basic_clean(df: pd.DataFrame) -> pd.DataFrame:
@@ -60,146 +75,7 @@ def basic_clean(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def apply_red_zone_rules_to_phase(row: pd.Series, model_phase: str) -> Tuple[str, str]:
-    """
-    Apply Red-Zone override rules to determine final phase.
-    
-    This function takes the ML model's prediction and applies strict safety override rules.
-    If any red-zone condition is met, it overrides to Red regardless of model prediction.
-    
-    Stricter Red Zone criteria implemented in priority order:
-    A = Attendance, B = Backlogs, C = CGPA, F = Fees Flag, S = Suspension
-    
-    Args:
-        row: Pandas Series containing student data
-        model_phase: The ML model's prediction (Green, Yellow, Orange, Red)
-        
-    Returns:
-        Tuple of (final_phase, red_reason)
-        - final_phase: Final prediction after applying overrides
-        - red_reason: Explanation if overridden, empty string otherwise
-    """
-    # Extract values with safe defaults
-    A = row.get("attendance", 100)
-    B = row.get("backlogs", 0)
-    C = row.get("cgpa", 10)
-    F = row.get("fees_flag", 0)  # Note: 1 = unpaid fees, 0 = paid fees
-    S = row.get("suspension_flag", 0)
 
-    # Red Zone Override Rules (strict safety net) - in priority order
-    
-    # 1. Attendance-based rules
-    if A < 40:
-        return "Red", "Attendance below 40%"
-    
-    if A < 50 and C < 5:
-        return "Red", "Very low attendance & low CGPA"
-    
-    if A < 50 and B >= 3:
-        return "Red", "Low attendance with multiple backlogs"
-    
-    # 2. Backlog-based rules
-    if B >= 5:
-        return "Red", "Too many backlogs"
-    
-    if B >= 3 and C < 5:
-        return "Red", "High backlogs & poor CGPA"
-    
-    # 3. CGPA-based rules
-    if C < 4.5:
-        return "Red", "Critically low CGPA"
-    
-    if C < 5 and A < 50:
-        return "Red", "Weak CGPA with low attendance"
-    
-    # 4. Disciplinary issues
-    if S >= 2:
-        return "Red", "Multiple suspensions"
-    
-    if S >= 1 and B >= 3:
-        return "Red", "Suspensions with high backlogs"
-    
-    if S >= 1 and A < 50:
-        return "Red", "Suspensions with low attendance"
-    
-    # 5. Financial issues
-    if F == 1:
-        return "Red", "Unpaid fees"
-    
-    if F == 1 and A < 60:
-        return "Red", "Unpaid fees & low attendance"
-    
-    if F == 1 and B >= 2:
-        return "Red", "Unpaid fees & multiple backlogs"
-    
-    # 6. Composite risk score (catch-all rule)
-    # risk_index = (100 - A) + (B * 10) + ((10 - C) * 5) + (S * 20) + (F * 30)
-    risk_index = (100 - A) + (B * 10) + ((10 - C) * 5) + (S * 20) + (F * 30)
-    
-    if risk_index >= 120:
-        return "Red", "High composite risk index"
-    
-    # No Red Zone conditions met, return original model prediction
-    return model_phase, ""
-
-
-def apply_red_zone_rules(student_data: Dict[str, Any]) -> Tuple[str, str]:
-    """
-    Legacy function for backward compatibility.
-    Apply red-zone rule engine to determine high-risk students.
-    
-    Original extensive Red-zone criteria:
-    A = Attendance, B = Backlogs, C = CGPA, F = Fees Flag, S = Suspension
-    
-    Args:
-        student_data: Dictionary containing student features
-        
-    Returns:
-        Tuple of (predicted_phase, red_reason)
-        - predicted_phase: "Red" if triggered, None otherwise
-        - red_reason: Explanation if Red, empty string otherwise
-    """
-    def is_red_zone(data):
-        """
-        Apply strict rules to decide if student is in Red zone.
-        A = Attendance, B = Backlogs, C = CGPA, F = Fees Flag, S = Suspension
-        """
-        A = data.get("attendance", 100)
-        B = data.get("backlogs", 0)
-        C = data.get("cgpa", 10)
-        F = data.get("fees_flag", 0)  # Fixed: 0 = paid, 1 = unpaid
-        S = data.get("suspension_flag", 0)
-
-        # RULES (corrected fees_flag logic)
-        # Note: F = 0 means fees paid, F = 1 means fees unpaid
-        if A < 35: return "Attendance < 35"
-        if B > 7: return "Backlogs > 7"
-        if A < 45 and B > 5: return "Low attendance & high backlogs"
-        if C < 4.5 and B > 5: return "Very low CGPA & high backlogs"
-        if A < 45 and C < 5: return "Low attendance & low CGPA"
-        if S >= 2 and A < 50: return "Multiple suspensions & low attendance"
-        if S >= 2 and B > 3: return "Multiple suspensions & backlogs"
-        if S >= 3 and C < 5: return "Multiple suspensions & low CGPA"
-        # Fixed fees_flag conditions (F == 1 means unpaid fees)
-        if F == 1 and B > 2: return "Unpaid fees & backlogs"
-        if F == 1 and C < 4.5: return "Unpaid fees & very low CGPA"
-        if F == 1 and A < 50: return "Unpaid fees & poor attendance"
-        if A < 45 and C < 5 and B > 3: return "Low attendance, low CGPA, high backlogs"
-        if C < 5.5 and F == 1 and B > 2: return "Low CGPA, unpaid fees & backlogs"
-        if A < 45 and S > 2 and B > 3: return "Low attendance, suspensions & backlogs"
-        if C < 5.5 and F == 1 and A < 45: return "Low CGPA, unpaid fees & poor attendance"
-        if A < 45 and C < 5 and B > 5 and F == 1: return "Severe academic & financial issues"
-        if F == 1 and S > 3 and A < 50 and C < 4.5: return "Unpaid fees, suspensions, very weak academics"
-
-        return None  # Not Red-Zone
-    
-    red_reason = is_red_zone(student_data)
-    
-    if red_reason:
-        return "Red", red_reason
-    
-    # No red-zone trigger
-    return None, ""
 
 
 def convert_to_model_features(student_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -261,7 +137,8 @@ def _normalize_fees_flag(fees_flag_value) -> int:
 
 def process_single_prediction(student_data: Dict[str, Any], ml_model=None, ml_scaler=None) -> Dict[str, Any]:
     """
-    Process a single student prediction with red-zone override.
+    Process a single student prediction using the unified system.
+    DEPRECATED: Use predict_with_unified_system for new code.
     
     Args:
         student_data: Student features
@@ -271,121 +148,8 @@ def process_single_prediction(student_data: Dict[str, Any], ml_model=None, ml_sc
     Returns:
         Dictionary with prediction results including model_phase and final_phase
     """
-    # Convert to model features
-    features = convert_to_model_features(student_data)
-    
-    # Get ML model prediction first
-    ml_probability = None
-    model_phase = "Green"  # Default
-    
-    if ml_model is not None:
-        try:
-            # Check if model is a dictionary (saved model metadata)
-            if isinstance(ml_model, dict):
-                # If it's a dictionary, we might have model metadata but not the actual model
-                logger.warning("Model is a dictionary - may contain metadata only")
-                ml_probability = None
-            elif hasattr(ml_model, 'predict_proba'):
-                # Prepare features for ML model
-                feature_order = ['attendance', 'cgpa', 'marks_10th', 'marks_12th', 'backlogs', 'fees_flag', 'suspension_flag']
-                X = np.array([[features[f] for f in feature_order]])
-                
-                # Direct prediction (model is a pipeline or doesn't need scaling)
-                ml_probability = float(ml_model.predict_proba(X)[0, 1])  # Convert to Python float
-            else:
-                logger.warning("Model object doesn't have predict_proba method")
-                ml_probability = None
-            
-            # Convert ML probability to model phase
-            if ml_probability is not None:
-                if ml_probability >= 0.7:
-                    model_phase = "Red"
-                elif ml_probability >= 0.5:
-                    model_phase = "Orange"
-                elif ml_probability >= 0.4:
-                    model_phase = "Yellow"
-                else:
-                    model_phase = "Green"
-                
-        except Exception as e:
-            logger.error(f"ML prediction failed: {e}")
-            ml_probability = None
-    
-    # If ML model failed, use rule-based prediction as fallback for model_phase
-    if ml_probability is None:
-        # Calculate risk score for model prediction
-        attendance = features.get('attendance', 80)
-        cgpa = features.get('cgpa', 7.0)
-        backlogs = features.get('backlogs', 0)
-        suspension_flag = features.get('suspension_flag', 0)
-        fees_flag = features.get('fees_flag', 0)
-        
-        # Risk scoring for model prediction (different from red-zone rules)
-        risk_score = 0
-        
-        # Attendance factor (0-30 points)
-        if attendance < 50:
-            risk_score += 30
-        elif attendance < 65:
-            risk_score += 20
-        elif attendance < 75:
-            risk_score += 15
-        elif attendance < 85:
-            risk_score += 10
-        
-        # CGPA factor (0-25 points)
-        if cgpa < 5.0:
-            risk_score += 25
-        elif cgpa < 6.5:
-            risk_score += 15
-        elif cgpa < 7.5:
-            risk_score += 10
-        elif cgpa < 8.5:
-            risk_score += 5
-        
-        # Backlogs factor (0-20 points)
-        if backlogs > 3:
-            risk_score += 20
-        elif backlogs > 1:
-            risk_score += 15
-        elif backlogs > 0:
-            risk_score += 10
-        
-        # Disciplinary issues (0-15 points)
-        if suspension_flag > 0:
-            risk_score += 15
-        if fees_flag > 0:
-            risk_score += 10
-        
-        # Convert score to model phase and probability
-        if risk_score >= 50:
-            model_phase = "Orange"
-            ml_probability = 0.75
-        elif risk_score >= 30:
-            model_phase = "Yellow"
-            ml_probability = 0.55
-        elif risk_score >= 15:
-            model_phase = "Yellow"
-            ml_probability = 0.45
-        else:
-            model_phase = "Green"
-            ml_probability = 0.25
-    
-    # Apply red-zone overrides to get final phase
-    # Convert features dict to pandas Series for compatibility
-    features_series = pd.Series(features)
-    final_phase, red_reason = apply_red_zone_rules_to_phase(features_series, model_phase)
-    rule_override = (final_phase != model_phase)
-    
-    return {
-        "model_phase": model_phase,
-        "final_phase": final_phase,
-        "red_reason": red_reason,
-        "ml_probability": ml_probability,
-        "rule_override": rule_override,
-        # Keep legacy field for backward compatibility
-        "predicted_phase": final_phase
-    }
+    # Use the unified system for consistency
+    return predict_with_unified_system(student_data, ml_model, ml_scaler)
 
 
 def add_predictions_to_dataset(df: pd.DataFrame, ml_model=None, ml_scaler=None) -> pd.DataFrame:
@@ -500,3 +264,295 @@ def validate_student_input(student_data: Dict[str, Any]) -> Dict[str, Any]:
             student_data[field] = default_value
     
     return student_data
+
+
+# ===============================================
+# UNIFIED PREDICTION AND OVERRIDE SYSTEM
+# ===============================================
+
+def apply_unified_override_rules(row):
+    """
+    Unified comprehensive override logic for both batch and live predictions.
+    Uses optimized priority system: Red → Orange → Yellow → Green.
+    
+    Args:
+        row: pandas Series or dict containing student data
+        
+    Returns:
+        tuple: (phase, reason) or (None, None) if no override
+    """
+    # Handle both Series and dict inputs
+    if hasattr(row, 'get'):
+        get_func = row.get
+    else:
+        get_func = lambda key, default: row.get(key, default) if isinstance(row, dict) else getattr(row, key, default)
+    
+    A = get_func('attendance', 0)
+    C = get_func('cgpa', 0)
+    B = get_func('backlogs', 0)
+    S = get_func('suspension_flag', 0)
+    F = get_func('fees_flag', 0)  # 0 = paid, 1 = unpaid fees
+    
+    # ============ RED ZONE RULES (HIGHEST PRIORITY) ============
+    # Critical attendance issues
+    if A < 50:
+        return "Red", "Critical attendance (<50%)"
+    
+    # Severe backlog issues
+    if B > 7:
+        return "Red", "Severe backlogs (>7)"
+    
+    # Combined academic failures
+    if C < 4.5 and B > 5:
+        return "Red", "Very low CGPA & high backlogs"
+    
+    if A < 45 and C < 5 and B > 3:
+        return "Red", "Severe academic issues (low attendance, low CGPA, high backlogs)"
+    
+    # Disciplinary issues
+    if S >= 3:
+        return "Red", "Multiple suspensions (≥3)"
+    
+    # Financial + academic combinations
+    if F == 1 and A < 60:
+        return "Red", "Fee default & poor attendance"
+    
+    if F == 1 and C < 4.5:
+        return "Red", "Fee default & very weak CGPA"
+    
+    # ============ ORANGE ZONE RULES ============
+    # Moderate attendance issues
+    if 60 <= A <= 69:
+        return "Orange", "Attendance in risk range (60–69%)"
+    
+    # Academic concerns
+    if 5 <= C < 6 and 2 <= B <= 4:
+        return "Orange", "Low CGPA with moderate backlogs"
+    
+    if C < 6 and B > 4:
+        return "Orange", "Low CGPA with backlogs"
+    
+    # Disciplinary concerns
+    if S == 2 and A < 70:
+        return "Orange", "Repeated discipline issues"
+    
+    # Financial concerns
+    if A < 65 and F == 1:
+        return "Orange", "Fee default & low attendance"
+    
+    # ============ YELLOW ZONE RULES ============
+    # Caution level attendance
+    if 70 <= A <= 79:
+        return "Yellow", "Attendance in caution range (70–79%)"
+    
+    # Minor academic concerns
+    if 6 <= C < 7 and B <= 2:
+        return "Yellow", "Slightly weak academics (CGPA 6–7, low backlogs)"
+    
+    # Minor disciplinary issues
+    if S == 1 and A >= 70:
+        return "Yellow", "Minor disciplinary issue"
+    
+    # Financial with acceptable performance
+    if F == 1 and A >= 70:
+        return "Yellow", "Fee default but attendance acceptable"
+    
+    # ============ GREEN ZONE RULES ============
+    # Excellence indicators
+    if A >= 90:
+        return "Green", "Excellent attendance"
+    
+    if A >= 85 and C >= 8:
+        return "Green", "Strong academics (high attendance & CGPA)"
+    
+    if A >= 80 and C >= 7 and B == 0 and S == 0:
+        return "Green", "Good performance & discipline"
+    
+    # No override → keep ML prediction
+    return None, None
+
+
+def load_ml_model():
+    """
+    Load the trained Random Forest model for predictions.
+    
+    Returns:
+        tuple: (model_pipeline, phase_map) or (None, None) if loading fails
+    """
+    try:
+        logger.info(f"📦 Loading trained model: {MODEL_PATH}")
+        
+        if not MODEL_PATH.exists():
+            logger.warning(f"Model file not found: {MODEL_PATH}")
+            return None, None
+            
+        obj = joblib.load(MODEL_PATH)
+        
+        if isinstance(obj, dict):
+            pipeline = obj.get("pipeline")
+            phase_map = obj.get("phase_map", {0: "Green", 1: "Yellow", 2: "Orange", 3: "Red"})
+        else:
+            # If obj is the pipeline directly
+            pipeline = obj
+            phase_map = {0: "Green", 1: "Yellow", 2: "Orange", 3: "Red"}
+        
+        logger.info("✅ Model loaded successfully")
+        return pipeline, phase_map
+        
+    except Exception as e:
+        logger.error(f"❌ Error loading model: {e}")
+        return None, None
+
+
+def predict_with_unified_system(student_data: Dict[str, Any], ml_model=None, ml_scaler=None) -> Dict[str, Any]:
+    """
+    Unified prediction system for both batch and live predictions.
+    
+    Args:
+        student_data: Student features (dict or pandas Series)
+        ml_model: Optional ML model tuple (pipeline, phase_map)
+        ml_scaler: Optional scaler (not used currently)
+        
+    Returns:
+        Dictionary with unified prediction results
+    """
+    # Convert to model features
+    features = convert_to_model_features(student_data)
+    
+    # Default values
+    ml_probability = None
+    model_phase = "Green"  # Default ML prediction
+    
+    # Try ML prediction if model is available
+    if ml_model is not None:
+        pipeline, phase_map = ml_model
+        try:
+            # Prepare features for ML model
+            feature_columns = ['attendance', 'cgpa', 'backlogs', 'marks_10th', 'marks_12th', 
+                             'fees_flag', 'suspension_flag', 'gender', 'age_at_enrollment']
+            
+            # Create feature vector (handle missing columns)
+            feature_vector = []
+            for col in feature_columns:
+                if col in features:
+                    feature_vector.append(features[col])
+                else:
+                    feature_vector.append(0)  # Default value
+            
+            # Reshape for model
+            X = np.array(feature_vector).reshape(1, -1)
+            
+            # Get ML prediction
+            y_pred = pipeline.predict(X)[0]
+            model_phase = phase_map.get(y_pred, "Green")
+            
+            # Get probability if available
+            if hasattr(pipeline, 'predict_proba'):
+                y_proba = pipeline.predict_proba(X)
+                ml_probability = float(y_proba[0][1]) if y_proba.shape[1] > 1 else None
+                
+        except Exception as e:
+            logger.warning(f"ML prediction failed: {e}, using default")
+    
+    # Apply unified override rules
+    override_phase, override_reason = apply_unified_override_rules(features)
+    
+    # Determine final results
+    if override_phase is not None:
+        final_phase = override_phase
+        red_reason = override_reason
+        rule_override = True
+    else:
+        final_phase = model_phase
+        red_reason = ""
+        rule_override = False
+    
+    # Return unified result format
+    return {
+        'model_phase': model_phase,
+        'final_phase': final_phase,
+        'override_reason': red_reason if red_reason else "Model prediction kept",
+        'red_reason': red_reason,
+        'ml_probability': ml_probability,
+        'rule_override': rule_override,
+        'predicted_phase': final_phase  # For backward compatibility
+    }
+
+
+def run_batch_prediction_pipeline():
+    """
+    Run batch prediction pipeline using unified system.
+    Generates the merged_with_predictions.csv file.
+    
+    Returns:
+        dict: Results with predictions and summary
+    """
+    logger.info("🚀 Starting Unified Batch Prediction Pipeline...")
+    
+    # 1. Load merged dataset
+    if not MERGED_DATA_PATH.exists():
+        raise FileNotFoundError(f"Merged dataset not found: {MERGED_DATA_PATH}")
+    
+    logger.info(f"📂 Loading merged dataset: {MERGED_DATA_PATH}")
+    df = pd.read_csv(MERGED_DATA_PATH)
+    logger.info(f"Loaded {len(df)} students with {len(df.columns)} features")
+
+    if KEY not in df.columns:
+        raise ValueError(f"❌ Missing key column '{KEY}' in merged dataset")
+
+    # 2. Apply data cleaning
+    logger.info("🧹 Applying data cleaning...")
+    df = basic_clean(df)
+    
+    # 3. Add engineered features (if feature_utils is available)
+    try:
+        from models.feature_utils import add_engineered_features
+        logger.info("⚙️ Adding engineered features...")
+        df = add_engineered_features(df)
+        logger.info(f"Dataset after feature engineering: {len(df.columns)} columns")
+    except ImportError:
+        logger.warning("Feature engineering not available, using basic features")
+
+    # 4. Load ML model
+    ml_model = load_ml_model()
+    
+    # 5. Process each student through unified system
+    logger.info("🤖 Running unified predictions...")
+    results = []
+    
+    for idx, row in df.iterrows():
+        student_data = row.to_dict()
+        prediction = predict_with_unified_system(student_data, ml_model)
+        
+        # Add results back to dataframe
+        for key, value in prediction.items():
+            df.at[idx, key] = value
+    
+    # 6. Save results
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(OUTPUT_PATH, index=False)
+    logger.info(f"💾 Saved dataset with predictions → {OUTPUT_PATH}")
+
+    # 7. Generate summary
+    ml_phase_counts = df["model_phase"].value_counts().to_dict()
+    final_phase_counts = df["final_phase"].value_counts().to_dict()
+    override_count = len(df[df["override_reason"] != "Model prediction kept"])
+    
+    logger.info(f"🔍 Unified Prediction Summary:")
+    logger.info(f"  ML predictions: {ml_phase_counts}")
+    logger.info(f"  Final predictions: {final_phase_counts}")
+    logger.info(f"  Rule-based overrides: {override_count} students")
+
+    # 8. Return results
+    results = {
+        "status": "success",
+        "total_students": len(df),
+        "ml_phase_distribution": ml_phase_counts,
+        "final_phase_distribution": final_phase_counts,
+        "rule_overrides": override_count,
+        "ml_model_used": ml_model is not None,
+        "output_path": str(OUTPUT_PATH),
+        "preview": df[[KEY, "model_phase", "final_phase", "override_reason", "ml_probability"]].head().to_dict('records')
+    }
+    
+    return results
