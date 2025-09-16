@@ -266,12 +266,61 @@ const StudentProfile: React.FC = () => {
                 <Badge variant="destructive">Academic Suspension</Badge>
               )}
               {student.fees_flag === 0 && (
-                <Badge variant="secondary" className="bg-success/10 text-success">Fees Paid</Badge>
+                <Badge variant="secondary" className="bg-success/10 text-success">✅ Fees Paid</Badge>
               )}
               {student.fees_flag > 0 && (
-                <Badge variant="destructive">Outstanding Fees</Badge>
+                <Badge variant="destructive">⚠️ Outstanding Fees</Badge>
+              )}
+              {student.suspension_flag === 0 && (
+                <Badge variant="secondary" className="bg-success/10 text-success">✅ No Suspension History</Badge>
               )}
             </div>
+            
+            {/* Developer Debug Mode */}
+            {process.env.NODE_ENV === 'development' && student.__debug && (
+              <Card className="mt-4 border-orange-500/50">
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center space-x-2">
+                    <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">DEV DEBUG</span>
+                    <span>Backend Data Validation</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-xs">
+                  <div className="grid grid-cols-2 gap-2 text-left">
+                    <div>
+                      <strong>Fees Flag:</strong> {student.fees_flag} 
+                      <span className="text-muted-foreground ml-1">
+                        ({student.fees_flag === 0 ? "Paid" : "Unpaid"})
+                      </span>
+                    </div>
+                    <div>
+                      <strong>Suspension Flag:</strong> {student.suspension_flag}
+                      <span className="text-muted-foreground ml-1">
+                        ({student.suspension_flag === 0 ? "No" : "Yes"})
+                      </span>
+                    </div>
+                    <div>
+                      <strong>Final Phase:</strong> {student.final_phase}
+                    </div>
+                    <div>
+                      <strong>Model Phase:</strong> {student.model_phase}
+                    </div>
+                    <div className="col-span-2">
+                      <strong>Override Reason:</strong> {student.override_reason || "None"}
+                    </div>
+                    <div className="col-span-2">
+                      <strong>ML Probability:</strong> {student.ml_probability?.toFixed(3) || "N/A"}
+                    </div>
+                  </div>
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-orange-600">Raw Backend JSON</summary>
+                    <pre className="mt-1 bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs overflow-auto max-h-32">
+                      {JSON.stringify(student.__debug.raw_backend_data, null, 2)}
+                    </pre>
+                  </details>
+                </CardContent>
+              </Card>
+            )}
           </CardContent>
         </Card>
 
@@ -376,15 +425,32 @@ const StudentProfile: React.FC = () => {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Fee Status</label>
                 <div className="flex items-center space-x-2 mt-1">
-                  {student.fees_flag > 0 ? (
+                  {student.fees_flag === 1 ? (
                     <>
                       <div className="w-2 h-2 rounded-full bg-destructive"></div>
-                      <span className="text-destructive font-medium">Outstanding</span>
+                      <span className="text-destructive font-medium">⚠️ Outstanding Fees</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-4 h-4 text-success" />
-                      <span className="text-success font-medium">Paid</span>
+                      <span className="text-success font-medium">✅ No Outstanding Fees</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Suspension Status</label>
+                <div className="flex items-center space-x-2 mt-1">
+                  {student.suspension_flag === 1 ? (
+                    <>
+                      <div className="w-2 h-2 rounded-full bg-destructive"></div>
+                      <span className="text-destructive font-medium">⚠️ Suspension Record</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 text-success" />
+                      <span className="text-success font-medium">✅ No Suspension History</span>
                     </>
                   )}
                 </div>
@@ -405,10 +471,18 @@ const StudentProfile: React.FC = () => {
               </div>
             </div>
             
-            {student.fees_flag > 0 && (
+            {student.fees_flag === 1 && (
               <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20">
                 <p className="text-sm text-destructive font-medium">
                   ⚠️ Outstanding fee payment may affect academic progression
+                </p>
+              </div>
+            )}
+            
+            {student.suspension_flag === 1 && (
+              <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                <p className="text-sm text-destructive font-medium">
+                  ⚠️ Suspension history may indicate disciplinary concerns
                 </p>
               </div>
             )}

@@ -1,5 +1,6 @@
 export interface Student {
   enrollment_no: string;
+  student_id?: string; // Alternative ID field
   attendance: number;
   cgpa: number;
   backlogs: number;
@@ -12,12 +13,21 @@ export interface Student {
   category?: string;
   department?: string;
   final_phase: "Green" | "Yellow" | "Orange" | "Red";
+  model_phase?: "Green" | "Yellow" | "Orange" | "Red";
   override_reason: string;
   ml_probability: number | null;
+  rule_override?: boolean;
+  risk_label?: string;
   // Computed fields for display
   name?: string; // We'll generate this from enrollment_no
   phase?: "Green" | "Yellow" | "Orange" | "Red"; // Alias for final_phase
   risk_reason?: string; // Alias for override_reason
+  // Debug info (only in development)
+  __debug?: {
+    raw_backend_data?: any;
+    fees_flag_original?: any;
+    suspension_flag_original?: any;
+  };
 }
 
 export interface SimulationData {

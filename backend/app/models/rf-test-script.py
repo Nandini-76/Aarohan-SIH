@@ -13,7 +13,7 @@ from feature_utils import add_engineered_features
 
 # ---------- CONFIG ----------
 DATA_PATH = "C:\\Users\\wanna\\Desktop\\dropout-repos\\prototype\\backend\\app\\models\\data\\new_test_dataset_v2.csv"   # ✅ balanced test dataset
-MODEL_PATH = "rf_pipeline_broad.joblib"                         # trained RF broad-phase model
+MODEL_PATH = "C:\\Users\\wanna\\Desktop\\AAROHAN\\backend\\app\\models\\rf_pipeline_broad.joblib"                         # trained RF broad-phase model
 TARGET_COL = "broad_phase"
 TOP_N_FEATURES = 15  # number of most important features to display
 # ----------------------------

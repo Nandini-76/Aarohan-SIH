@@ -67,7 +67,7 @@ def apply_red_zone_rules_to_phase(row: pd.Series, model_phase: str) -> Tuple[str
     This function takes the ML model's prediction and applies strict safety override rules.
     If any red-zone condition is met, it overrides to Red regardless of model prediction.
     
-    Original extensive Red-zone criteria:
+    Stricter Red Zone criteria implemented in priority order:
     A = Attendance, B = Backlogs, C = CGPA, F = Fees Flag, S = Suspension
     
     Args:
@@ -79,45 +79,67 @@ def apply_red_zone_rules_to_phase(row: pd.Series, model_phase: str) -> Tuple[str
         - final_phase: Final prediction after applying overrides
         - red_reason: Explanation if overridden, empty string otherwise
     """
-    def is_red_zone(row):
-        """
-        Apply strict rules to decide if student is in Red zone.
-        A = Attendance, B = Backlogs, C = CGPA, F = Fees Flag, S = Suspension
-        """
-        A = row.get("attendance", 100)
-        B = row.get("backlogs", 0)
-        C = row.get("cgpa", 10)
-        F = row.get("fees_flag", 1)
-        S = row.get("suspension_flag", 0)
+    # Extract values with safe defaults
+    A = row.get("attendance", 100)
+    B = row.get("backlogs", 0)
+    C = row.get("cgpa", 10)
+    F = row.get("fees_flag", 0)  # Note: 1 = unpaid fees, 0 = paid fees
+    S = row.get("suspension_flag", 0)
 
-        # RULES (original extensive logic)
-        if A < 35: return "Attendance < 35"
-        if B > 7: return "Backlogs > 7"
-        if A < 45 and B > 5: return "Low attendance & high backlogs"
-        if C < 4.5 and B > 5: return "Very low CGPA & high backlogs"
-        if A < 45 and C < 5: return "Low attendance & low CGPA"
-        if S >= 2 and A < 50: return "Multiple suspensions & low attendance"
-        if S >= 2 and B > 3: return "Multiple suspensions & backlogs"
-        if S >= 3 and C < 5: return "Multiple suspensions & low CGPA"
-        if F == 0 and B > 2: return "Fee default & backlogs"
-        if F == 0 and C < 4.5: return "Fee default & very low CGPA"
-        if F == 0 and A < 50: return "Fee default & low attendance"
-        if A < 45 and C < 5 and B > 3: return "Low attendance, low CGPA, high backlogs"
-        if C < 5.5 and F == 0 and B > 2: return "Low CGPA, fee default & backlogs"
-        if A < 45 and S > 2 and B > 3: return "Low attendance, suspensions & backlogs"
-        if C < 5.5 and F == 0 and A < 45: return "Low CGPA, fee default & low attendance"
-        if A < 45 and C < 5 and B > 5 and F == 0: return "Severe academic issues"
-        if F == 0 and S > 3 and A < 50 and C < 4.5: return "Fee default, suspensions, very weak academics"
-
-        return None  # Not Red-Zone
+    # Red Zone Override Rules (strict safety net) - in priority order
     
-    # Apply the red-zone check
-    red_reason = is_red_zone(row)
+    # 1. Attendance-based rules
+    if A < 40:
+        return "Red", "Attendance below 40%"
     
-    if red_reason:
-        return "Red", red_reason
+    if A < 50 and C < 5:
+        return "Red", "Very low attendance & low CGPA"
     
-    # No override needed, keep model prediction
+    if A < 50 and B >= 3:
+        return "Red", "Low attendance with multiple backlogs"
+    
+    # 2. Backlog-based rules
+    if B >= 5:
+        return "Red", "Too many backlogs"
+    
+    if B >= 3 and C < 5:
+        return "Red", "High backlogs & poor CGPA"
+    
+    # 3. CGPA-based rules
+    if C < 4.5:
+        return "Red", "Critically low CGPA"
+    
+    if C < 5 and A < 50:
+        return "Red", "Weak CGPA with low attendance"
+    
+    # 4. Disciplinary issues
+    if S >= 2:
+        return "Red", "Multiple suspensions"
+    
+    if S >= 1 and B >= 3:
+        return "Red", "Suspensions with high backlogs"
+    
+    if S >= 1 and A < 50:
+        return "Red", "Suspensions with low attendance"
+    
+    # 5. Financial issues
+    if F == 1:
+        return "Red", "Unpaid fees"
+    
+    if F == 1 and A < 60:
+        return "Red", "Unpaid fees & low attendance"
+    
+    if F == 1 and B >= 2:
+        return "Red", "Unpaid fees & multiple backlogs"
+    
+    # 6. Composite risk score (catch-all rule)
+    # risk_index = (100 - A) + (B * 10) + ((10 - C) * 5) + (S * 20) + (F * 30)
+    risk_index = (100 - A) + (B * 10) + ((10 - C) * 5) + (S * 20) + (F * 30)
+    
+    if risk_index >= 120:
+        return "Red", "High composite risk index"
+    
+    # No Red Zone conditions met, return original model prediction
     return model_phase, ""
 
 
@@ -195,12 +217,44 @@ def convert_to_model_features(student_data: Dict[str, Any]) -> Dict[str, Any]:
         'backlogs': student_data.get('backlogs', 0),
         'marks_10th': student_data.get('marks_10', student_data.get('marks_10th', 0)),
         'marks_12th': student_data.get('marks_12', student_data.get('marks_12th', 0)),
-        'fees_flag': 1 if student_data.get('fees_flag', 'Y') == 'N' else 0,
-        'suspension_flag': student_data.get('suspension_flag', 0),
+        # Fix fees_flag logic - handle both string and numeric inputs
+        'fees_flag': _normalize_fees_flag(student_data.get('fees_flag', 0)),
+        'suspension_flag': int(student_data.get('suspension_flag', 0)),
         'gender': student_data.get('gender', 'M')
     }
     
     return features
+
+
+def _normalize_fees_flag(fees_flag_value) -> int:
+    """
+    Normalize fees_flag to consistent 0/1 format.
+    
+    Args:
+        fees_flag_value: Can be int (0/1), string ('Y'/'N', 'paid'/'unpaid'), or bool
+        
+    Returns:
+        int: 0 = fees paid, 1 = fees unpaid
+    """
+    if isinstance(fees_flag_value, (int, float)):
+        # Numeric: 0 = paid, 1 = unpaid (keep as is)
+        return int(fees_flag_value)
+    elif isinstance(fees_flag_value, str):
+        # String values - handle various formats
+        value = fees_flag_value.strip().upper()
+        if value in ['N', 'NO', 'UNPAID', 'OUTSTANDING', 'FALSE', '1']:
+            return 1  # Unpaid
+        elif value in ['Y', 'YES', 'PAID', 'TRUE', '0']:
+            return 0  # Paid
+        else:
+            logger.warning(f"Unknown fees_flag value: {fees_flag_value}, defaulting to 0 (paid)")
+            return 0
+    elif isinstance(fees_flag_value, bool):
+        # Boolean: True = unpaid, False = paid
+        return int(fees_flag_value)
+    else:
+        logger.warning(f"Unknown fees_flag type: {type(fees_flag_value)}, defaulting to 0 (paid)")
+        return 0
 
 
 def process_single_prediction(student_data: Dict[str, Any], ml_model=None, ml_scaler=None) -> Dict[str, Any]:

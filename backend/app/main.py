@@ -43,12 +43,51 @@ except ImportError:
     StandardScaler = None
 
 # Import utility functions
-from app.utils import (
+from utils import (
     apply_red_zone_rules,
     process_single_prediction, 
     add_predictions_to_dataset,
     validate_student_input
 )
+
+# Helper functions for API
+def generate_student_name(enrollment_no: str) -> str:
+    """Generate display name from enrollment number for consistency with frontend."""
+    # Extract number from enrollment (e.g., "2023ENG001" -> "001")
+    import re
+    match = re.search(r'(\d+)$', enrollment_no)
+    num = int(match.group(1)) if match else 1
+    
+    # Generate realistic names based on enrollment number
+    first_names = [
+        'Aarav', 'Ananya', 'Arjun', 'Diya', 'Ishaan', 'Kavya', 'Kiran', 'Meera',
+        'Nikhil', 'Priya', 'Rahul', 'Riya', 'Rohan', 'Sakshi', 'Siddharth', 'Sneha',
+        'Varun', 'Vani', 'Yash', 'Zara', 'Aditya', 'Aditi', 'Akash', 'Bhavya',
+        'Charan', 'Deepika', 'Eshaan', 'Fathima', 'Gaurav', 'Harini'
+    ]
+    
+    last_names = [
+        'Sharma', 'Verma', 'Gupta', 'Singh', 'Kumar', 'Reddy', 'Patel', 'Shah',
+        'Jain', 'Agarwal', 'Mehta', 'Chopra', 'Malhotra', 'Khanna', 'Rao',
+        'Iyer', 'Nair', 'Pillai', 'Menon', 'Krishnan', 'Sundaram', 'Raman',
+        'Prasad', 'Srinivas', 'Venkat', 'Mohan', 'Suresh', 'Ramesh', 'Dinesh', 'Ganesh'
+    ]
+    
+    first_name = first_names[(num - 1) % len(first_names)]
+    last_name = last_names[(num - 1) // len(first_names) % len(last_names)]
+    
+    return f"{first_name} {last_name}"
+
+
+def _convert_phase_to_risk_label(phase: str) -> str:
+    """Convert phase to human-readable risk label."""
+    phase_map = {
+        "Green": "Low Risk",
+        "Yellow": "Medium Risk", 
+        "Orange": "High Risk",
+        "Red": "Critical Risk"
+    }
+    return phase_map.get(phase, "Unknown Risk")
 
 # Import pipeline functions
 # from models.integration_pipeline import run_integration_pipeline
@@ -676,25 +715,37 @@ async def get_all_students():
         # Convert to JSON-serializable format
         students = []
         for _, row in df.iterrows():
-            student = {
+            # Clean and standardize the student data
+            cleaned_student = {
+                "student_id": str(row.get('enrollment_no', '')),
                 "enrollment_no": str(row.get('enrollment_no', '')),
+                "name": generate_student_name(str(row.get('enrollment_no', ''))),
+                "department": str(row.get('department', '')) if pd.notna(row.get('department')) else None,
                 "attendance": float(row.get('attendance', 0)),
                 "cgpa": float(row.get('cgpa', 0)),
                 "backlogs": int(row.get('backlogs', 0)),
                 "marks_10th": float(row.get('marks_10th', 0)),
                 "marks_12th": float(row.get('marks_12th', 0)),
-                "fees_flag": int(row.get('fees_flag', 0)),
-                "suspension_flag": int(row.get('suspension_flag', 0)),
+                "fees_flag": int(row.get('fees_flag', 0)),  # 0 = paid, 1 = unpaid
+                "suspension_flag": int(row.get('suspension_flag', 0)),  # 0 = no suspension, 1 = suspended
                 "gender": str(row.get('gender', 'M')),
                 "age_at_enrollment": int(row.get('age_at_enrollment', 0)) if pd.notna(row.get('age_at_enrollment')) else None,
                 "category": str(row.get('category', '')) if pd.notna(row.get('category')) else None,
-                "department": str(row.get('department', '')) if pd.notna(row.get('department')) else None,
-                # Use new prediction columns with fallback to old ones
+                # Prediction results
+                "prediction": str(row.get('final_phase', 'Green')),
                 "final_phase": str(row.get('final_phase', 'Green')),
-                "override_reason": str(row.get('override_reason', '')),
-                "ml_probability": float(row.get('ml_probability', 0)) if pd.notna(row.get('ml_probability')) else None
+                "model_phase": str(row.get('model_phase', 'Green')),
+                "risk_label": _convert_phase_to_risk_label(str(row.get('final_phase', 'Green'))),
+                "override_reason": str(row.get('override_reason', row.get('red_reason', ''))),
+                "ml_probability": float(row.get('ml_probability', 0)) if pd.notna(row.get('ml_probability')) else None,
+                "rule_override": bool(row.get('rule_override', False))
             }
-            students.append(student)
+            
+            # Log the payload for debugging
+            logger.debug(f"Student {cleaned_student['enrollment_no']}: fees_flag={cleaned_student['fees_flag']}, "
+                        f"suspension_flag={cleaned_student['suspension_flag']}, prediction={cleaned_student['prediction']}")
+            
+            students.append(cleaned_student)
         
         logger.info(f"Returning {len(students)} student profiles")
         return {"students": students, "total": len(students)}
@@ -744,26 +795,36 @@ async def get_student_by_enrollment(enrollment_no: str):
         student_row = predicted_df.iloc[0]
         
         # Convert to response format
-        student = {
+        cleaned_student = {
+            "student_id": str(student_row.get('enrollment_no', '')),
             "enrollment_no": str(student_row.get('enrollment_no', '')),
+            "name": generate_student_name(str(student_row.get('enrollment_no', ''))),
+            "department": str(student_row.get('department', '')) if pd.notna(student_row.get('department')) else None,
             "attendance": float(student_row.get('attendance', 0)),
             "cgpa": float(student_row.get('cgpa', 0)),
             "backlogs": int(student_row.get('backlogs', 0)),
             "marks_10th": float(student_row.get('marks_10th', 0)),
             "marks_12th": float(student_row.get('marks_12th', 0)),
-            "fees_flag": int(student_row.get('fees_flag', 0)),
-            "suspension_flag": int(student_row.get('suspension_flag', 0)),
+            "fees_flag": int(student_row.get('fees_flag', 0)),  # 0 = paid, 1 = unpaid  
+            "suspension_flag": int(student_row.get('suspension_flag', 0)),  # 0 = no suspension, 1 = suspended
             "gender": str(student_row.get('gender', 'M')),
             "age_at_enrollment": int(student_row.get('age_at_enrollment', 0)) if pd.notna(student_row.get('age_at_enrollment')) else None,
             "category": str(student_row.get('category', '')) if pd.notna(student_row.get('category')) else None,
-            "department": str(student_row.get('department', '')) if pd.notna(student_row.get('department')) else None,
-            # Use new prediction columns with fallback to old ones
+            # Prediction results
+            "prediction": str(student_row.get('final_phase', 'Green')),
             "final_phase": str(student_row.get('final_phase', 'Green')),
-            "override_reason": str(student_row.get('override_reason', '')),
-            "ml_probability": float(student_row.get('ml_probability', 0)) if pd.notna(student_row.get('ml_probability')) else None
+            "model_phase": str(student_row.get('model_phase', 'Green')),
+            "risk_label": _convert_phase_to_risk_label(str(student_row.get('final_phase', 'Green'))),
+            "override_reason": str(student_row.get('override_reason', student_row.get('red_reason', ''))),
+            "ml_probability": float(student_row.get('ml_probability', 0)) if pd.notna(student_row.get('ml_probability')) else None,
+            "rule_override": bool(student_row.get('rule_override', False))
         }
         
-        return student
+        # Log the payload for debugging
+        logger.info(f"Retrieved student {cleaned_student['enrollment_no']}: fees_flag={cleaned_student['fees_flag']}, "
+                   f"suspension_flag={cleaned_student['suspension_flag']}, prediction={cleaned_student['prediction']}")
+        
+        return cleaned_student
         
     except HTTPException:
         raise
@@ -784,57 +845,27 @@ async def simulate_dropout_prediction(request: SimulateRequest):
         Prediction result with phase, reason, and probability
     """
     try:
-        # Import the comprehensive rules from prediction pipeline
-        import sys
-        import os
-        sys.path.append(os.path.join(os.path.dirname(__file__), 'models'))
-        from prediction_pipeline import apply_rules
-        
-        # Convert request to dictionary
+        # Convert request to dictionary and validate
         student_data = request.dict()
+        student_data = validate_student_input(student_data)
         
-        # Create a pandas Series for the rule application
-        import pandas as pd
-        student_series = pd.Series(student_data)
+        # Use the improved prediction pipeline
+        prediction_result = process_single_prediction(student_data, ml_model, ml_scaler)
         
-        # Get ML prediction first (simplified)
-        ml_probability = 0.3  # Default fallback
-        if student_data.get('attendance', 80) < 70:
-            ml_probability = 0.6
-        if student_data.get('cgpa', 7) < 5:
-            ml_probability = 0.7
-        if student_data.get('backlogs', 0) > 2:
-            ml_probability = 0.65
-            
-        # Convert ML probability to model phase
-        if ml_probability >= 0.7:
-            model_phase = "Orange"
-        elif ml_probability >= 0.5:
-            model_phase = "Yellow"
-        else:
-            model_phase = "Green"
-        
-        # Apply comprehensive rules to get final phase
-        override_phase, override_reason = apply_rules(student_series)
-        
-        if override_phase is not None:
-            # Rule override triggered
-            final_phase = override_phase
-            override_reason = override_reason
-            rule_override = True
-        else:
-            # Keep ML prediction
-            final_phase = model_phase
-            override_reason = "Model prediction kept"
-            rule_override = False
-        
+        # Log simulation for debugging
+        logger.info(f"Simulation for {student_data.get('enrollment_no', 'anonymous')}: "
+                   f"fees_flag={student_data.get('fees_flag', 0)}, "
+                   f"suspension_flag={student_data.get('suspension_flag', 0)}, "
+                   f"model_phase={prediction_result['model_phase']}, "
+                   f"final_phase={prediction_result['final_phase']}")
+
         return SimulateResponse(
             enrollment_no=request.enrollment_no if hasattr(request, 'enrollment_no') else None,
-            model_phase=model_phase,
-            final_phase=final_phase,
-            override_reason=override_reason,
-            ml_probability=ml_probability,
-            rule_override=rule_override
+            model_phase=prediction_result['model_phase'],
+            final_phase=prediction_result['final_phase'],
+            override_reason=prediction_result['red_reason'],
+            ml_probability=prediction_result['ml_probability'],
+            rule_override=prediction_result['rule_override']
         )
         
     except ValueError as e:

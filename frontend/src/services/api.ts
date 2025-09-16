@@ -26,14 +26,46 @@ export const studentApi = {
     const response = await api.get('/students');
     const students = response.data.students || [];
     
-    // Transform backend data to frontend format
+    // Transform backend data to frontend format with consistent field mapping
     return students.map((student: any) => ({
-      ...student,
-      name: generateStudentName(student.enrollment_no), // Generate display name
-      phase: student.final_phase, // Alias for compatibility
+      // Core identification
+      enrollment_no: student.enrollment_no,
+      student_id: student.student_id || student.enrollment_no,
+      name: student.name || generateStudentName(student.enrollment_no),
+      department: student.department,
+      
+      // Academic data
+      attendance: student.attendance,
+      cgpa: student.cgpa,
+      backlogs: student.backlogs,
+      marks_10th: student.marks_10th,
+      marks_12th: student.marks_12th,
+      
+      // Flags (ensure proper numeric format)
+      fees_flag: Number(student.fees_flag), // 0 = paid, 1 = unpaid
+      suspension_flag: Number(student.suspension_flag), // 0 = no suspension, 1 = suspended
+      
+      // Demographics
+      gender: student.gender,
+      age_at_enrollment: student.age_at_enrollment,
+      category: student.category,
+      
+      // Prediction results
+      final_phase: student.final_phase || student.prediction,
+      phase: student.final_phase || student.prediction, // Alias for compatibility
+      model_phase: student.model_phase,
+      override_reason: student.override_reason,
       risk_reason: student.override_reason, // Alias for compatibility
-      fees_flag: student.fees_flag, // Keep as number for backend compatibility
-      suspension_flag: student.suspension_flag, // Keep as number for backend compatibility
+      risk_label: student.risk_label,
+      ml_probability: student.ml_probability,
+      rule_override: student.rule_override,
+      
+      // Debug info
+      __debug: process.env.NODE_ENV === 'development' ? {
+        raw_backend_data: student,
+        fees_flag_original: student.fees_flag,
+        suspension_flag_original: student.suspension_flag
+      } : undefined
     }));
   },
 
@@ -42,14 +74,46 @@ export const studentApi = {
     const response = await api.get(`/students/${enrollmentNo}`);
     const student = response.data;
     
-    // Transform backend data to frontend format
+    // Transform backend data to frontend format with consistent field mapping
     return {
-      ...student,
-      name: generateStudentName(student.enrollment_no),
-      phase: student.final_phase,
-      risk_reason: student.override_reason,
-      fees_flag: student.fees_flag,
-      suspension_flag: student.suspension_flag,
+      // Core identification
+      enrollment_no: student.enrollment_no,
+      student_id: student.student_id || student.enrollment_no,
+      name: student.name || generateStudentName(student.enrollment_no),
+      department: student.department,
+      
+      // Academic data
+      attendance: student.attendance,
+      cgpa: student.cgpa,
+      backlogs: student.backlogs,
+      marks_10th: student.marks_10th,
+      marks_12th: student.marks_12th,
+      
+      // Flags (ensure proper numeric format)
+      fees_flag: Number(student.fees_flag), // 0 = paid, 1 = unpaid
+      suspension_flag: Number(student.suspension_flag), // 0 = no suspension, 1 = suspended
+      
+      // Demographics
+      gender: student.gender,
+      age_at_enrollment: student.age_at_enrollment,
+      category: student.category,
+      
+      // Prediction results
+      final_phase: student.final_phase || student.prediction,
+      phase: student.final_phase || student.prediction, // Alias for compatibility
+      model_phase: student.model_phase,
+      override_reason: student.override_reason,
+      risk_reason: student.override_reason, // Alias for compatibility
+      risk_label: student.risk_label,
+      ml_probability: student.ml_probability,
+      rule_override: student.rule_override,
+      
+      // Debug info
+      __debug: process.env.NODE_ENV === 'development' ? {
+        raw_backend_data: student,
+        fees_flag_original: student.fees_flag,
+        suspension_flag_original: student.suspension_flag
+      } : undefined
     };
   },
 
