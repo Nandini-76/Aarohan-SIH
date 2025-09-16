@@ -9,7 +9,7 @@ import requests
 import json
 from typing import Dict, List
 
-BACKEND_URL = "http://localhost:8000"
+BACKEND_URL = "http://127.0.0.1:8000"  # Use 127.0.0.1 instead of localhost
 
 def test_edge_case(name: str, student_data: Dict, expected_frontend_display: Dict):
     """Test a specific edge case scenario."""

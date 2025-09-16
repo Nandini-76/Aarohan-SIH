@@ -1,21 +1,45 @@
 import axios from 'axios';
 import { Student, SimulationData, SimulationResult } from '../types';
 
-// Get API base URL from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// Get API base URL from environment variables with fallback logic
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.DEV ? 'http://127.0.0.1:8000' : 'https://arohann.vercel.app/api');
+
+console.log('API Base URL:', API_BASE_URL); // Debug log
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  withCredentials: false, // Set to false for CORS simplicity in development
+  timeout: 10000, // 10 second timeout
 });
+
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    console.log('Making API request to:', config.baseURL + config.url);
+    return config;
+  },
+  (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
 
 // Add response interceptor for error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API response received:', response.status);
+    return response;
+  },
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
+    if (error.code === 'ERR_NETWORK') {
+      console.error('Network error - check if backend is running on:', API_BASE_URL);
+    }
     throw error;
   }
 );

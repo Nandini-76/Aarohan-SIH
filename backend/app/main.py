@@ -42,13 +42,23 @@ except ImportError:
     joblib = None
     StandardScaler = None
 
-# Import utility functions
-from utils import (
-    apply_red_zone_rules,
-    process_single_prediction, 
-    add_predictions_to_dataset,
-    validate_student_input
-)
+# Import utility functions - handle both local and deployed environments
+try:
+    # Try relative import first (for local development from app directory)
+    from utils import (
+        apply_red_zone_rules,
+        process_single_prediction, 
+        add_predictions_to_dataset,
+        validate_student_input
+    )
+except ImportError:
+    # Fall back to app.utils for deployed environment
+    from app.utils import (
+        apply_red_zone_rules,
+        process_single_prediction, 
+        add_predictions_to_dataset,
+        validate_student_input
+    )
 
 # Helper functions for API
 def generate_student_name(enrollment_no: str) -> str:
@@ -100,10 +110,19 @@ logger = logging.getLogger(__name__)
 # Environment configuration
 MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://wannabe:gummy(*_*)@ai-based-dropout-system.k51tjan.mongodb.net/?retryWrites=true&w=majority&appName=AI-based-dropout-system")
 DB_NAME = os.getenv("DB_NAME", "dropout_prediction")
-DATA_FILE_PATH = "app/data/merged_dataset.csv"
 
-# ML Model configuration
-MODELS_DIR = Path("app/models")
+# Data file path - handle both local and deployed environments
+if os.path.exists("data/merged_dataset.csv"):
+    DATA_FILE_PATH = "data/merged_dataset.csv"  # Local development
+else:
+    DATA_FILE_PATH = "app/data/merged_dataset.csv"  # Deployed environment
+
+# ML Model configuration - handle both local and deployed environments
+if os.path.exists("models"):
+    MODELS_DIR = Path("models")  # Local development
+else:
+    MODELS_DIR = Path("app/models")  # Deployed environment
+
 MODEL_PATH = MODELS_DIR / "rf_pipeline_broad.joblib"
 SCALER_PATH = MODELS_DIR / "scaler.joblib"
 METRICS_PATH = MODELS_DIR / "metrics.json"
@@ -135,20 +154,39 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS middleware for frontend integration (env-driven)
-# FRONTEND_URL: comma-separated origins. FRONTEND_URL_REGEX: optional regex for origins (e.g., ^https://.*vercel\.app$)
+# CORS middleware for frontend integration - enhanced for local and production
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000,http://localhost:5173,https://arohann.vercel.app,https://aarohan.vercel.app")
-FRONTEND_URL_REGEX = os.getenv("FRONTEND_URL_REGEX")  # Don't set default regex
+FRONTEND_URL_REGEX = os.getenv("FRONTEND_URL_REGEX")
 
-# Default allowed origins for development and production
+# Comprehensive allowed origins for all environments
 default_origins = [
-    "http://localhost:3000",  # React dev server
-    "http://localhost:5173",  # Vite dev server
+    # Local development - all common ports and hosts
+    "http://localhost:3000",
+    "http://localhost:5173", 
+    "http://localhost:8080",  # Vite frontend port
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
-    "https://arohann.vercel.app",  # Production frontend
-    "https://aarohan.vercel.app",  # Alternative production frontend
+    "http://127.0.0.1:8080",  # Vite frontend port
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+    # Production Vercel deployments
+    "https://arohann.vercel.app",
+    "https://aarohan.vercel.app",
+    # Add any additional production domains
 ]
+
+# Development mode - be more permissive for local testing
+if os.getenv("NODE_ENV") == "development" or os.getenv("ENVIRONMENT") == "development":
+    # Add more local development origins
+    dev_origins = [
+        "http://localhost:3001",
+        "http://localhost:4173",
+        "http://127.0.0.1:3001", 
+        "http://127.0.0.1:4173",
+        "http://0.0.0.0:3000",
+        "http://0.0.0.0:5173",
+    ]
+    default_origins.extend(dev_origins)
 
 if FRONTEND_URL.strip() == "*":
     # Use default origins instead of wildcard to allow credentials
@@ -158,10 +196,23 @@ else:
     custom_origins = [o.strip() for o in FRONTEND_URL.split(",") if o.strip()]
     allowed_origins = list(set(default_origins + custom_origins))
 
+# Enhanced CORS configuration
 cors_kwargs = dict(
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language", 
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+    ],
+    expose_headers=["*"],
+    max_age=3600,  # Cache preflight for 1 hour
 )
 
 # Use regex pattern to allow Vercel preview deployments (only if explicitly set)
@@ -174,6 +225,25 @@ else:
     logger.info(f"CORS configured with specific origins: {allowed_origins}")
 
 app.add_middleware(CORSMiddleware, **cors_kwargs)
+
+# Add explicit CORS preflight handler for better compatibility
+@app.options("/{full_path:path}")
+async def preflight_handler(request: Request):
+    """Handle CORS preflight requests explicitly."""
+    origin = request.headers.get("origin")
+    
+    # Check if origin is allowed
+    if origin in allowed_origins:
+        headers = {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD",
+            "Access-Control-Allow-Headers": "Accept, Accept-Language, Content-Language, Content-Type, Authorization, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "3600",
+        }
+        return Response(status_code=200, headers=headers)
+    
+    return Response(status_code=400)
 
 # MongoDB client initialization
 mongo_client = None
