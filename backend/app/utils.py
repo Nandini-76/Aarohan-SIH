@@ -87,19 +87,33 @@ def convert_to_model_features(student_data: Dict[str, Any]) -> Dict[str, Any]:
         
     Returns:
         Processed feature dictionary ready for ML model
+        
+    Note: Does NOT provide defaults for required features to allow proper validation
     """
-    # Map API fields to model features
-    features = {
-        'attendance': student_data.get('attendance_percent', student_data.get('attendance', 0)),
-        'cgpa': student_data.get('cgpa', 0),
-        'backlogs': student_data.get('backlogs', 0),
-        'marks_10th': student_data.get('marks_10', student_data.get('marks_10th', 0)),
-        'marks_12th': student_data.get('marks_12', student_data.get('marks_12th', 0)),
-        # Fix fees_flag logic - handle both string and numeric inputs
-        'fees_flag': _normalize_fees_flag(student_data.get('fees_flag', 0)),
-        'suspension_flag': int(student_data.get('suspension_flag', 0)),
-        'gender': student_data.get('gender', 'M')
-    }
+    features = {}
+    
+    # Required features - no defaults provided to allow validation to catch missing ones
+    if 'attendance_percent' in student_data:
+        features['attendance'] = student_data['attendance_percent']
+    elif 'attendance' in student_data:
+        features['attendance'] = student_data['attendance']
+    
+    if 'cgpa' in student_data:
+        features['cgpa'] = student_data['cgpa']
+    
+    if 'backlogs' in student_data:
+        features['backlogs'] = student_data['backlogs']
+    
+    if 'suspension_flag' in student_data:
+        features['suspension_flag'] = int(student_data['suspension_flag'])
+    
+    if 'gender' in student_data:
+        features['gender'] = student_data['gender']
+    
+    # Optional features - provide defaults
+    features['marks_10th'] = student_data.get('marks_10', student_data.get('marks_10th', 60))
+    features['marks_12th'] = student_data.get('marks_12', student_data.get('marks_12th', 60))
+    features['fees_flag'] = _normalize_fees_flag(student_data.get('fees_flag', 0))
     
     return features
 
@@ -172,7 +186,6 @@ def add_predictions_to_dataset(df: pd.DataFrame, ml_model=None, ml_scaler=None) 
     result_df['red_reason'] = ''
     result_df['ml_probability'] = None
     result_df['rule_override'] = False
-    # Keep legacy column for backward compatibility
     result_df['predicted_phase'] = 'Green'
     
     for idx, row in result_df.iterrows():
@@ -188,7 +201,6 @@ def add_predictions_to_dataset(df: pd.DataFrame, ml_model=None, ml_scaler=None) 
         result_df.at[idx, 'red_reason'] = prediction['red_reason']
         result_df.at[idx, 'ml_probability'] = prediction['ml_probability']
         result_df.at[idx, 'rule_override'] = prediction['rule_override']
-        # Legacy compatibility
         result_df.at[idx, 'predicted_phase'] = prediction['predicted_phase']
     
     logger.info(f"Added predictions to {len(result_df)} students")
@@ -272,14 +284,16 @@ def validate_student_input(student_data: Dict[str, Any]) -> Dict[str, Any]:
 
 def apply_unified_override_rules(row):
     """
-    Unified comprehensive override logic for both batch and live predictions.
-    Uses optimized priority system: Red → Orange → Yellow → Green.
+    Strict Red Zone Safety Override Only.
+    
+    This function ONLY checks for critical safety thresholds that should force Red.
+    For Green, Yellow, Orange → ML model prediction is always used (no overrides).
     
     Args:
         row: pandas Series or dict containing student data
         
     Returns:
-        tuple: (phase, reason) or (None, None) if no override
+        tuple: ("Red", reason) for critical cases, (None, None) otherwise
     """
     # Handle both Series and dict inputs
     if hasattr(row, 'get'):
@@ -293,151 +307,105 @@ def apply_unified_override_rules(row):
     S = get_func('suspension_flag', 0)
     F = get_func('fees_flag', 0)  # 0 = paid, 1 = unpaid fees
     
-    # ============ RED ZONE RULES (HIGHEST PRIORITY) ============
-    # Critical attendance issues
-    if A < 35:
-        return "Red", "Critical attendance (<35%)"
-
-    # Extremely poor attendance even if CGPA is high
-    if A < 40:
-        return "Red", "Extremely poor attendance (<40%)"
-
-    # Severe backlog issues
-    if B > 7:
-        return "Red", "Severe backlogs (>7)"
-
-    # Critical backlog count
-    if B >= 10:
-        return "Red", "Critical backlog count (≥10)"
-
-    # Very low CGPA
-    if C < 4:
-        return "Red", "Very low CGPA (<4.0)"
-
-    # Severe academic issues
-    if A < 45 and C < 4.5:
-        return "Red", "Severe academic issues (low attendance, low CGPA)"
-
-    # Combined academic failures
-    if C < 4.5 and B > 5:
-        return "Red", "Very low CGPA & high backlogs"
-
-    if A < 45 and C < 4.5 and B > 3:
-        return "Red", "Severe academic issues (low attendance, low CGPA, high backlogs)"
-
-    # CGPA + backlog + attendance all weak
-    if A < 50 and C < 5 and B >= 5:
-        return "Red", "Very weak academics across all metrics"
-
-    # Disciplinary issues
-    if S >= 3:
-        return "Red", "Multiple suspensions (≥3)"
-
-    if S >= 3 and B > 3:
-        return "Red", "Multiple suspensions (≥3) & high backlogs"
-
-    # Financial + academic combinations
-    if F == 1 and A < 50:
-        return "Red", "Fee default & poor attendance"
-
-    if F == 1 and C < 4.5:
-        return "Red", "Fee default & very weak CGPA"
-
-    # Financial + disciplinary combo
-    if F == 1 and S >= 2:
-        return "Red", "Fee default & multiple suspensions"
-
-    # One suspension + severe academics
-    if S == 1 and A < 40 and C < 5:
-        return "Red", "Suspension with severe academic risk"
-
-    # ============ ORANGE ZONE RULES ============
-    # Moderate attendance issues
-    if 50 <= A <= 59:
-        return "Orange", "Attendance in risk range (50–59%)"
-
-    # Attendance borderline 45–49
-    if 45 <= A < 50:
-        return "Orange", "Very low attendance (45–49%)"
-
-    # Academic concerns
-    if 4.5 <= C < 5.5 and 2 <= B <= 4:
-        return "Orange", "Low CGPA with moderate backlogs"
-
-    if C < 5.5 and B > 4:
-        return "Orange", "Low CGPA with backlogs"
-
-    # CGPA borderline 5.0–5.5 with few backlogs
-    if 5.0 <= C < 5.5 and B <= 2:
-        return "Orange", "Borderline CGPA with limited backlogs"
-
-    # CGPA okay but backlog pressure
-    if C >= 6 and 3 <= B <= 5:
-        return "Orange", "Moderate backlogs despite acceptable CGPA"
-
-    # Disciplinary concerns
-    if S == 2 and A < 60:
-        return "Orange", "Repeated discipline issues"
-
-    if S == 1 and 60 <= A < 70:
-        return "Orange", "Disciplinary issue with average attendance"
-
-    # Financial concerns
-    if 45 < A < 60 and F == 1:
-        return "Orange", "Fee default & low attendance"
-
-    if F == 1 and 6 <= C < 7:
-        return "Orange", "Fee default with weak academics"
-
-    # ============ YELLOW ZONE RULES ============
-    # Caution level attendance
-    if 70 <= A <= 79 and 5 < C < 6:
-        return "Yellow", "Attendance in caution range (70–79%) with weak academic performance"
-
-    # Attendance borderline 65–69
-    if 65 <= A < 70:
-        return "Yellow", "Attendance below target (65–69%)"
-
-    # Minor academic concerns
-    if 6 <= C < 7 and B <= 2:
-        return "Yellow", "Slightly weak academics (CGPA 6–7, low backlogs)"
-
-    # Single backlog with CGPA 6–7
-    if 6 <= C < 7 and B == 1:
-        return "Yellow", "Weak CGPA with one backlog"
-
-    # Minor disciplinary issues
-    if S == 1 and A >= 70:
-        return "Yellow", "Minor disciplinary issue"
-
-    # Financial with acceptable performance
-    if F == 1 and A >= 70:
-        return "Yellow", "Fee default but attendance acceptable"
-
-    if F == 1 and C >= 7:
-        return "Yellow", "Fee default but strong academics"
-
-    # ============ GREEN ZONE RULES ============
-    # Excellence indicators
-    if A >= 90 and C > 6.5:
-        return "Green", "Excellent attendance"
-
-    if A >= 85 and C >= 8:
-        return "Green", "Strong academics (high attendance & CGPA)"
-
-    if A >= 80 and C >= 7 and B == 0 and S == 0:
-        return "Green", "Good performance & discipline"
-
-    # Good CGPA even with average attendance
-    if 75 <= A < 85 and C >= 8 and B <= 1 and S == 0:
-        return "Green", "High CGPA offsets average attendance"
-
-    # Outstanding CGPA with clean record
-    if C >= 9 and B == 0 and S == 0:
-        return "Green", "Outstanding CGPA with clean record"
-
+    # ============ STRICT RED ZONE SAFETY OVERRIDES ONLY ============
     
-    # No override → keep ML prediction
+    # Critical attendance thresholds
+    if A < 30:
+        return "Red", "Forced Red due to critical safety threshold: Attendance <30%"
+    
+    # Critical CGPA threshold
+    if C < 3.0:
+        return "Red", "Forced Red due to critical safety threshold: CGPA <3.0"
+    
+    # Critical backlog threshold
+    if B >= 8:
+        return "Red", "Forced Red due to critical safety threshold: Backlogs ≥8"
+    
+    # Critical suspension threshold
+    if S >= 3:
+        return "Red", "Forced Red due to critical safety threshold: Suspensions ≥3"
+    
+    # Combined critical thresholds (extremely severe cases)
+    if A < 35 and C < 4.0:
+        return "Red", "Forced Red due to critical safety threshold: Extremely poor attendance + very low CGPA"
+    
+    if C < 4.0 and B >= 6:
+        return "Red", "Forced Red due to critical safety threshold: Very low CGPA + high backlogs"
+    
+    # No override → use ML prediction for Green, Yellow, Orange
+    return None, None
+
+
+def generate_ml_explanation(model_phase: str, features: dict, ml_probability: float = None) -> str:
+    """
+    Generate explanation text based on ML model prediction and student features.
+    
+    Args:
+        model_phase: ML model prediction (Green, Yellow, Orange, Red)
+        features: Student feature dictionary
+        ml_probability: ML model probability score
+        
+    Returns:
+        str: Explanation text for the prediction
+    """
+    A = features.get('attendance', 0)
+    C = features.get('cgpa', 0)
+    B = features.get('backlogs', 0)
+    S = features.get('suspension_flag', 0)
+    
+    # Base explanation with ML confidence
+    if ml_probability is not None:
+        confidence = f" (ML confidence: {ml_probability:.1%})"
+    else:
+        confidence = ""
+    
+    if model_phase == "Green":
+        if A >= 85 and C >= 7.5:
+            return f"Low risk - Strong academic performance{confidence}"
+        elif A >= 80:
+            return f"Low risk - Good attendance record{confidence}"
+        elif C >= 8.0:
+            return f"Low risk - High CGPA performance{confidence}"
+        else:
+            return f"Low risk - Overall stable performance{confidence}"
+    
+    elif model_phase == "Yellow":
+        factors = []
+        if 65 <= A < 80:
+            factors.append("moderate attendance")
+        if 5.5 <= C < 7.0:
+            factors.append("borderline CGPA")
+        if B >= 1:
+            factors.append(f"{B} backlog(s)")
+        if S >= 1:
+            factors.append("disciplinary issues")
+        
+        if factors:
+            return f"Medium risk - {', '.join(factors)}{confidence}"
+        else:
+            return f"Medium risk - Multiple risk indicators detected{confidence}"
+    
+    elif model_phase == "Orange":
+        factors = []
+        if A < 65:
+            factors.append("low attendance")
+        if C < 5.5:
+            factors.append("low CGPA")
+        if B >= 3:
+            factors.append("multiple backlogs")
+        if S >= 2:
+            factors.append("repeated disciplinary issues")
+        
+        if factors:
+            return f"High risk - {', '.join(factors)}{confidence}"
+        else:
+            return f"High risk - Significant academic concerns{confidence}"
+    
+    elif model_phase == "Red":
+        return f"Critical risk - ML model prediction{confidence}"
+    
+    else:
+        return f"Risk assessment based on ML model{confidence}"
     return None, None
 
 
@@ -500,6 +468,12 @@ def predict_with_unified_system(student_data: Dict[str, Any], ml_model=None, ml_
     # Convert to model features
     features = convert_to_model_features(student_data)
     
+    # Validate required raw features before proceeding
+    required_raw_features = ['attendance', 'cgpa', 'backlogs', 'suspension_flag', 'gender']
+    missing_features = [f for f in required_raw_features if f not in features]
+    if missing_features:
+        raise ValueError(f"Missing required features for prediction: {missing_features}")
+    
     # Default values
     ml_probability = None
     model_phase = "Green"  # Default ML prediction
@@ -515,7 +489,7 @@ def predict_with_unified_system(student_data: Dict[str, Any], ml_model=None, ml_
             pipeline = ml_model.get("pipeline")
             phase_map = ml_model.get("phase_map", {0: "Green", 1: "Yellow", 2: "Orange", 3: "Red"})
         else:
-            # Direct pipeline format (legacy from main.py)
+            # Direct pipeline format
             pipeline = ml_model
             phase_map = {0: "Green", 1: "Yellow", 2: "Orange", 3: "Red"}
         
@@ -527,53 +501,74 @@ def predict_with_unified_system(student_data: Dict[str, Any], ml_model=None, ml_
                 
                 # Add engineered features to match training data
                 try:
-                    # Try multiple import paths for different environments
+                    # Import the updated feature engineering function
                     add_engineered_features = None
+                    validate_model_features = None
                     
-                    # Attempt 1: Direct import (if models dir is in path)
+                    # Try multiple import paths for different environments
                     try:
-                        from models.feature_utils import add_engineered_features
+                        from models.feature_utils import add_engineered_features, validate_model_features
                     except ImportError:
-                        pass
-                    
-                    # Attempt 2: Import from app.models (production path)
-                    if add_engineered_features is None:
                         try:
-                            from app.models.feature_utils import add_engineered_features
+                            from app.models.feature_utils import add_engineered_features, validate_model_features
                         except ImportError:
-                            pass
-                    
-                    # Attempt 3: Relative import
-                    if add_engineered_features is None:
-                        try:
-                            import sys
-                            import os
-                            # Add both possible model directories to path
-                            model_paths = [
-                                os.path.join(os.path.dirname(__file__), "models"),
-                                os.path.join(os.path.dirname(__file__), "..", "models"),
-                                "/opt/render/project/src/backend/app/models"  # Render production path
-                            ]
-                            for path in model_paths:
-                                if os.path.exists(path) and path not in sys.path:
-                                    sys.path.insert(0, path)
-                            from feature_utils import add_engineered_features
-                        except ImportError:
-                            pass
+                            try:
+                                import sys
+                                import os
+                                # Add both possible model directories to path
+                                model_paths = [
+                                    os.path.join(os.path.dirname(__file__), "models"),
+                                    os.path.join(os.path.dirname(__file__), "..", "models"),
+                                    "/opt/render/project/src/backend/app/models"  # Render production path
+                                ]
+                                for path in model_paths:
+                                    if os.path.exists(path) and path not in sys.path:
+                                        sys.path.insert(0, path)
+                                from feature_utils import add_engineered_features, validate_model_features
+                            except ImportError:
+                                pass
                     
                     # Apply feature engineering if available
                     if add_engineered_features is not None:
-                        single_student_df = add_engineered_features(single_student_df)
-                        logger.debug("✅ Feature engineering applied successfully")
-                    else:
-                        logger.warning("Feature engineering not available for ML prediction")
+                        # Validate raw features first
+                        required_raw_features = ['attendance', 'cgpa', 'backlogs', 'suspension_flag', 'gender']
+                        missing_raw = [f for f in required_raw_features if f not in single_student_df.columns]
+                        if missing_raw:
+                            raise ValueError(f"Missing required raw features for prediction: {missing_raw}")
                         
+                        # Add engineered features
+                        single_student_df = add_engineered_features(single_student_df)
+                        
+                        # Validate all features are present
+                        if validate_model_features is not None:
+                            validate_model_features(single_student_df)
+                        
+                        logger.debug("✅ All engineered features added and validated for ML prediction")
+                    else:
+                        logger.error("❌ Feature engineering function not available - model will likely fail!")
+                        raise ImportError("Feature engineering module not found")
+                        
+                except ImportError as e:
+                    logger.error(f"❌ Failed to import feature engineering: {e}")
+                    raise ImportError(f"Feature engineering not available: {e}")
+                except ValueError as e:
+                    logger.error(f"❌ Feature validation failed: {e}")
+                    raise ValueError(f"Invalid features for prediction: {e}")
                 except Exception as e:
-                    logger.warning(f"Feature engineering failed: {e}")
+                    logger.error(f"❌ Feature engineering failed: {e}")
+                    raise RuntimeError(f"Feature engineering error: {e}")
                 
                 # Get ML prediction (model handles preprocessing internally)
                 y_pred = pipeline.predict(single_student_df)[0]
-                model_phase = phase_map.get(y_pred, "Green")
+                
+                # Handle both numeric and string predictions
+                if isinstance(y_pred, str):
+                    # Model returns phase name directly
+                    model_phase = y_pred
+                else:
+                    # Model returns numeric code, map to phase name
+                    y_pred_int = int(y_pred)
+                    model_phase = phase_map.get(y_pred_int, "Green")
                 
                 # Get probability if available
                 if hasattr(pipeline, 'predict_proba'):
@@ -585,25 +580,27 @@ def predict_with_unified_system(student_data: Dict[str, Any], ml_model=None, ml_
         else:
             logger.warning(f"Invalid pipeline object: {type(pipeline)}, using default")
     
-    # Apply unified override rules
+    # Apply unified override rules (Red zone safety only)
     override_phase, override_reason = apply_unified_override_rules(features)
     
-    # Determine final results
+    # Determine final results and explanations
     if override_phase is not None:
+        # Red zone safety override
         final_phase = override_phase
-        red_reason = override_reason
+        explanation = override_reason
         rule_override = True
     else:
+        # Use ML prediction - generate ML-based explanation
         final_phase = model_phase
-        red_reason = ""
+        explanation = generate_ml_explanation(model_phase, features, ml_probability)
         rule_override = False
     
     # Return unified result format
     return {
         'model_phase': model_phase,
         'final_phase': final_phase,
-        'override_reason': red_reason if red_reason else "Model prediction kept",
-        'red_reason': red_reason,
+        'override_reason': explanation,
+        'red_reason': override_reason if override_phase is not None else "",
         'ml_probability': ml_probability,
         'rule_override': rule_override,
         'predicted_phase': final_phase  # For backward compatibility
@@ -637,13 +634,14 @@ def run_batch_prediction_pipeline():
     
     # 3. Add engineered features (if feature_utils is available)
     add_engineered_features = None
+    validate_model_features = None
     
     # Try multiple import paths for different environments
     try:
-        from models.feature_utils import add_engineered_features
+        from models.feature_utils import add_engineered_features, validate_model_features
     except ImportError:
         try:
-            from app.models.feature_utils import add_engineered_features
+            from app.models.feature_utils import add_engineered_features, validate_model_features
         except ImportError:
             try:
                 import sys
@@ -657,16 +655,27 @@ def run_batch_prediction_pipeline():
                 for path in model_paths:
                     if os.path.exists(path) and path not in sys.path:
                         sys.path.insert(0, path)
-                from feature_utils import add_engineered_features
+                from feature_utils import add_engineered_features, validate_model_features
             except ImportError:
                 pass
     
     if add_engineered_features is not None:
         logger.info("⚙️ Adding engineered features...")
-        df = add_engineered_features(df)
-        logger.info(f"Dataset after feature engineering: {len(df.columns)} columns")
+        try:
+            df = add_engineered_features(df)
+            logger.info(f"✅ Dataset after feature engineering: {len(df.columns)} columns")
+            
+            # Validate all features are present
+            if validate_model_features is not None:
+                validate_model_features(df)
+                logger.info("✅ All required model features validated")
+                
+        except Exception as e:
+            logger.error(f"❌ Feature engineering failed in batch pipeline: {e}")
+            raise RuntimeError(f"Feature engineering error in batch processing: {e}")
     else:
-        logger.warning("Feature engineering not available, using basic features")
+        logger.error("❌ Feature engineering not available - predictions will likely fail!")
+        raise ImportError("Feature engineering module not found for batch processing")
 
     # 4. Load ML model
     ml_model = load_ml_model()

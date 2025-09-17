@@ -1,0 +1,8 @@
+enrollment_no,attendance,cgpa,backlogs,suspension_flag,gender
+TEST001,90,8.5,0,0,M
+TEST002,75,5.5,1,0,F
+TEST003,60,4.5,2,1,M
+TEST004,30,3.0,4,2,F
+TEST005,73,6.2,1,0,M
+TEST006,77,5.8,2,0,F
+TEST007,65,5.5,1,2,M

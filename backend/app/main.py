@@ -136,17 +136,6 @@ ml_feature_names = None
 ml_metrics = None
 model_loaded = False
 
-# ML Probability Thresholds for Risk Refinement
-# These thresholds are conservative to ensure high confidence before overriding rule-based results
-ML_HIGH_RISK_THRESHOLD = 0.75  # Override to High Risk if ml_proba >= 0.75
-ML_MEDIUM_RISK_THRESHOLD = 0.45  # Override to Medium Risk if ml_proba >= 0.45 (and current is Low)
-ML_NO_OVERRIDE_THRESHOLD = 0.30  # Don't override if ml_proba < 0.30 (keep rule-based result)
-#
-# Threshold Rationale:
-# - 0.75: High confidence threshold to avoid false alarms for High Risk classification
-# - 0.45: Moderate confidence to elevate Low Risk students who show ML warning signs  
-# - 0.30: Low confidence region where rule-based system is preferred over ML uncertainty
-
 # FastAPI app initialization
 app = FastAPI(
     title="AI-based Drop-out Prediction System",
@@ -301,16 +290,6 @@ class SimulateResponse(BaseModel):
     override_reason: str = Field("", description="Reason for override (if any)")
     ml_probability: Optional[float] = Field(None, description="ML model dropout probability")
     rule_override: bool = Field(False, description="Whether red-zone rules overrode ML prediction")
-
-class SimulationResponse(BaseModel):
-    """Response model for simulation endpoint"""
-    simulation_id: str = Field(..., description="Unique simulation identifier")
-    timestamp: datetime = Field(..., description="Simulation execution timestamp")
-    students: List[Dict[str, Any]] = Field(..., description="Processed student records with risk scores and ML probabilities")
-    counts: Dict[str, int] = Field(..., description="Risk level distribution")
-    log: List[str] = Field(..., description="Risk assessment log for Medium/High risk students")
-    model_loaded: bool = Field(..., description="Whether ML model was loaded and used")
-    model_metrics: Optional[Dict[str, Any]] = Field(None, description="ML model performance metrics if available")
 
 class TrainingResponse(BaseModel):
     """Response model for training endpoint"""
@@ -546,128 +525,6 @@ def compute_ml_proba(df: pd.DataFrame) -> pd.DataFrame:
         # Fallback: add null column
         df['ml_proba'] = None
         return df
-
-
-def apply_rules(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Apply rule-based scoring system to identify students at risk.
-    
-    Scoring Rules:
-    - fees_paid = 'N' → +2 points
-    - gpa < 5 → +2 points  
-    - marks_10 < 50 → +1 point
-    - marks_12 < 50 → +1 point
-    - attendance_percent < 70 → +2 points
-    - backlogs >= 3 → +2 points
-    - suspension = 'Y' → +3 points
-    
-    Risk Levels:
-    - score >= 6 → High Risk
-    - score >= 3 → Medium Risk  
-    - score < 3 → Low Risk
-    
-    Args:
-        df: Normalized dataframe
-        
-    Returns:
-        Dataframe with risk scores, levels, and reasons
-    """
-    result_df = df.copy()
-    
-    # Initialize risk score
-    result_df['risk_score'] = 0
-    result_df['risk_reasons'] = ''
-    
-    # Apply scoring rules
-    # Rule 1: Fees not paid
-    fees_mask = result_df['fees_paid'] == 'N'
-    result_df.loc[fees_mask, 'risk_score'] += 2
-    result_df.loc[fees_mask, 'risk_reasons'] += 'Fees not paid (+2); '
-    
-    # Rule 2: Low GPA
-    gpa_mask = result_df['gpa'] < 5
-    result_df.loc[gpa_mask, 'risk_score'] += 2
-    result_df.loc[gpa_mask, 'risk_reasons'] += f'Low GPA < 5 (+2); '
-    
-    # Rule 3: Low 10th grade marks
-    marks10_mask = result_df['marks_10'] < 50
-    result_df.loc[marks10_mask, 'risk_score'] += 1
-    result_df.loc[marks10_mask, 'risk_reasons'] += 'Low 10th marks < 50% (+1); '
-    
-    # Rule 4: Low 12th grade marks
-    marks12_mask = result_df['marks_12'] < 50
-    result_df.loc[marks12_mask, 'risk_score'] += 1
-    result_df.loc[marks12_mask, 'risk_reasons'] += 'Low 12th marks < 50% (+1); '
-    
-    # Rule 5: Poor attendance
-    attendance_mask = result_df['attendance_percent'] < 70
-    result_df.loc[attendance_mask, 'risk_score'] += 2
-    result_df.loc[attendance_mask, 'risk_reasons'] += 'Poor attendance < 70% (+2); '
-    
-    # Rule 6: Multiple backlogs
-    backlogs_mask = result_df['backlogs'] >= 3
-    result_df.loc[backlogs_mask, 'risk_score'] += 2
-    result_df.loc[backlogs_mask, 'risk_reasons'] += 'Multiple backlogs >= 3 (+2); '
-    
-    # Rule 7: Suspension
-    suspension_mask = result_df['suspension'] == 'Y'
-    result_df.loc[suspension_mask, 'risk_score'] += 3
-    result_df.loc[suspension_mask, 'risk_reasons'] += 'Previous suspension (+3); '
-    
-    # Determine risk levels based on rule scores
-    def get_risk_level(score):
-        if score >= 6:
-            return "High Risk"
-        elif score >= 3:
-            return "Medium Risk"
-        else:
-            return "Low Risk"
-    
-    result_df['risk_level'] = result_df['risk_score'].apply(get_risk_level)
-    result_df['rule_based_risk'] = result_df['risk_level'].copy()  # Store original rule-based result
-    
-    # ML-based risk refinement (if ML model is available)
-    if 'ml_proba' in result_df.columns and result_df['ml_proba'].notna().any():
-        logger.info("Applying ML-based risk refinement...")
-        
-        ml_overrides = 0
-        for idx, row in result_df.iterrows():
-            if pd.isna(row['ml_proba']):
-                continue
-                
-            ml_proba = row['ml_proba']
-            current_risk = row['risk_level']
-            original_risk = current_risk
-            
-            # Apply ML threshold-based refinement
-            if ml_proba >= ML_HIGH_RISK_THRESHOLD:
-                # High confidence → override to High Risk
-                result_df.at[idx, 'risk_level'] = 'High Risk'
-                if original_risk != 'High Risk':
-                    result_df.at[idx, 'risk_reasons'] += f' [ML Override: High confidence dropout risk (p={ml_proba:.3f})]'
-                    ml_overrides += 1
-                    
-            elif ml_proba >= ML_MEDIUM_RISK_THRESHOLD and current_risk == 'Low Risk':
-                # Medium confidence → upgrade Low Risk to Medium Risk
-                result_df.at[idx, 'risk_level'] = 'Medium Risk'
-                result_df.at[idx, 'risk_reasons'] += f' [ML Upgrade: Moderate dropout risk detected (p={ml_proba:.3f})]'
-                ml_overrides += 1
-                
-            elif ml_proba < ML_NO_OVERRIDE_THRESHOLD:
-                # Low ML confidence → keep rule-based result (no override)
-                pass  # No change needed
-        
-        if ml_overrides > 0:
-            logger.info(f"ML model refined {ml_overrides} risk assessments")
-        else:
-            logger.info("No ML refinements applied (all probabilities within rule-based agreement)")
-    
-    # Clean up risk reasons (remove trailing semicolon and space)
-    result_df['risk_reasons'] = result_df['risk_reasons'].str.rstrip('; ')
-    result_df.loc[result_df['risk_reasons'] == '', 'risk_reasons'] = 'No significant risk factors identified'
-    
-    logger.info(f"Applied risk scoring rules to {len(result_df)} students")
-    return result_df
 
 
 async def save_to_mongo(simulation_data: dict) -> str:
@@ -960,85 +817,6 @@ async def simulate_dropout_prediction(request: SimulateRequest):
         logger.error(f"Simulation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
 
-
-@app.post("/simulate_batch", response_model=SimulationResponse, summary="Run Risk Assessment Simulation")
-async def simulate_risk_assessment():
-    """
-    Load student data from CSV, apply rule-based scoring, and save results to MongoDB.
-    
-    Returns:
-        Simulation results including processed students, risk counts, and assessment log
-        
-    Raises:
-        HTTPException: If file not found or processing fails
-    """
-    try:
-        # Load data from CSV file
-        if not os.path.exists(DATA_FILE_PATH):
-            raise HTTPException(status_code=404, detail=f"Data file not found: {DATA_FILE_PATH}")
-        
-        df = pd.read_csv(DATA_FILE_PATH)
-        logger.info(f"Loaded {len(df)} student records from {DATA_FILE_PATH}")
-        
-        # Normalize columns 
-        normalized_df = normalize_columns(df)
-        
-        # Compute ML probabilities (if model available)
-        ml_enhanced_df = compute_ml_proba(normalized_df)
-        
-        # Apply rule-based scoring with ML refinement
-        processed_df = apply_rules(ml_enhanced_df)
-        
-        # Convert to list of dictionaries for JSON response
-        students = processed_df.to_dict('records')
-        
-        # Calculate risk level counts
-        risk_counts = processed_df['risk_level'].value_counts().to_dict()
-        counts = {
-            "High Risk": risk_counts.get("High Risk", 0),
-            "Medium Risk": risk_counts.get("Medium Risk", 0),
-            "Low Risk": risk_counts.get("Low Risk", 0),
-            "Total": len(processed_df)
-        }
-        
-        # Generate log for Medium and High risk students only
-        log = []
-        for _, student in processed_df.iterrows():
-            if student['risk_level'] in ['Medium Risk', 'High Risk']:
-                log_entry = (f"Student {student['enrollment_no']}: {student['risk_level']} "
-                           f"(Score: {student['risk_score']}) - {student['risk_reasons']}")
-                log.append(log_entry)
-        
-        # Prepare simulation data for MongoDB
-        simulation_data = {
-            "students": students,
-            "counts": counts,
-            "log": log
-        }
-        
-        # Save to MongoDB and get simulation ID
-        simulation_id = await save_to_mongo(simulation_data)
-        
-        logger.info(f"Simulation completed: {counts['High Risk']} High Risk, "
-                   f"{counts['Medium Risk']} Medium Risk, {counts['Low Risk']} Low Risk")
-        
-        return SimulationResponse(
-            simulation_id=simulation_id,
-            timestamp=datetime.utcnow(),
-            students=students,
-            counts=counts,
-            log=log,
-            model_loaded=model_loaded,
-            model_metrics=ml_metrics
-        )
-        
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Student data file not found")
-    except pd.errors.EmptyDataError:
-        raise HTTPException(status_code=400, detail="Student data file is empty")
-    except Exception as e:
-        logger.error(f"Simulation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
 
 
 @app.get("/simulations", response_model=SimulationListResponse, summary="Get All Past Simulations")

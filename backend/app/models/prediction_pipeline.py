@@ -33,11 +33,5 @@ def main():
         raise
 
 
-# Legacy function redirects
-def run_prediction_pipeline():
-    """Legacy function - redirects to unified system"""
-    return run_batch_prediction_pipeline()
-
-
 if __name__ == "__main__":
     main()
