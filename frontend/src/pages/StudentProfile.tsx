@@ -304,9 +304,6 @@ const StudentProfile: React.FC = () => {
                     <div className="col-span-2">
                       <strong>Override Reason:</strong> {student.override_reason || "None"}
                     </div>
-                    <div className="col-span-2">
-                      <strong>ML Probability:</strong> {student.ml_probability?.toFixed(3) || "N/A"}
-                    </div>
                   </div>
                   <details className="mt-2">
                     <summary className="cursor-pointer text-orange-600">Raw Backend JSON</summary>
@@ -349,19 +346,6 @@ const StudentProfile: React.FC = () => {
                 </h4>
                 <div className="bg-muted p-3 rounded-lg">
                   <p className="text-sm">{student.risk_reason}</p>
-                </div>
-              </div>
-            )}
-            
-            {student.ml_probability !== null && (
-              <div>
-                <h4 className="font-semibold mb-2">ML Confidence Score</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Dropout Probability</span>
-                    <span className="font-medium">{(student.ml_probability * 100).toFixed(1)}%</span>
-                  </div>
-                  <Progress value={student.ml_probability * 100} className="h-2" />
                 </div>
               </div>
             )}

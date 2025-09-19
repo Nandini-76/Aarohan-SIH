@@ -434,28 +434,6 @@ const Simulation: React.FC = () => {
                   )}
                 </div>
 
-                {/* ML Confidence */}
-                {result.ml_probability !== null && (
-                  <div>
-                    <h4 className="font-semibold mb-3 flex items-center">
-                      <Info className="w-4 h-4 mr-2 text-primary" />
-                      ML Model Confidence
-                    </h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Dropout Probability</span>
-                        <span className="font-medium">{(result.ml_probability * 100).toFixed(1)}%</span>
-                      </div>
-                      <Progress value={result.ml_probability * 100} className="h-3" />
-                      <p className="text-xs text-muted-foreground">
-                        {result.ml_probability < 0.3 ? "Low confidence - rule-based assessment preferred" :
-                         result.ml_probability < 0.7 ? "Moderate confidence" :
-                         "High confidence prediction"}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
                 {/* Risk Factors */}
                 {result.override_reason && (
                   <div>
