@@ -63,6 +63,12 @@ const Simulation: React.FC = () => {
     
     try {
       const result = await studentApi.simulate(formData);
+      
+      // Debug logging to see what we're receiving
+      console.log('🔍 Simulation result received:', result);
+      console.log('🔍 Notification message:', result.notification_message);
+      console.log('🔍 Final phase:', result.final_phase);
+      
       setResult(result);
       setHasRun(true);
 
@@ -444,6 +450,40 @@ const Simulation: React.FC = () => {
                     <div className="bg-muted p-4 rounded-lg">
                       <p className="text-sm">{result.override_reason}</p>
                     </div>
+                  </div>
+                )}
+
+                {/* Notification Alert */}
+                {result.notification_message && (result.final_phase === "Orange" || result.final_phase === "Red") && (
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center">
+                      <Info className="w-4 h-4 mr-2 text-blue-600" />
+                      Notification Sent
+                    </h4>
+                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0">
+                          <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-blue-800 font-medium mb-1">
+                            Alert Notification Triggered
+                          </p>
+                          <p className="text-sm text-blue-700">
+                            {result.notification_message}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Debug Info - Remove this after testing */}
+                {result && (
+                  <div className="bg-gray-100 p-2 rounded text-xs">
+                    <strong>Debug:</strong> Phase: {result.final_phase}, 
+                    Has notification: {result.notification_message ? 'Yes' : 'No'}, 
+                    Message: {result.notification_message || 'None'}
                   </div>
                 )}
 

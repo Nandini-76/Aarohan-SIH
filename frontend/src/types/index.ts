@@ -49,6 +49,7 @@ export interface SimulationResult {
   override_reason: string;
   ml_probability: number | null;
   rule_override: boolean;
+  notification_message?: string; // Notification message for Orange/Red risk
   // Legacy compatibility
   phase?: "Green" | "Yellow" | "Orange" | "Red"; // Alias for final_phase
   risk_reason?: string; // Alias for override_reason
