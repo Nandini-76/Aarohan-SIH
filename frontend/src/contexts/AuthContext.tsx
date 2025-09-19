@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
 import { AuthContextType } from '../types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -12,35 +12,17 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ username: string } | null>(null);
-
-  useEffect(() => {
-    // Check if user is already logged in (from localStorage)
-    const savedAuth = localStorage.getItem('auth');
-    if (savedAuth) {
-      const authData = JSON.parse(savedAuth);
-      setIsAuthenticated(true);
-      setUser(authData.user);
-    }
-  }, []);
+  // Always return authenticated state since authentication is removed
+  const isAuthenticated = true;
+  const user = { username: 'User' };
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // Simulated login - in real app, this would call your auth API
-    if (username && password) {
-      const userData = { username };
-      setIsAuthenticated(true);
-      setUser(userData);
-      localStorage.setItem('auth', JSON.stringify({ user: userData }));
-      return true;
-    }
-    return false;
+    // No-op function since authentication is disabled
+    return true;
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    localStorage.removeItem('auth');
+    // No-op function since authentication is disabled
   };
 
   return (

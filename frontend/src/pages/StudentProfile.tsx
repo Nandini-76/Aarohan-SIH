@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Navigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
   ArrowLeft, User, GraduationCap, CreditCard, Users, Phone, 
   TrendingUp, AlertCircle, CheckCircle, Calendar, MapPin 
@@ -15,13 +15,9 @@ import { studentApi } from '../services/api';
 import { Student } from '../types';
 import { useToast } from '../hooks/use-toast';
 import { cn } from '../lib/utils';
-import { useAuth } from '../contexts/AuthContext';
 import SiteHeader from '../components/SiteHeader';
 
 const StudentProfile: React.FC = () => {
-  const { isAuthenticated } = useAuth();
-  const location = useLocation();
-  if (!isAuthenticated) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   const { enrollmentNo } = useParams<{ enrollmentNo: string }>();
   const [student, setStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(true);

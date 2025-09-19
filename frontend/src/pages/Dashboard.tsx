@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Navigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, Users, AlertTriangle, CheckCircle, XCircle, RefreshCw, TrendingUp } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, CartesianGrid } from 'recharts';
 import { Input } from '../components/ui/input';
@@ -13,13 +13,9 @@ import { studentApi } from '../services/api';
 import { Student, DashboardStats } from '../types';
 import { useToast } from '../hooks/use-toast';
 import { cn } from '../lib/utils';
-import { useAuth } from '../contexts/AuthContext';
 import SiteHeader from '../components/SiteHeader';
 
 const Dashboard: React.FC = () => {
-  const { isAuthenticated } = useAuth();
-  const location = useLocation();
-  if (!isAuthenticated) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState('');

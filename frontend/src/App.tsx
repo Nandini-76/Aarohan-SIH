@@ -4,12 +4,9 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./components/DashboardLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
-import Login from "./pages/Login";
 import Landing from "./pages/Landing";
-import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import StudentProfile from "./pages/StudentProfile";
 import Simulation from "./pages/Simulation";
@@ -34,40 +31,15 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/student/:enrollmentNo"
-                element={
-                  <ProtectedRoute>
-                    <StudentProfile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/simulation"
-                element={
-                  <ProtectedRoute>
-                    <Simulation />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/student/:enrollmentNo" element={<StudentProfile />} />
+              <Route path="/simulation" element={<Simulation />} />
               <Route
                 path="/profile"
                 element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Profile />
-                    </DashboardLayout>
-                  </ProtectedRoute>
+                  <DashboardLayout>
+                    <Profile />
+                  </DashboardLayout>
                 }
               />
               <Route path="/about" element={<About />} />

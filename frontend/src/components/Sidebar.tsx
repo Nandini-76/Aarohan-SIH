@@ -1,19 +1,9 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FlaskConical, User, LogOut, GraduationCap, Shield } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { LayoutDashboard, Users, FlaskConical, User, GraduationCap, Shield } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from './ui/button';
 
 const Sidebar: React.FC = () => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   ];
@@ -65,18 +55,6 @@ const Sidebar: React.FC = () => {
           </NavLink>
         ))}
       </nav>
-
-      {/* Logout */}
-      <div className="p-4 border-t border-white/10">
-        <Button
-          onClick={handleLogout}
-          variant="ghost" 
-          className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10 group"
-        >
-          <LogOut className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform duration-200" />
-          Logout
-        </Button>
-      </div>
     </div>
   );
 };

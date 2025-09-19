@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, RefreshCw, Sliders, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -14,7 +14,6 @@ import RiskBadge from '../components/RiskBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { studentApi } from '../services/api';
 import { SimulationData, SimulationResult, Student } from '../types';
-import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { cn } from '../lib/utils';
 import SiteHeader from '../components/SiteHeader';
@@ -117,9 +116,6 @@ const Simulation: React.FC = () => {
     setHasRun(false);
     setRealTimeMode(false);
   };
-
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace state={{ from: '/simulation' }} />;
 
   const bgStyle: React.CSSProperties = {
     background: `radial-gradient(1200px 800px at -10% -10%, #8dd5ff55 0%, transparent 60%),
