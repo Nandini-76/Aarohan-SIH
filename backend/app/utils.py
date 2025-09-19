@@ -195,6 +195,10 @@ def add_predictions_to_dataset(df: pd.DataFrame, ml_model=None, ml_scaler=None) 
         # Get prediction
         prediction = process_single_prediction(student_data, ml_model, ml_scaler)
         
+        # Send notification if student is at Orange or Red risk
+        final_risk_level = prediction['final_phase']
+        send_notification(student_data, final_risk_level)
+        
         # Update DataFrame with new format
         result_df.at[idx, 'model_phase'] = prediction['model_phase']
         result_df.at[idx, 'final_phase'] = prediction['final_phase']
@@ -720,3 +724,73 @@ def run_batch_prediction_pipeline():
     }
     
     return results
+
+
+def send_notification(student_data: Dict[str, Any], risk_level: str) -> None:
+    """
+    Simulate WhatsApp notification for students at Orange or Red risk levels.
+    
+    This function simulates sending notifications to counselors, mentors, and parents
+    when a student is identified as being at Orange or Red risk. Currently logs 
+    the notification instead of actually sending it. Can be easily replaced with
+    actual Twilio API calls later.
+    
+    Args:
+        student_data: Dictionary containing student information
+        risk_level: Final risk level ("Green", "Yellow", "Orange", or "Red")
+    """
+    # Only send notifications for Orange and Red risk levels
+    if risk_level not in ["Orange", "Red"]:
+        return
+    
+    # Extract student information
+    student_id = student_data.get('enrollment_no', 'Unknown')
+    
+    # Generate student name from enrollment number for demo purposes
+    # In a real system, this would come from the student database
+    student_name = generate_student_name_from_id(student_id)
+    
+    # Format the notification message
+    notification_message = (
+        f"🚨 Student {student_name} is at {risk_level} risk. "
+        f"Notification sent to Counselor, Mentor, and Parents."
+    )
+    
+    # Log the simulated notification
+    logger.info(f"[Notification] WhatsApp message simulated for {student_id}: \"{notification_message}\"")
+    
+    # TODO: Replace this with actual Twilio API call when ready
+    # Example for future implementation:
+    # from twilio.rest import Client
+    # client = Client(account_sid, auth_token)
+    # client.messages.create(
+    #     body=notification_message,
+    #     from_='whatsapp:+1234567890',
+    #     to='whatsapp:+counselor_number'
+    # )
+
+
+def generate_student_name_from_id(student_id: str) -> str:
+    """
+    Generate a realistic student name from enrollment number for demonstration.
+    In a real system, this would be replaced with actual database lookup.
+    
+    Args:
+        student_id: Student enrollment number
+        
+    Returns:
+        Generated student name for demonstration
+    """
+    if not student_id or student_id == 'Unknown':
+        return "Unknown Student"
+    
+    # Sample names for demonstration
+    sample_names = [
+        "Ananya Sharma", "Rohan Patel", "Priya Singh", "Arjun Kumar", 
+        "Sneha Gupta", "Vikram Joshi", "Kavya Reddy", "Aditya Verma",
+        "Riya Agarwal", "Kartik Mehta", "Isha Malhotra", "Harsh Kapoor"
+    ]
+    
+    # Use hash of student_id to consistently get the same name for the same ID
+    name_index = hash(student_id) % len(sample_names)
+    return sample_names[name_index]

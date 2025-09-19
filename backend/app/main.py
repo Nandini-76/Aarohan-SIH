@@ -50,7 +50,8 @@ try:
         add_predictions_to_dataset,
         validate_student_input,
         predict_with_unified_system,
-        run_batch_prediction_pipeline
+        run_batch_prediction_pipeline,
+        send_notification
     )
 except ImportError:
     # Fall back to app.utils for deployed environment
@@ -59,7 +60,8 @@ except ImportError:
         add_predictions_to_dataset,
         validate_student_input,
         predict_with_unified_system,
-        run_batch_prediction_pipeline
+        run_batch_prediction_pipeline,
+        send_notification
     )
 
 # Helper functions for API
@@ -794,6 +796,10 @@ async def simulate_dropout_prediction(request: SimulateRequest):
         
         # Use the improved prediction pipeline
         prediction_result = process_single_prediction(student_data, ml_model, ml_scaler)
+        
+        # Send notification if student is at Orange or Red risk
+        final_risk_level = prediction_result['final_phase']
+        send_notification(student_data, final_risk_level)
         
         # Log simulation for debugging
         logger.info(f"Simulation for {student_data.get('enrollment_no', 'anonymous')}: "
