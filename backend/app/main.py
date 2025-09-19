@@ -292,6 +292,7 @@ class SimulateResponse(BaseModel):
     override_reason: str = Field("", description="Reason for override (if any)")
     ml_probability: Optional[float] = Field(None, description="ML model dropout probability")
     rule_override: bool = Field(False, description="Whether red-zone rules overrode ML prediction")
+    notification_message: Optional[str] = Field(None, description="Notification message sent if risk is Orange/Red")
 
 class TrainingResponse(BaseModel):
     """Response model for training endpoint"""
@@ -797,9 +798,9 @@ async def simulate_dropout_prediction(request: SimulateRequest):
         # Use the improved prediction pipeline
         prediction_result = process_single_prediction(student_data, ml_model, ml_scaler)
         
-        # Send notification if student is at Orange or Red risk
+        # Send notification if student is at Orange or Red risk and capture message
         final_risk_level = prediction_result['final_phase']
-        send_notification(student_data, final_risk_level)
+        notification_message = send_notification(student_data, final_risk_level)
         
         # Log simulation for debugging
         logger.info(f"Simulation for {student_data.get('enrollment_no', 'anonymous')}: "
@@ -814,7 +815,8 @@ async def simulate_dropout_prediction(request: SimulateRequest):
             final_phase=prediction_result['final_phase'],
             override_reason=prediction_result['red_reason'],
             ml_probability=prediction_result['ml_probability'],
-            rule_override=prediction_result['rule_override']
+            rule_override=prediction_result['rule_override'],
+            notification_message=notification_message
         )
         
     except ValueError as e:

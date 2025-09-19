@@ -726,7 +726,7 @@ def run_batch_prediction_pipeline():
     return results
 
 
-def send_notification(student_data: Dict[str, Any], risk_level: str) -> None:
+def send_notification(student_data: Dict[str, Any], risk_level: str) -> Optional[str]:
     """
     Simulate WhatsApp notification for students at Orange or Red risk levels.
     
@@ -738,10 +738,13 @@ def send_notification(student_data: Dict[str, Any], risk_level: str) -> None:
     Args:
         student_data: Dictionary containing student information
         risk_level: Final risk level ("Green", "Yellow", "Orange", or "Red")
+        
+    Returns:
+        Notification message if sent, None if no notification was needed
     """
     # Only send notifications for Orange and Red risk levels
     if risk_level not in ["Orange", "Red"]:
-        return
+        return None
     
     # Extract student information
     student_id = student_data.get('enrollment_no', 'Unknown')
@@ -768,6 +771,8 @@ def send_notification(student_data: Dict[str, Any], risk_level: str) -> None:
     #     from_='whatsapp:+1234567890',
     #     to='whatsapp:+counselor_number'
     # )
+    
+    return notification_message
 
 
 def generate_student_name_from_id(student_id: str) -> str:
