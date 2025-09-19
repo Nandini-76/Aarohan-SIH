@@ -318,9 +318,9 @@ def apply_unified_override_rules(row):
         return "Red", "Forced Red due to critical safety threshold: Attendance <30%"
     
     # Critical CGPA threshold
-    if C < 3.0:
-        return "Red", "Forced Red due to critical safety threshold: CGPA <3.0"
-    
+    if C < 4.0:
+        return "Red", "Forced Red due to critical safety threshold: CGPA <4.0"
+
     # Critical backlog threshold
     if B >= 8:
         return "Red", "Forced Red due to critical safety threshold: Backlogs ≥8"
