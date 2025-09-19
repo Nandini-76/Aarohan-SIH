@@ -37,7 +37,25 @@ const Dashboard: React.FC = () => {
       student.enrollment_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.department?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    setFilteredStudents(filtered);
+    
+    // Sort by risk level: Red → Orange → Yellow → Green
+    const riskPriority = { 'Red': 1, 'Orange': 2, 'Yellow': 3, 'Green': 4 };
+    const sortedFiltered = filtered.sort((a, b) => {
+      const phaseA = a.phase || a.final_phase || 'Green';
+      const phaseB = b.phase || b.final_phase || 'Green';
+      const priorityA = riskPriority[phaseA as keyof typeof riskPriority] || 5;
+      const priorityB = riskPriority[phaseB as keyof typeof riskPriority] || 5;
+      
+      // Primary sort: by risk level
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      
+      // Secondary sort: by enrollment number for consistent ordering
+      return a.enrollment_no.localeCompare(b.enrollment_no);
+    });
+    
+    setFilteredStudents(sortedFiltered);
   }, [students, searchTerm]);
 
   const fetchStudents = async () => {
