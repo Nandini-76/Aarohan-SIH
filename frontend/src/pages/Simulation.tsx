@@ -12,6 +12,7 @@ import { Separator } from '../components/ui/separator';
 import { Progress } from '../components/ui/progress';
 import RiskBadge from '../components/RiskBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { Skeleton } from '../components/ui/skeleton';
 import { studentApi } from '../services/api';
 import { SimulationData, SimulationResult, Student } from '../types';
 import { useToast } from '../hooks/use-toast';
@@ -400,8 +401,30 @@ const Simulation: React.FC = () => {
                 </div>
               </div>
             ) : isLoading ? (
-              <div className="py-12">
-                <LoadingSpinner text="Running prediction model..." />
+              <div className="py-12 space-y-6">
+                <div className="text-center space-y-3">
+                  <Skeleton variant="text" className="h-6 w-48 mx-auto" />
+                  <div className="space-y-4">
+                    <div className="p-6 bg-muted/30 rounded-lg space-y-3">
+                      <Skeleton variant="text" className="h-4 w-32 mx-auto" />
+                      <Skeleton variant="button" className="h-12 w-32 mx-auto" />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="p-4 bg-muted/20 rounded-lg space-y-2">
+                      <Skeleton variant="text" className="h-4 w-24" />
+                      <Skeleton variant="text" className="h-8 w-full" />
+                      <Skeleton variant="text" className="h-3 w-3/4" />
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="text-center">
+                  <LoadingSpinner text="Running prediction model..." />
+                </div>
               </div>
             ) : result ? (
               <div className="space-y-6">

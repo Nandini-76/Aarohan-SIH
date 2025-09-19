@@ -13,12 +13,13 @@ const Sidebar: React.FC = () => {
       {/* Logo/Header */}
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center space-x-3 mb-2">
-          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 group relative">
             <img 
-              src="/assets/logo.svg" 
+              src="/assets/logo.png" 
               alt="AAROHAN Logo" 
-              className="w-6 h-6"
+              className="w-6 h-6 drop-shadow-md group-hover:scale-110 transition-transform duration-300"
             />
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-300/20 to-blue-400/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">

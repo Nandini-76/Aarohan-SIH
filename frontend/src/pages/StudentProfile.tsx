@@ -11,11 +11,13 @@ import { Progress } from '../components/ui/progress';
 import { Separator } from '../components/ui/separator';
 import RiskBadge from '../components/RiskBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { Skeleton, CardSkeleton } from '../components/ui/skeleton';
 import { studentApi } from '../services/api';
 import { Student } from '../types';
 import { useToast } from '../hooks/use-toast';
 import { cn } from '../lib/utils';
 import SiteHeader from '../components/SiteHeader';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const StudentProfile: React.FC = () => {
   const { enrollmentNo } = useParams<{ enrollmentNo: string }>();
@@ -79,14 +81,78 @@ const StudentProfile: React.FC = () => {
                    linear-gradient(135deg, #94c5ff 0%, #2b6cb0 40%, #0d3b66 100%)`,
     };
     return (
-      <div className="min-h-screen text-white" style={bgStyle}>
+      <motion.div 
+        className="min-h-screen text-white" 
+        style={bgStyle}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
         <SiteHeader />
         <main className="container mx-auto px-4 md:px-8 py-8 md:py-12">
-          <div className="flex items-center justify-center h-96">
-            <LoadingSpinner size="lg" text="Loading student profile..." />
+          {/* Back button skeleton */}
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Skeleton variant="button" className="bg-white/10" />
+          </motion.div>
+
+          {/* Profile header skeleton */}
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-6">
+                  <Skeleton variant="avatar" className="w-24 h-24 bg-white/10" />
+                  <div className="space-y-3 flex-1">
+                    <Skeleton variant="text" className="h-8 w-64 bg-white/20" />
+                    <Skeleton variant="text" className="h-5 w-48 bg-white/10" />
+                    <Skeleton variant="text" className="h-5 w-32 bg-white/10" />
+                  </div>
+                  <Skeleton variant="button" className="bg-white/10" />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Info cards skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+              >
+                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center space-x-3">
+                      <Skeleton variant="avatar" className="w-8 h-8 bg-white/10" />
+                      <Skeleton variant="text" className="h-5 w-32 bg-white/20" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <Skeleton variant="text" className="h-6 w-full bg-white/10" />
+                      <Skeleton variant="text" className="h-4 w-3/4 bg-white/10" />
+                      <div className="mt-4">
+                        <Skeleton variant="text" className="h-2 w-full bg-white/10" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         </main>
-      </div>
+      </motion.div>
     );
   }
 
