@@ -133,30 +133,30 @@ const Simulation: React.FC = () => {
   return (
     <div className="min-h-screen text-white" style={bgStyle}>
       <SiteHeader />
-      <main className="container mx-auto px-4 md:px-8 py-8 md:py-12 space-y-6">
+      <main className="container mx-auto px-4 md:px-8 py-4 md:py-6 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <Button
             variant="ghost"
             onClick={() => navigate('/dashboard')}
-            className="p-2"
+            className="p-1.5"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold flex items-center space-x-2">
-              <Sliders className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold flex items-center space-x-2">
+              <Sliders className="h-6 w-6 text-primary" />
               <span>AAROHAN Risk Simulation</span>
             </h1>
-            <p className="text-white/90">
+            <p className="text-sm text-white/90">
               AI-powered dropout risk prediction and analysis
             </p>
           </div>
         </div>
         
         <div className="flex items-center space-x-2">
-          <Label htmlFor="realtime" className="text-sm">Real-time</Label>
+          <Label htmlFor="realtime" className="text-xs">Real-time</Label>
           <Switch
             id="realtime"
             checked={realTimeMode}
@@ -168,14 +168,14 @@ const Simulation: React.FC = () => {
 
       {studentFromProfile && (
         <Card className="border-primary bg-gradient-to-r from-primary/5 to-primary/10">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                <Info className="w-5 h-5 text-primary" />
+          <CardContent className="p-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                <Info className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="font-medium">Simulating for: {studentFromProfile.name}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm font-medium">Simulating for: {studentFromProfile.name}</p>
+                <p className="text-xs text-muted-foreground">
                   {studentFromProfile.enrollment_no} • {studentFromProfile.department}
                 </p>
               </div>
@@ -184,152 +184,144 @@ const Simulation: React.FC = () => {
         </Card>
       )}
 
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Input Parameters */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Sliders className="h-5 w-5 text-primary" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center space-x-2 text-base">
+              <Sliders className="h-4 w-4 text-primary" />
               <span>Simulation Parameters</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-3">
             {/* Enrollment Number (if not from profile) */}
             {!studentFromProfile && (
-              <div className="space-y-2">
-                <Label htmlFor="enrollment">Enrollment Number (Optional)</Label>
+              <div className="space-y-1">
+                <Label htmlFor="enrollment" className="text-xs">Enrollment Number (Optional)</Label>
                 <Input
                   id="enrollment"
                   type="text"
                   placeholder="e.g., 2023ENG001"
                   value={formData.enrollment_no || ''}
                   onChange={(e) => handleInputChange('enrollment_no', e.target.value)}
+                  className="h-8 text-sm"
                 />
               </div>
             )}
 
-            {/* Attendance */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="attendance">Attendance (%)</Label>
-                <span className="text-sm font-medium">{formData.attendance}%</span>
+            {/* Compact Grid for Main Metrics */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Attendance */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="attendance" className="text-xs">Attendance</Label>
+                  <span className="text-xs font-medium">{formData.attendance}%</span>
+                </div>
+                <Slider
+                  value={[formData.attendance]}
+                  onValueChange={(value) => handleInputChange('attendance', value[0])}
+                  max={100}
+                  min={0}
+                  step={1}
+                  className="w-full"
+                />
+                {formData.attendance < 70 && (
+                  <p className="text-[10px] text-destructive">Below 70%</p>
+                )}
               </div>
-              <Slider
-                value={[formData.attendance]}
-                onValueChange={(value) => handleInputChange('attendance', value[0])}
-                max={100}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>0%</span>
-                <span className={formData.attendance < 70 ? "text-destructive font-medium" : ""}>
-                  {formData.attendance < 70 ? "Below Minimum (70%)" : ""}
-                </span>
-                <span>100%</span>
+
+              {/* CGPA */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="cgpa" className="text-xs">CGPA</Label>
+                  <span className="text-xs font-medium">{formData.cgpa.toFixed(1)}</span>
+                </div>
+                <Slider
+                  value={[formData.cgpa]}
+                  onValueChange={(value) => handleInputChange('cgpa', value[0])}
+                  max={10}
+                  min={0}
+                  step={0.1}
+                  className="w-full"
+                />
+                {formData.cgpa < 5 && (
+                  <p className="text-[10px] text-destructive">Below Average</p>
+                )}
+              </div>
+
+              {/* Backlogs */}
+              <div className="space-y-1">
+                <Label htmlFor="backlogs" className="text-xs">Backlogs</Label>
+                <Input
+                  id="backlogs"
+                  type="number"
+                  min="0"
+                  max="15"
+                  value={formData.backlogs}
+                  onChange={(e) => handleInputChange('backlogs', Number(e.target.value))}
+                  className="h-8 text-sm"
+                />
+                {formData.backlogs > 3 && (
+                  <p className="text-[10px] text-destructive">⚠️ High</p>
+                )}
+              </div>
+
+              {/* Gender */}
+              <div className="space-y-1">
+                <Label htmlFor="gender" className="text-xs">Gender</Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value) => handleInputChange('gender', value)}
+                >
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Male</SelectItem>
+                    <SelectItem value="F">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 10th Marks */}
+              <div className="space-y-1">
+                <Label htmlFor="marks-10th" className="text-xs">10th Marks (%)</Label>
+                <Input
+                  id="marks-10th"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.marks_10th}
+                  onChange={(e) => handleInputChange('marks_10th', Number(e.target.value))}
+                  className="h-8 text-sm"
+                />
+              </div>
+
+              {/* 12th Marks */}
+              <div className="space-y-1">
+                <Label htmlFor="marks-12th" className="text-xs">12th Marks (%)</Label>
+                <Input
+                  id="marks-12th"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.marks_12th}
+                  onChange={(e) => handleInputChange('marks_12th', Number(e.target.value))}
+                  className="h-8 text-sm"
+                />
               </div>
             </div>
 
-            {/* CGPA */}
+            <Separator className="my-2" />
+
+            {/* Flags - More Compact */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="cgpa">CGPA</Label>
-                <span className="text-sm font-medium">{formData.cgpa.toFixed(1)}</span>
-              </div>
-              <Slider
-                value={[formData.cgpa]}
-                onValueChange={(value) => handleInputChange('cgpa', value[0])}
-                max={10}
-                min={0}
-                step={0.1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>0.0</span>
-                <span className={formData.cgpa < 5 ? "text-destructive font-medium" : ""}>
-                  {formData.cgpa < 5 ? "Below Average" : ""}
-                </span>
-                <span>10.0</span>
-              </div>
-            </div>
-
-            {/* Backlogs */}
-            <div className="space-y-2">
-              <Label htmlFor="backlogs">Number of Backlogs</Label>
-              <Input
-                id="backlogs"
-                type="number"
-                min="0"
-                max="15"
-                value={formData.backlogs}
-                onChange={(e) => handleInputChange('backlogs', Number(e.target.value))}
-              />
-              <p className={cn("text-xs", 
-                formData.backlogs > 3 ? "text-destructive font-medium" : "text-muted-foreground"
-              )}>
-                {formData.backlogs > 3 ? "⚠️ High backlog count" : `Current: ${formData.backlogs}`}
-              </p>
-            </div>
-
-            <Separator />
-
-            {/* 10th Marks */}
-            <div className="space-y-2">
-              <Label htmlFor="marks-10th">10th Grade Marks (%)</Label>
-              <Input
-                id="marks-10th"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.marks_10th}
-                onChange={(e) => handleInputChange('marks_10th', Number(e.target.value))}
-              />
-            </div>
-
-            {/* 12th Marks */}
-            <div className="space-y-2">
-              <Label htmlFor="marks-12th">12th Grade Marks (%)</Label>
-              <Input
-                id="marks-12th"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.marks_12th}
-                onChange={(e) => handleInputChange('marks_12th', Number(e.target.value))}
-              />
-            </div>
-
-            {/* Gender */}
-            <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
-              <Select
-                value={formData.gender}
-                onValueChange={(value) => handleInputChange('gender', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="M">Male</SelectItem>
-                  <SelectItem value="F">Female</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Separator />
-
-            {/* Flags */}
-            <div className="space-y-6">
-              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+              <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wide">
                 Risk Factors
               </h3>
               
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="fees-flag" className="font-medium">Outstanding Fees</Label>
-                  <p className="text-xs text-muted-foreground">Student has unpaid fees</p>
-                </div>
+              <div className="flex items-center justify-between py-1">
+                <Label htmlFor="fees-flag" className="text-xs font-medium">Outstanding Fees</Label>
                 <Switch
                   id="fees-flag"
                   checked={Boolean(formData.fees_flag)}
@@ -337,11 +329,8 @@ const Simulation: React.FC = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="suspension-flag" className="font-medium">Academic Suspension</Label>
-                  <p className="text-xs text-muted-foreground">Student has disciplinary issues</p>
-                </div>
+              <div className="flex items-center justify-between py-1">
+                <Label htmlFor="suspension-flag" className="text-xs font-medium">Academic Suspension</Label>
                 <Switch
                   id="suspension-flag"
                   checked={Boolean(formData.suspension_flag)}
@@ -350,12 +339,12 @@ const Simulation: React.FC = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex space-x-3 pt-4">
+            {/* Action Buttons - Sticky at bottom */}
+            <div className="flex space-x-2 pt-3 sticky bottom-0 bg-card pb-2">
               <Button
                 onClick={() => runSimulation()}
                 disabled={isLoading}
-                className="flex-1 bg-gradient-primary hover:opacity-90"
+                className="flex-1 bg-gradient-primary hover:opacity-90 h-10"
               >
                 {isLoading ? (
                   <>
@@ -371,7 +360,7 @@ const Simulation: React.FC = () => {
               </Button>
               
               {hasRun && (
-                <Button onClick={resetSimulation} variant="outline">
+                <Button onClick={resetSimulation} variant="outline" className="h-10">
                   Reset
                 </Button>
               )}
@@ -381,22 +370,22 @@ const Simulation: React.FC = () => {
 
         {/* Results */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-primary" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center space-x-2 text-base">
+              <AlertTriangle className="h-4 w-4 text-primary" />
               <span>Prediction Results</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {!hasRun ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <div className="space-y-4">
-                  <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto">
-                    <Play className="w-8 h-8 opacity-50" />
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mx-auto">
+                    <Play className="w-6 h-6 opacity-50" />
                   </div>
                   <div>
-                    <p className="font-medium mb-1">Ready to Simulate</p>
-                    <p className="text-sm">Adjust the parameters and click "RUN SIMULATION" to see the prediction</p>
+                    <p className="text-sm font-medium mb-1">Ready to Simulate</p>
+                    <p className="text-xs">Adjust the parameters and click "RUN SIMULATION"</p>
                   </div>
                 </div>
               </div>
@@ -427,36 +416,36 @@ const Simulation: React.FC = () => {
                 </div>
               </div>
             ) : result ? (
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {/* Prediction Results Header */}
-                <div className="text-center space-y-3">
-                  <h3 className="text-lg font-semibold">Prediction Results</h3>
+                <div className="text-center space-y-2">
+                  <h3 className="text-base font-semibold">Prediction Results</h3>
                   
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">Final Risk Assessment</h4>
-                      <RiskBadge phase={result.final_phase} size="lg" showIcon className="text-lg px-6 py-3" />
+                  <div className="grid grid-cols-1 gap-2">
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <h4 className="text-xs font-medium text-muted-foreground mb-1.5">Final Risk Assessment</h4>
+                      <RiskBadge phase={result.final_phase} size="lg" showIcon className="text-base px-4 py-2" />
                     </div>
                   </div>
                   
                   {/* Model vs Final Comparison */}
                   {result.model_phase !== result.final_phase && (
-                    <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="grid grid-cols-2 gap-2 mt-2">
                     <div>
-                        <h4 className="text-xs font-medium text-muted-foreground mb-2">ML Model</h4>
+                        <h4 className="text-[10px] font-medium text-muted-foreground mb-1">ML Model</h4>
                         <RiskBadge phase={result.model_phase} />
                     </div>
                     <div>
-                        <h4 className="text-xs font-medium text-muted-foreground mb-2">After Safety Rules</h4>
+                        <h4 className="text-[10px] font-medium text-muted-foreground mb-1">After Safety Rules</h4>
                         <RiskBadge phase={result.final_phase} showIcon />
                     </div>
                     </div>
                   )}
                   
                   {result.rule_override && (
-                    <div className="bg-orange/10 border border-orange/30 rounded-lg p-3">
-                      <p className="text-sm text-orange font-medium flex items-center">
-                        <AlertTriangle className="w-4 h-4 mr-2" />
+                    <div className="bg-orange/10 border border-orange/30 rounded-lg p-2">
+                      <p className="text-xs text-orange font-medium flex items-center">
+                        <AlertTriangle className="w-3 h-3 mr-1.5" />
                         Safety rules overrode ML prediction
                       </p>
                     </div>
@@ -466,12 +455,12 @@ const Simulation: React.FC = () => {
                 {/* Risk Factors */}
                 {result.override_reason && (
                   <div>
-                    <h4 className="font-semibold mb-3 flex items-center">
-                      <AlertTriangle className="w-4 h-4 mr-2 text-warning" />
+                    <h4 className="text-sm font-semibold mb-2 flex items-center">
+                      <AlertTriangle className="w-3 h-3 mr-1.5 text-warning" />
                       Risk Factors
                     </h4>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <p className="text-sm">{result.override_reason}</p>
+                    <div className="bg-muted p-2.5 rounded-lg">
+                      <p className="text-xs">{result.override_reason}</p>
                     </div>
                   </div>
                 )}
@@ -479,20 +468,20 @@ const Simulation: React.FC = () => {
                 {/* Notification Alert */}
                 {result.notification_message && (result.final_phase === "Orange" || result.final_phase === "Red") && (
                   <div>
-                    <h4 className="font-semibold mb-3 flex items-center">
-                      <Info className="w-4 h-4 mr-2 text-blue-600" />
+                    <h4 className="text-sm font-semibold mb-2 flex items-center">
+                      <Info className="w-3 h-3 mr-1.5 text-blue-600" />
                       Notification Sent
                     </h4>
-                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                      <div className="flex items-start space-x-3">
+                    <div className="bg-blue-50 border border-blue-200 p-2.5 rounded-lg">
+                      <div className="flex items-start space-x-2">
                         <div className="flex-shrink-0">
-                          <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                          <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm text-blue-800 font-medium mb-1">
+                          <p className="text-xs text-blue-800 font-medium mb-0.5">
                             Alert Notification Triggered
                           </p>
-                          <p className="text-sm text-blue-700">
+                          <p className="text-xs text-blue-700">
                             {result.notification_message}
                           </p>
                         </div>
@@ -503,7 +492,7 @@ const Simulation: React.FC = () => {
 
                 {/* Debug Info - Remove this after testing */}
                 {result && (
-                  <div className="bg-gray-100 p-2 rounded text-xs">
+                  <div className="bg-gray-100 p-1.5 rounded text-[10px]">
                     <strong>Debug:</strong> Phase: {result.final_phase}, 
                     Has notification: {result.notification_message ? 'Yes' : 'No'}, 
                     Message: {result.notification_message || 'None'}
@@ -511,12 +500,12 @@ const Simulation: React.FC = () => {
                 )}
 
                 {/* Recommendations */}
-                <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
-                  <h4 className="font-semibold mb-3 text-primary flex items-center">
-                    <CheckCircle className="w-4 h-4 mr-2" />
+                <div className="bg-primary/5 p-3 rounded-lg border border-primary/20">
+                  <h4 className="text-sm font-semibold mb-2 text-primary flex items-center">
+                    <CheckCircle className="w-3 h-3 mr-1.5" />
                     Recommendations
                   </h4>
-                  <ul className="text-sm space-y-1 text-muted-foreground">
+                  <ul className="text-xs space-y-0.5 text-muted-foreground">
                     {result.final_phase === "Red" && (
                       <>
                         <li>• Immediate academic counseling required</li>
@@ -551,10 +540,10 @@ const Simulation: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-12">
-                <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" />
-                <p className="text-destructive font-medium">An error occurred during simulation</p>
-                <p className="text-sm text-muted-foreground mt-1">Please try again or check your connection</p>
+              <div className="text-center py-8">
+                <AlertTriangle className="w-10 h-10 mx-auto text-destructive mb-3" />
+                <p className="text-sm text-destructive font-medium">An error occurred during simulation</p>
+                <p className="text-xs text-muted-foreground mt-1">Please try again or check your connection</p>
               </div>
             )}
           </CardContent>
