@@ -1,8 +1,0 @@
-enrollment_no,attendance,cgpa,backlogs,suspension_flag,gender,model_phase,final_phase,override_reason,red_reason,ml_probability,rule_override,predicted_phase
-TEST001,90,8.5,0,0,M,Green,Green,Excellent attendance,Excellent attendance,,True,Green
-TEST002,75,5.5,1,0,F,Green,Yellow,Attendance in caution range (70–79%) with weak academic performance,Attendance in caution range (70–79%) with weak academic performance,,True,Yellow
-TEST003,60,4.5,2,1,M,Green,Orange,Low CGPA with moderate backlogs,Low CGPA with moderate backlogs,,True,Orange
-TEST004,30,3.0,4,2,F,Green,Red,Critical attendance (<35%),Critical attendance (<35%),,True,Red
-TEST005,73,6.2,1,0,M,Green,Yellow,"Slightly weak academics (CGPA 6–7, low backlogs)","Slightly weak academics (CGPA 6–7, low backlogs)",,True,Yellow
-TEST006,77,5.8,2,0,F,Green,Yellow,Attendance in caution range (70–79%) with weak academic performance,Attendance in caution range (70–79%) with weak academic performance,,True,Yellow
-TEST007,65,5.5,1,2,M,Green,Yellow,Attendance below target (65–69%),Attendance below target (65–69%),,True,Yellow

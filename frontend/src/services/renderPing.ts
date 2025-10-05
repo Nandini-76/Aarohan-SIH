@@ -6,7 +6,7 @@
 const RENDER_BACKEND_URL = 'https://arohann.onrender.com';
 const PING_INTERVAL = 2 * 60 * 1000; // 2 minutes in milliseconds
 const PING_ENDPOINT = '/health'; // Health check endpoint
-const PING_TIMEOUT = 30000; // 30 seconds timeout
+const PING_TIMEOUT = 60000; // 60 seconds timeout for backend warmup
 
 class RenderPingService {
   private intervalId: NodeJS.Timeout | null = null;

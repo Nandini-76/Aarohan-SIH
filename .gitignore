@@ -64,6 +64,10 @@ Thumbs.db
 *.p12
 *.pfx
 
+# Firebase credentials (NEVER commit to git!)
+serviceAccountKey.json
+backend/serviceAccountKey.json
+
 # Database files
 *.db
 *.sqlite
@@ -129,6 +133,11 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
+# Lock files (keep package-lock.json for consistency)
+yarn.lock
+bun.lockb
+pnpm-lock.yaml
+
 # parcel-bundler cache
 .cache
 .parcel-cache
@@ -152,12 +161,24 @@ gatsby/public/
 tmp/
 temp/
 
-# ML Models and Data (if they contain sensitive information)
-# Uncomment the lines below if your models/data contain sensitive information
-# backend/app/models/*.joblib
-# backend/app/models/*.pkl
-# backend/app/models/*.h5
-# backend/app/data/*.csv
+# ML Models and Large Data Files
+# Training/test datasets can be regenerated or stored in cloud storage
+backend/app/data/*.csv
+backend/app/models/data/*.csv
+backend/distributed-data/*.csv
+# ML model binaries - can be large and regenerated
+*.joblib
+*.pkl
+*.h5
+*.model
+*.weights
+*.pb
+*.onnx
+*.pt
+*.pth
+# Keep the pipeline script but not the trained models
+!backend/app/models/*_pipeline.py
+!backend/app/models/feature_utils.py
 
 # System files
 .DS_Store
@@ -180,10 +201,25 @@ Thumbs.db
 *.backup
 *.old
 *.orig
+*~
+*.swp
+*.swo
 
-# Test files
+# Deprecated/Legacy files
+*.deprecated
+*_deprecated.*
+*_legacy.*
+*.bak.*
+
+# Test files and outputs
 test-results/
 coverage/
+test_*.py
+*_test.py
+*.test.js
+*.spec.js
+test_*.csv
+*_test_*.csv
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -225,3 +261,44 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Additional Security & Sensitive Files
+# API Keys and secrets
+**/secrets/
+**/credentials/
+*.credentials
+api_keys.txt
+secrets.txt
+.secrets
+
+# Cloud provider config files
+.gcloud/
+.aws/
+.azure/
+
+# Local environment files (actual .env files, not examples)
+.env
+.env.*.local
+!.env.example
+!.env.*.example
+
+# IDE specific settings that might contain sensitive info
+.vscode/settings.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries/
+
+# Render/Vercel local config
+.vercel/
+.render/
+
+# macOS specific
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Thumbnails and previews
+*.stackdump
+Desktop.ini
+$RECYCLE.BIN/

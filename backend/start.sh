@@ -47,5 +47,5 @@ echo "  - Swagger UI: http://localhost:8000/docs"
 echo "  - ReDoc: http://localhost:8000/redoc"
 echo ""
 
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload --timeout-keep-alive 75 --timeout-graceful-shutdown 30
 

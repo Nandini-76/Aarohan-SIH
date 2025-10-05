@@ -14,7 +14,7 @@ const api = axios.create({
     'Accept': 'application/json',
   },
   withCredentials: false, // Set to false for CORS simplicity in development
-  timeout: 10000, // 10 second timeout
+  timeout: 60000, // 60 second timeout for ML predictions and Firebase operations
 });
 
 // Add request interceptor for debugging
