@@ -163,9 +163,7 @@ temp/
 
 # ML Models and Large Data Files
 # Training/test datasets can be regenerated or stored in cloud storage
-backend/app/data/*.csv
 backend/app/models/data/*.csv
-backend/distributed-data/*.csv
 # ML model binaries - can be large and regenerated
 *.joblib
 *.pkl
@@ -179,6 +177,11 @@ backend/distributed-data/*.csv
 # Keep the pipeline script but not the trained models
 !backend/app/models/*_pipeline.py
 !backend/app/models/feature_utils.py
+
+# IMPORTANT: Keep these files - they're needed for the app to work
+# Re-add essential data files
+!backend/app/data/merged_dataset.csv
+!backend/distributed-data/*.csv
 
 # System files
 .DS_Store
