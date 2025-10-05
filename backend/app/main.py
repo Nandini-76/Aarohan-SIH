@@ -632,8 +632,7 @@ async def get_all_students():
             df = pd.read_csv(merged_file)
             logger.info(f"Loaded {len(df)} student records from merged dataset")
             
-            # Generate predictions using utils function
-            from utils import add_predictions_to_dataset
+            # Generate predictions using utils function (already imported at top of file)
             df = add_predictions_to_dataset(df, ml_model, ml_scaler)
         
         # Convert to JSON-serializable format
