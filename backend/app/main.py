@@ -66,6 +66,7 @@ try:
     from services.firebase_service import (
         init_firebase,
         update_latest_data,
+        update_all_students,
         update_student_prediction,
         update_batch_predictions,
         is_firebase_initialized
@@ -75,6 +76,7 @@ except ImportError:
         from app.services.firebase_service import (
             init_firebase,
             update_latest_data,
+            update_all_students,
             update_student_prediction,
             update_batch_predictions,
             is_firebase_initialized
@@ -87,6 +89,7 @@ except ImportError:
         # Define dummy functions if Firebase not available
         def init_firebase(): return False
         def update_latest_data(data): return False
+        def update_all_students(students): return False
         def update_student_prediction(sid, data): return False
         def update_batch_predictions(preds): return False
         def is_firebase_initialized(): return False
@@ -669,6 +672,14 @@ async def get_all_students():
                         f"suspension_flag={cleaned_student['suspension_flag']}, prediction={cleaned_student['prediction']}")
             
             students.append(cleaned_student)
+        
+        # Store all students in Firebase for frontend direct access
+        if is_firebase_initialized():
+            try:
+                update_all_students(students)
+                logger.info("Students data pushed to Firebase successfully")
+            except Exception as fb_error:
+                logger.warning(f"Failed to push students to Firebase: {fb_error}")
         
         logger.info(f"Returning {len(students)} student profiles")
         return {"students": students, "total": len(students)}

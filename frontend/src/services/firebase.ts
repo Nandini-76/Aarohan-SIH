@@ -162,6 +162,78 @@ export const listenToPath = (path: string, callback: (data: any) => void): (() =
 };
 
 /**
+ * Fetch all students data from Firebase (one-time read)
+ * This is used as a fallback when the backend is unavailable
+ * 
+ * @returns Promise with students array
+ */
+export const getAllStudentsFromFirebase = async (): Promise<any[]> => {
+  if (!database) {
+    console.warn("Firebase not initialized. Call initFirebase() first.");
+    throw new Error("Firebase not initialized");
+  }
+
+  return new Promise((resolve, reject) => {
+    const studentsRef: DatabaseReference = ref(database, "students");
+    
+    // Get data once (not a listener)
+    onValue(studentsRef, (snapshot) => {
+      const data = snapshot.val();
+      
+      if (data) {
+        // Convert Firebase object to array
+        const studentsArray = Object.values(data);
+        console.log(`Fetched ${studentsArray.length} students from Firebase`);
+        resolve(studentsArray);
+      } else {
+        console.warn("No students data found in Firebase");
+        resolve([]);
+      }
+      
+      // Unsubscribe immediately after first read
+      off(studentsRef);
+    }, (error) => {
+      console.error("Firebase fetch error:", error);
+      reject(error);
+    });
+  });
+};
+
+/**
+ * Fetch a single student from Firebase (one-time read)
+ * 
+ * @param enrollmentNo Student enrollment number
+ * @returns Promise with student data
+ */
+export const getStudentFromFirebase = async (enrollmentNo: string): Promise<any> => {
+  if (!database) {
+    console.warn("Firebase not initialized. Call initFirebase() first.");
+    throw new Error("Firebase not initialized");
+  }
+
+  return new Promise((resolve, reject) => {
+    const studentRef: DatabaseReference = ref(database, `students/${enrollmentNo}`);
+    
+    onValue(studentRef, (snapshot) => {
+      const data = snapshot.val();
+      
+      if (data) {
+        console.log(`Fetched student ${enrollmentNo} from Firebase`);
+        resolve(data);
+      } else {
+        reject(new Error(`Student ${enrollmentNo} not found in Firebase`));
+      }
+      
+      // Unsubscribe immediately
+      off(studentRef);
+    }, (error) => {
+      console.error("Firebase fetch error:", error);
+      reject(error);
+    });
+  });
+};
+
+/**
  * Check if Firebase is initialized and configured
  */
 export const isFirebaseConfigured = (): boolean => {

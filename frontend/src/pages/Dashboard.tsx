@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Users, AlertTriangle, CheckCircle, XCircle, TrendingUp, Filter, AlertOctagon } from 'lucide-react';
+import { Search, Users, AlertTriangle, CheckCircle, XCircle, TrendingUp, Filter, AlertOctagon, Database } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, CartesianGrid } from 'recharts';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -10,7 +10,7 @@ import { Badge } from '../components/ui/badge';
 import RiskBadge from '../components/RiskBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Skeleton, TableSkeleton, StatCardSkeleton } from '../components/ui/skeleton';
-import { studentApi } from '../services/api';
+import { getAllStudentsFromFirebase, isFirebaseConfigured, listenToPath } from '../services/firebase';
 import { Student, DashboardStats } from '../types';
 import { useToast } from '../hooks/use-toast';
 import { cn } from '../lib/utils';
@@ -32,6 +32,7 @@ const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [attendanceBins, setAttendanceBins] = useState<{ range: string; count: number }[]>([]);
   const [cgpaBins, setCgpaBins] = useState<{ range: string; count: number }[]>([]);
+  const [dataSource, setDataSource] = useState<'backend' | 'firebase' | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -56,7 +57,47 @@ const Dashboard: React.FC = () => {
   }, [showFilter]);
 
   useEffect(() => {
+    // Initial load from Firebase
     fetchStudents();
+    
+    // Set up real-time listener for automatic updates
+    if (isFirebaseConfigured()) {
+      const unsubscribe = listenToPath('students', (data) => {
+        if (data) {
+          // Convert Firebase object to array
+          const studentsArray = Object.values(data) as Student[];
+          console.log(`Real-time update: ${studentsArray.length} students received from Firebase`);
+          
+          setStudents(studentsArray);
+          calculateStats(studentsArray);
+          buildCharts(studentsArray);
+          setDataSource('firebase');
+          
+          // Show toast notification when data updates
+          const firstStudent = studentsArray[0] as any;
+          if (firstStudent?.lastUpdated) {
+            const updateTime = new Date(firstStudent.lastUpdated);
+            const now = new Date();
+            const secondsAgo = Math.floor((now.getTime() - updateTime.getTime()) / 1000);
+            
+            // Only show notification if update is very recent (< 10 seconds)
+            if (secondsAgo < 10) {
+              toast({
+                title: "Data Updated",
+                description: "Backend has pushed fresh predictions to Firebase",
+                variant: "default",
+              });
+            }
+          }
+        }
+      });
+      
+      // Cleanup listener on unmount
+      return () => {
+        console.log('Cleaning up Firebase listener');
+        unsubscribe();
+      };
+    }
   }, []);
 
   useEffect(() => {
@@ -111,20 +152,50 @@ const Dashboard: React.FC = () => {
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
-      const data = await studentApi.getAllStudents();
-  setStudents(data);
-  calculateStats(data);
-  buildCharts(data);
+      
+      // ALWAYS read from Firebase (not backend API)
+      if (!isFirebaseConfigured()) {
+        throw new Error('Firebase not configured');
+      }
+      
+      const firebaseData = await getAllStudentsFromFirebase();
+      
+      if (firebaseData && firebaseData.length > 0) {
+        setStudents(firebaseData);
+        calculateStats(firebaseData);
+        buildCharts(firebaseData);
+        setDataSource('firebase');
+        
+        // Check data freshness
+        const firstStudent = firebaseData[0];
+        const lastUpdated = firstStudent.lastUpdated;
+        
+        if (lastUpdated) {
+          const updateTime = new Date(lastUpdated);
+          const now = new Date();
+          const minutesAgo = Math.floor((now.getTime() - updateTime.getTime()) / (1000 * 60));
+          
+          if (minutesAgo < 5) {
+            console.log(`Data is fresh (updated ${minutesAgo} minutes ago)`);
+          } else {
+            console.log(`Data is ${minutesAgo} minutes old. Backend may be sleeping.`);
+          }
+        }
+        
+        console.log(`Successfully loaded ${firebaseData.length} students from Firebase`);
+      } else {
+        throw new Error('No data available in Firebase');
+      }
     } catch (error) {
-      console.error('Failed to fetch students:', error);
+      console.error('Failed to load from Firebase:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch students data. Please check if the backend server is running.",
+        description: "Unable to load data from Firebase. Please ensure backend has populated data at least once.",
         variant: "destructive",
       });
-      // Fallback to empty array on error
       setStudents([]);
       setStats(null);
+      setDataSource(null);
     } finally {
       setIsLoading(false);
     }
@@ -343,6 +414,43 @@ const Dashboard: React.FC = () => {
     >
       <SiteHeader />
       <main className="container mx-auto px-4 md:px-8 py-8 md:py-12 space-y-6">
+      {/* Data Source Indicator */}
+      {dataSource === 'firebase' && students.length > 0 && (
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-3 flex items-center gap-3"
+        >
+          <Database className="w-5 h-5 text-blue-400" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-blue-100">
+              Real-time Firebase Data
+            </p>
+            <p className="text-xs text-blue-200/80">
+              {(() => {
+                const firstStudent = students[0] as any;
+                if (firstStudent?.lastUpdated) {
+                  const updateTime = new Date(firstStudent.lastUpdated);
+                  const now = new Date();
+                  const minutesAgo = Math.floor((now.getTime() - updateTime.getTime()) / (1000 * 60));
+                  
+                  if (minutesAgo < 1) {
+                    return "Just updated • Backend is active";
+                  } else if (minutesAgo < 60) {
+                    return `Last updated ${minutesAgo} minute${minutesAgo === 1 ? '' : 's'} ago`;
+                  } else {
+                    const hoursAgo = Math.floor(minutesAgo / 60);
+                    return `Last updated ${hoursAgo} hour${hoursAgo === 1 ? '' : 's'} ago • Backend may be sleeping`;
+                  }
+                }
+                return "Data loaded from Firebase";
+              })()}
+            </p>
+          </div>
+        </motion.div>
+      )}
+      
       {/* Header */}
       <motion.div 
         className="flex items-center justify-between"

@@ -104,6 +104,44 @@ def update_latest_data(data: dict):
         return False
 
 
+def update_all_students(students: list):
+    """
+    Store all students data in Firebase for frontend direct access.
+    Stores each student by enrollment number for easy querying.
+    
+    Args:
+        students: List of student dictionaries with predictions
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        if not firebase_admin._apps:
+            logger.warning("Firebase not initialized. Cannot update students data.")
+            return False
+            
+        ref = db.reference("students")
+        
+        # Convert list to dictionary keyed by enrollment_no
+        students_dict = {}
+        for student in students:
+            enrollment = str(student.get('enrollment_no', student.get('Enrollment No', '')))
+            if enrollment:
+                students_dict[enrollment] = {
+                    **student,
+                    "lastUpdated": datetime.utcnow().isoformat()
+                }
+        
+        # Store all students
+        ref.set(students_dict)
+        logger.info(f"Successfully stored {len(students_dict)} students in Firebase at /students")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to update students in Firebase: {e}")
+        return False
+
+
 def update_student_prediction(student_id: str, prediction_data: dict):
     """
     Store individual student prediction in Firebase.
