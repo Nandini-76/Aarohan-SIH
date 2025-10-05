@@ -133,10 +133,10 @@ const Dashboard: React.FC = () => {
   const calculateStats = (studentData: Student[]) => {
     const stats: DashboardStats = {
       total_students: studentData.length,
-      green_count: studentData.filter(s => s.phase === "Green").length,
-      yellow_count: studentData.filter(s => s.phase === "Yellow").length,
-      orange_count: studentData.filter(s => s.phase === "Orange").length,
-      red_count: studentData.filter(s => s.phase === "Red").length,
+      green_count: studentData.filter(s => (s.final_phase || s.phase) === "Green").length,
+      yellow_count: studentData.filter(s => (s.final_phase || s.phase) === "Yellow").length,
+      orange_count: studentData.filter(s => (s.final_phase || s.phase) === "Orange").length,
+      red_count: studentData.filter(s => (s.final_phase || s.phase) === "Red").length,
       monitor_count: 0,
       at_risk_count: 0
     };
@@ -667,12 +667,12 @@ const Dashboard: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <RiskBadge 
-                        phase={student.phase || "Green"} 
-                        showIcon={student.phase === "Red" || student.phase === "Orange"}
+                        phase={(student.final_phase || student.phase) || "Green"} 
+                        showIcon={(student.final_phase || student.phase) === "Red" || (student.final_phase || student.phase) === "Orange"}
                       />
                     </TableCell>
                     <TableCell className="max-w-xs truncate text-muted-foreground">
-                      {student.risk_reason || "No specific risk factors"}
+                      {student.risk_reason || student.override_reason || "No specific risk factors"}
                     </TableCell>
                   </TableRow>
                 ))}
