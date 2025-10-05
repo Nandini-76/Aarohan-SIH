@@ -1,8 +1,6 @@
 fastapi
 uvicorn[standard]
 pandas
-motor
-pymongo
 python-multipart
 pydantic
 python-dotenv
@@ -11,3 +9,5 @@ scikit-learn==1.7.1
 joblib
 numpy
 requests
+# Firebase for data persistence
+firebase-admin

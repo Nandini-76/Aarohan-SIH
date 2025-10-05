@@ -24,9 +24,6 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Query, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from motor.motor_asyncio import AsyncIOMotorClient
-from bson import ObjectId
-from pymongo.errors import ConnectionFailure
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -63,6 +60,36 @@ except ImportError:
         run_batch_prediction_pipeline,
         send_notification
     )
+
+# Import Firebase service - handle both local and deployed environments
+try:
+    from services.firebase_service import (
+        init_firebase,
+        update_latest_data,
+        update_student_prediction,
+        update_batch_predictions,
+        is_firebase_initialized
+    )
+except ImportError:
+    try:
+        from app.services.firebase_service import (
+            init_firebase,
+            update_latest_data,
+            update_student_prediction,
+            update_batch_predictions,
+            is_firebase_initialized
+        )
+    except ImportError:
+        # Configure logging first
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger(__name__)
+        logger.warning("Firebase service not available")
+        # Define dummy functions if Firebase not available
+        def init_firebase(): return False
+        def update_latest_data(data): return False
+        def update_student_prediction(sid, data): return False
+        def update_batch_predictions(preds): return False
+        def is_firebase_initialized(): return False
 
 # Helper functions for API
 def generate_student_name(enrollment_no: str) -> str:
@@ -110,10 +137,6 @@ def _convert_phase_to_risk_label(phase: str) -> str:
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Environment configuration
-MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://wannabe:gummy(*_*)@ai-based-dropout-system.k51tjan.mongodb.net/?retryWrites=true&w=majority&appName=AI-based-dropout-system")
-DB_NAME = os.getenv("DB_NAME", "dropout_prediction")
 
 # Data file path - handle both local and deployed environments
 if os.path.exists("data/merged_dataset.csv"):
@@ -238,10 +261,6 @@ async def preflight_handler(request: Request):
     
     return Response(status_code=400)
 
-# MongoDB client initialization
-mongo_client = None
-database = None
-
 # Pydantic models for request/response
 class StudentRecord(BaseModel):
     """Individual student record model"""
@@ -334,7 +353,7 @@ class MetricsResponse(BaseModel):
     model_info: Optional[Dict[str, Any]] = Field(None, description="Model configuration info")
 
 
-# MongoDB connection management
+# ML Model Management
 def load_ml_model():
     """
     Load trained ML model and scaler if available.
@@ -407,32 +426,24 @@ def load_ml_model():
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize MongoDB connection and ML model on startup"""
-    global mongo_client, database
-    
+    """Initialize ML model and Firebase on startup"""
     # Load ML model
     load_ml_model()
     
-    # Connect to MongoDB
+    # Initialize Firebase for data persistence
     try:
-        mongo_client = AsyncIOMotorClient(MONGO_URI)
-        # Test connection with timeout
-        await mongo_client.admin.command('ping', maxTimeMS=5000)
-        database = mongo_client[DB_NAME]
-        logger.info(f"Successfully connected to MongoDB: {DB_NAME}")
+        firebase_success = init_firebase()
+        if firebase_success:
+            logger.info("Firebase initialized successfully - data will be persisted")
+        else:
+            logger.warning("Firebase not configured - continuing without persistence layer")
     except Exception as e:
-        logger.warning(f"Failed to connect to MongoDB: {e}")
-        logger.info("Continuing without database - using mock simulation IDs")
-        mongo_client = None
-        database = None
+        logger.error(f"Firebase initialization error: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Close MongoDB connection on shutdown"""
-    global mongo_client
-    if mongo_client:
-        mongo_client.close()
-        logger.info("MongoDB connection closed")
+    """Cleanup on shutdown"""
+    logger.info("Application shutdown")
 
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -530,39 +541,6 @@ def compute_ml_proba(df: pd.DataFrame) -> pd.DataFrame:
         return df
 
 
-async def save_to_mongo(simulation_data: dict) -> str:
-    """
-    Save simulation results to MongoDB.
-    
-    Args:
-        simulation_data: Dictionary containing simulation results
-        
-    Returns:
-        String representation of the inserted document's ObjectId
-        
-    Raises:
-        HTTPException: If database operation fails
-    """
-    if database is None:
-        # Return a mock simulation ID when database is not connected (for testing)
-        logger.warning("Database not connected - returning mock simulation ID")
-        return f"mock_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-    
-    try:
-        # Insert document with current timestamp
-        simulation_data['timestamp'] = datetime.utcnow()
-        result = await database.simulations.insert_one(simulation_data)
-        
-        # Convert ObjectId to string for JSON serialization
-        simulation_id = str(result.inserted_id)
-        logger.info(f"Saved simulation to MongoDB with ID: {simulation_id}")
-        return simulation_id
-        
-    except Exception as e:
-        logger.error(f"Failed to save to MongoDB: {e}")
-        raise HTTPException(status_code=500, detail=f"Database operation failed: {str(e)}")
-
-
 # API Endpoints
 @app.get("/", summary="Health Check")
 async def root():
@@ -572,7 +550,7 @@ async def root():
             "message": "AI-based Drop-out Prediction System is running",
             "version": "1.0.0",
             "timestamp": datetime.utcnow().isoformat(),
-            "database_status": "connected" if database is not None else "disconnected",
+            "firebase_status": "connected" if is_firebase_initialized() else "not_configured",
             "model_loaded": model_loaded,
             "status": "healthy"
         }
@@ -809,7 +787,8 @@ async def simulate_dropout_prediction(request: SimulateRequest):
                    f"model_phase={prediction_result['model_phase']}, "
                    f"final_phase={prediction_result['final_phase']}")
 
-        return SimulateResponse(
+        # Prepare response
+        response = SimulateResponse(
             enrollment_no=request.enrollment_no if hasattr(request, 'enrollment_no') else None,
             model_phase=prediction_result['model_phase'],
             final_phase=prediction_result['final_phase'],
@@ -818,6 +797,27 @@ async def simulate_dropout_prediction(request: SimulateRequest):
             rule_override=prediction_result['rule_override'],
             notification_message=notification_message
         )
+        
+        # Push latest simulation data to Firebase for judges to see
+        if is_firebase_initialized():
+            try:
+                firebase_data = {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "latest_simulation": {
+                        "enrollment_no": request.enrollment_no if hasattr(request, 'enrollment_no') else "anonymous",
+                        "final_phase": prediction_result['final_phase'],
+                        "risk_level": _convert_phase_to_risk_label(prediction_result['final_phase']),
+                        "ml_probability": prediction_result['ml_probability'],
+                        "rule_override": prediction_result['rule_override']
+                    },
+                    "backend_status": "active"
+                }
+                update_latest_data(firebase_data)
+                logger.info("Simulation data pushed to Firebase successfully")
+            except Exception as fb_error:
+                logger.warning(f"Failed to push to Firebase: {fb_error}")
+        
+        return response
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -830,38 +830,23 @@ async def simulate_dropout_prediction(request: SimulateRequest):
 @app.get("/simulations", response_model=SimulationListResponse, summary="Get All Past Simulations")
 async def get_simulations():
     """
-    Retrieve all past simulation results from MongoDB, sorted by timestamp (newest first).
+    Retrieve all past simulation results from Firebase.
     
     Returns:
-        List of all simulation records with ObjectIds converted to strings
+        List of all simulation records
         
     Raises:
-        HTTPException: If database query fails
+        HTTPException: If Firebase query fails
     """
-    if database is None:
-        # Return empty list when database is not connected (for testing)
-        logger.warning("Database not connected - returning empty simulations list")
-        return SimulationListResponse(simulations=[])
-    
     try:
-        # Query all simulations, sorted by ObjectId (timestamp) in descending order
-        cursor = database.simulations.find().sort("_id", -1)
-        simulations = await cursor.to_list(length=None)
-        
-        # Convert ObjectId to string for JSON serialization
-        for sim in simulations:
-            sim["_id"] = str(sim["_id"])
-            # Ensure timestamp is properly formatted
-            if "timestamp" in sim and sim["timestamp"]:
-                sim["timestamp"] = sim["timestamp"].isoformat()
-        
-        logger.info(f"Retrieved {len(simulations)} simulation records")
-        
-        return SimulationListResponse(simulations=simulations)
+        # TODO: Implement Firebase-based simulation history retrieval
+        # For now, return empty list as simulations are stored in Firebase /latestData
+        logger.info("Simulations endpoint called - Firebase stores latest data only")
+        return SimulationListResponse(simulations=[])
         
     except Exception as e:
         logger.error(f"Failed to retrieve simulations: {e}")
-        raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
 @app.get("/merge", response_model=MergeResponse, summary="Merge Distributed Datasets")
@@ -1044,6 +1029,93 @@ async def train_model(token: str = Query(..., description="Security token (use '
             metrics=None,
             model_path=None
         )
+
+
+@app.post("/firebase/update", summary="Update Firebase with Latest Data")
+async def update_firebase_data(data: Optional[Dict[str, Any]] = None):
+    """
+    Manually trigger Firebase update with latest prediction data.
+    This ensures judges can always see the latest results even when backend sleeps.
+    
+    Args:
+        data: Optional custom data to push. If not provided, uses sample data.
+        
+    Returns:
+        Status of Firebase update operation
+    """
+    try:
+        if not is_firebase_initialized():
+            return {
+                "status": "warning",
+                "message": "Firebase not initialized. Configure environment variables on Render.",
+                "firebase_configured": False
+            }
+        
+        # If no data provided, create sample summary data
+        if data is None:
+            data = {
+                "timestamp": datetime.utcnow().isoformat(),
+                "summary": "Backend pipeline completed",
+                "status": "active",
+                "last_simulation": "awaiting data"
+            }
+        
+        success = update_latest_data(data)
+        
+        if success:
+            return {
+                "status": "success",
+                "message": "Data successfully pushed to Firebase",
+                "firebase_configured": True,
+                "data": data
+            }
+        else:
+            return {
+                "status": "error",
+                "message": "Failed to push data to Firebase",
+                "firebase_configured": True
+            }
+            
+    except Exception as e:
+        logger.error(f"Firebase update endpoint failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Firebase update failed: {str(e)}")
+
+
+@app.get("/firebase/status", summary="Check Firebase Connection Status")
+async def firebase_status():
+    """
+    Check if Firebase is properly initialized and connected.
+    
+    Returns:
+        Firebase initialization status and configuration check
+    """
+    try:
+        initialized = is_firebase_initialized()
+        
+        # Check environment variables
+        env_vars_configured = all([
+            os.getenv("FIREBASE_PROJECT_ID"),
+            os.getenv("FIREBASE_PRIVATE_KEY"),
+            os.getenv("FIREBASE_CLIENT_EMAIL"),
+            os.getenv("FIREBASE_DATABASE_URL")
+        ])
+        
+        return {
+            "firebase_initialized": initialized,
+            "environment_vars_configured": env_vars_configured,
+            "project_id": os.getenv("FIREBASE_PROJECT_ID", "not_set"),
+            "database_url": os.getenv("FIREBASE_DATABASE_URL", "not_set"),
+            "status": "connected" if initialized else "not_configured"
+        }
+        
+    except Exception as e:
+        logger.error(f"Firebase status check failed: {e}")
+        return {
+            "firebase_initialized": False,
+            "environment_vars_configured": False,
+            "error": str(e),
+            "status": "error"
+        }
 
 
 # Development server entry point
