@@ -182,6 +182,8 @@ backend/app/models/data/*.csv
 # Re-add essential data files
 !backend/app/data/merged_dataset.csv
 !backend/distributed-data/*.csv
+# Re-add the trained ML model (needed for predictions)
+!backend/app/models/rf_pipeline_broad.joblib
 
 # System files
 .DS_Store

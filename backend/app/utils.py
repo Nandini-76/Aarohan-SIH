@@ -584,6 +584,50 @@ def predict_with_unified_system(student_data: Dict[str, Any], ml_model=None, ml_
         else:
             logger.warning(f"Invalid pipeline object: {type(pipeline)}, using default")
     
+    # If ML model is not available or failed, use rule-based Yellow/Orange classification
+    if ml_model is None or model_phase == "Green":
+        # Rule-based risk assessment when no ML model
+        attendance = float(features.get('attendance', 100))
+        cgpa = float(features.get('cgpa', 10))
+        backlogs = int(features.get('backlogs', 0))
+        
+        # Calculate risk score
+        risk_score = 0
+        
+        # Attendance risk
+        if attendance < 60:
+            risk_score += 3  # Critical
+        elif attendance < 75:
+            risk_score += 2  # High
+        elif attendance < 85:
+            risk_score += 1  # Medium
+        
+        # CGPA risk
+        if cgpa < 5:
+            risk_score += 3  # Critical
+        elif cgpa < 6.5:
+            risk_score += 2  # High
+        elif cgpa < 7.5:
+            risk_score += 1  # Medium
+        
+        # Backlogs risk
+        if backlogs >= 5:
+            risk_score += 3  # Critical
+        elif backlogs >= 3:
+            risk_score += 2  # High
+        elif backlogs >= 1:
+            risk_score += 1  # Medium
+        
+        # Map risk score to phase
+        if risk_score >= 7:
+            model_phase = "Red"  # Will be caught by Red override below
+        elif risk_score >= 5:
+            model_phase = "Orange"  # At Risk
+        elif risk_score >= 3:
+            model_phase = "Yellow"  # To Monitor
+        else:
+            model_phase = "Green"  # Safe
+    
     # Apply unified override rules (Red zone safety only)
     override_phase, override_reason = apply_unified_override_rules(features)
     
