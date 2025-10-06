@@ -427,6 +427,65 @@ def load_ml_model():
         ml_metrics = None
         model_loaded = False
 
+async def populate_firebase_on_startup():
+    """
+    Generate fresh predictions and push to Firebase on startup.
+    This ensures judges always see up-to-date data when backend wakes up.
+    """
+    try:
+        logger.info("🔄 Generating fresh predictions on startup...")
+        
+        # Load the merged dataset
+        merged_file = os.path.join(os.path.dirname(__file__), "data", "merged_dataset.csv")
+        if not os.path.exists(merged_file):
+            logger.warning(f"Dataset not found for startup population: {merged_file}")
+            return
+        
+        df = pd.read_csv(merged_file)
+        logger.info(f"Loaded {len(df)} student records for startup prediction")
+        
+        # Generate predictions
+        df = add_predictions_to_dataset(df, ml_model, ml_scaler)
+        
+        # Convert to the format expected by Firebase
+        students = []
+        for _, row in df.iterrows():
+            cleaned_student = {
+                "student_id": str(row.get('enrollment_no', '')),
+                "enrollment_no": str(row.get('enrollment_no', '')),
+                "name": generate_student_name(str(row.get('enrollment_no', ''))),
+                "department": str(row.get('department', '')) if pd.notna(row.get('department')) else None,
+                "attendance": float(row.get('attendance', 0)),
+                "cgpa": float(row.get('cgpa', 0)),
+                "backlogs": int(row.get('backlogs', 0)),
+                "marks_10th": float(row.get('marks_10th', 0)),
+                "marks_12th": float(row.get('marks_12th', 0)),
+                "fees_flag": int(row.get('fees_flag', 0)),
+                "suspension_flag": int(row.get('suspension_flag', 0)),
+                "gender": str(row.get('gender', 'M')),
+                "age_at_enrollment": int(row.get('age_at_enrollment', 0)) if pd.notna(row.get('age_at_enrollment')) else None,
+                "category": str(row.get('category', '')) if pd.notna(row.get('category')) else None,
+                "prediction": str(row.get('final_phase', 'Green')),
+                "final_phase": str(row.get('final_phase', 'Green')),
+                "model_phase": str(row.get('model_phase', 'Green')),
+                "risk_label": _convert_phase_to_risk_label(str(row.get('final_phase', 'Green'))),
+                "override_reason": str(row.get('override_reason', row.get('red_reason', ''))),
+                "ml_probability": float(row.get('ml_probability', 0)) if pd.notna(row.get('ml_probability')) else None,
+                "rule_override": bool(row.get('rule_override', False))
+            }
+            students.append(cleaned_student)
+        
+        # Push to Firebase
+        if is_firebase_initialized():
+            update_all_students(students)
+            logger.info(f"✅ Successfully populated Firebase with {len(students)} students on startup")
+        else:
+            logger.warning("Firebase not initialized, skipping startup population")
+            
+    except Exception as e:
+        logger.error(f"Failed to populate Firebase on startup: {e}")
+        # Don't raise - we want the app to start even if this fails
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize ML model and Firebase on startup"""
@@ -438,6 +497,9 @@ async def startup_event():
         firebase_success = init_firebase()
         if firebase_success:
             logger.info("Firebase initialized successfully - data will be persisted")
+            
+            # Populate Firebase with fresh predictions on startup
+            await populate_firebase_on_startup()
         else:
             logger.warning("Firebase not configured - continuing without persistence layer")
     except Exception as e:
