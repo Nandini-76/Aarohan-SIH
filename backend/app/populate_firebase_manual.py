@@ -152,26 +152,58 @@ def load_and_format_students(data_file: Path) -> list:
                 return default
             return str(value)
         
+        # Create student dict with ALL available fields
         cleaned_student = {
+            # Core identification
             "student_id": safe_str(row.get('enrollment_no', '')),
             "enrollment_no": safe_str(row.get('enrollment_no', '')),
-            "name": generate_student_name(safe_str(row.get('enrollment_no', ''))),
+            "name": safe_str(row.get('student_name', generate_student_name(safe_str(row.get('enrollment_no', ''))))),
             "department": safe_str(row.get('department', '')) if pd.notna(row.get('department')) else None,
+            
+            # Personal information
+            "gender": safe_str(row.get('gender', 'M')),
+            "age": safe_int(row.get('age', 0)) if pd.notna(row.get('age')) else None,
+            "age_at_enrollment": safe_int(row.get('age_at_enrollment', 0)) if pd.notna(row.get('age_at_enrollment')) else None,
+            "hometown": safe_str(row.get('hometown', '')) if pd.notna(row.get('hometown')) else None,
+            "category": safe_str(row.get('category', '')) if pd.notna(row.get('category')) else None,
+            
+            # Academic information
             "attendance": safe_float(row.get('attendance', 0)),
             "cgpa": safe_float(row.get('cgpa', 0)),
+            "sgpa": safe_float(row.get('sgpa', 0)) if pd.notna(row.get('sgpa')) else None,
+            "sgpa1": safe_float(row.get('sgpa1', 0)) if pd.notna(row.get('sgpa1')) else None,
+            "sgpa2": safe_float(row.get('sgpa2', 0)) if pd.notna(row.get('sgpa2')) else None,
+            "sgpa3": safe_float(row.get('sgpa3', 0)) if pd.notna(row.get('sgpa3')) else None,
+            "sgpa4": safe_float(row.get('sgpa4', 0)) if pd.notna(row.get('sgpa4')) else None,
+            "sgpa5": safe_float(row.get('sgpa5', 0)) if pd.notna(row.get('sgpa5')) else None,
+            "sgpa6": safe_float(row.get('sgpa6', 0)) if pd.notna(row.get('sgpa6')) else None,
+            "sgpa7": safe_float(row.get('sgpa7', 0)) if pd.notna(row.get('sgpa7')) else None,
             "backlogs": safe_int(row.get('backlogs', 0)),
             "marks_10th": safe_float(row.get('marks_10th', 0)),
             "marks_12th": safe_float(row.get('marks_12th', 0)),
+            "section": safe_str(row.get('section', '')) if pd.notna(row.get('section')) else None,
+            "course": safe_str(row.get('course', '')) if pd.notna(row.get('course')) else None,
+            "year_level": safe_int(row.get('year_level', 0)) if pd.notna(row.get('year_level')) else None,
+            "year_enrollment": safe_int(row.get('year_enrollment', 0)) if pd.notna(row.get('year_enrollment')) else None,
+            "year_completion": safe_int(row.get('year_completion', 0)) if pd.notna(row.get('year_completion')) else None,
+            "specialization": safe_str(row.get('specialization', '')) if pd.notna(row.get('specialization')) else None,
+            
+            # Family and financial
+            "father_occupation": safe_str(row.get('father_occupation', '')) if pd.notna(row.get('father_occupation')) else None,
+            "mother_occupation": safe_str(row.get('mother_occupation', '')) if pd.notna(row.get('mother_occupation')) else None,
+            "family_income": safe_float(row.get('family_income', 0)) if pd.notna(row.get('family_income')) else None,
+            "fees_status": safe_str(row.get('fees_status', '')) if pd.notna(row.get('fees_status')) else None,
             "fees_flag": safe_int(row.get('fees_flag', 0)),
+            "suspension": safe_str(row.get('suspension', '')) if pd.notna(row.get('suspension')) else None,
             "suspension_flag": safe_int(row.get('suspension_flag', 0)),
-            "gender": safe_str(row.get('gender', 'M')),
-            "age_at_enrollment": safe_int(row.get('age_at_enrollment', 0)) if pd.notna(row.get('age_at_enrollment')) else None,
-            "category": safe_str(row.get('category', '')) if pd.notna(row.get('category')) else None,
+            
+            # ML Predictions
             "prediction": safe_str(row.get('final_phase', 'Green')),
             "final_phase": safe_str(row.get('final_phase', 'Green')),
             "model_phase": safe_str(row.get('model_phase', 'Green')),
+            "predicted_phase": safe_str(row.get('predicted_phase', safe_str(row.get('final_phase', 'Green')))),
             "risk_label": convert_phase_to_risk_label(safe_str(row.get('final_phase', 'Green'))),
-            "override_reason": safe_str(row.get('override_reason', row.get('red_reason', ''))),
+            "override_reason": safe_str(row.get('red_reason', '')) if pd.notna(row.get('red_reason')) else None,
             "ml_probability": safe_float(row.get('ml_probability', 0)) if pd.notna(row.get('ml_probability')) else 0.0,
             "rule_override": bool(row.get('rule_override', False))
         }
@@ -249,13 +281,18 @@ def main():
     script_dir = Path(__file__).parent
     data_dir = script_dir / "data"
     
-    # Priority order for data files
+    # Priority order for data files (prioritize comprehensive data)
+    comprehensive_file = data_dir / "comprehensive_predicted.csv"
     predicted_file = data_dir / "predicted_phase_data.csv"
     merged_with_pred_file = data_dir / "merged_with_predictions.csv"
     merged_file = data_dir / "merged_dataset.csv"
     
     data_file = None
-    if predicted_file.exists():
+    if comprehensive_file.exists():
+        data_file = comprehensive_file
+        logger.info(f"\n✓ Found comprehensive dataset: {comprehensive_file.name}")
+        logger.info("  (Includes ALL original fields + ML predictions)")
+    elif predicted_file.exists():
         data_file = predicted_file
         logger.info(f"\n✓ Found preprocessed dataset: {predicted_file.name}")
     elif merged_with_pred_file.exists():

@@ -1,27 +1,61 @@
 export interface Student {
+  // Core identification
   enrollment_no: string;
-  student_id?: string; // Alternative ID field
+  student_id?: string;
+  name?: string; // Real student name from original data
+  
+  // Personal information
+  gender: string;
+  age?: number; // Current age
+  age_at_enrollment?: number;
+  hometown?: string;
+  category?: string; // SC, ST, OBC, General, EWS
+  
+  // Academic information
   attendance: number;
   cgpa: number;
+  sgpa?: number; // Current semester GPA
+  sgpa1?: number; // Semester 1 GPA
+  sgpa2?: number; // Semester 2 GPA
+  sgpa3?: number; // Semester 3 GPA
+  sgpa4?: number; // Semester 4 GPA
+  sgpa5?: number; // Semester 5 GPA
+  sgpa6?: number; // Semester 6 GPA
+  sgpa7?: number; // Semester 7 GPA
   backlogs: number;
   marks_10th: number;
   marks_12th: number;
-  fees_flag: number; // 0 = paid, 1 = unpaid
-  suspension_flag: number; // 0 = no suspension, 1 = suspended
-  gender: string;
-  age_at_enrollment?: number;
-  category?: string;
   department?: string;
+  section?: string;
+  course?: string; // Full course name (e.g., "B.B.A.", "B.Tech")
+  year_level?: number; // 1, 2, 3, or 4
+  year_enrollment?: number; // Year when enrolled (e.g., 2023)
+  year_completion?: number; // Expected completion year
+  specialization?: string;
+  
+  // Family and financial information
+  father_occupation?: string;
+  mother_occupation?: string;
+  family_income?: number; // Annual family income
+  fees_status?: string; // "Paid", "Partial", "Pending"
+  fees_flag: number; // 0 = paid, 1 = unpaid
+  suspension?: string; // "Yes", "No"
+  suspension_flag: number; // 0 = no suspension, 1 = suspended
+  
+  // ML Predictions
   final_phase: "Green" | "Yellow" | "Orange" | "Red";
   model_phase?: "Green" | "Yellow" | "Orange" | "Red";
+  predicted_phase?: "Green" | "Yellow" | "Orange" | "Red";
   override_reason: string;
   ml_probability: number | null;
   rule_override?: boolean;
   risk_label?: string;
-  // Computed fields for display
-  name?: string; // We'll generate this from enrollment_no
+  
+  // Computed/alias fields for display
   phase?: "Green" | "Yellow" | "Orange" | "Red"; // Alias for final_phase
   risk_reason?: string; // Alias for override_reason
+  prediction?: "Green" | "Yellow" | "Orange" | "Red"; // Another alias
+  
   // Debug info (only in development)
   __debug?: {
     raw_backend_data?: any;

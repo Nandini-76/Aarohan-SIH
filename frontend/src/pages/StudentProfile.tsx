@@ -35,6 +35,22 @@ const StudentProfile: React.FC = () => {
   const fetchStudent = async (id: string) => {
     try {
       setIsLoading(true);
+      
+      // Try Firebase first (has comprehensive data)
+      try {
+        const { getStudentFromFirebase } = await import('../services/firebase');
+        const data = await getStudentFromFirebase(id);
+        
+        if (data) {
+          console.log('✓ Fetched student from Firebase with comprehensive data');
+          setStudent(data);
+          return;
+        }
+      } catch (firebaseError) {
+        console.warn('Firebase fetch failed, falling back to backend:', firebaseError);
+      }
+      
+      // Fallback to backend API
       const data = await studentApi.getStudent(id);
       setStudent(data);
     } catch (error) {
@@ -535,6 +551,185 @@ const StudentProfile: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Comprehensive Information Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Family & Background */}
+        {(student.hometown || student.father_occupation || student.mother_occupation || student.family_income) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-primary" />
+                <span>Family & Background</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {student.hometown && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground flex items-center">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    Hometown
+                  </label>
+                  <p className="text-lg font-medium">{student.hometown}</p>
+                </div>
+              )}
+              
+              <Separator />
+              
+              <div className="grid grid-cols-2 gap-4">
+                {student.father_occupation && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Father's Occupation</label>
+                    <p className="text-md font-medium">{student.father_occupation}</p>
+                  </div>
+                )}
+                {student.mother_occupation && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Mother's Occupation</label>
+                    <p className="text-md font-medium">{student.mother_occupation}</p>
+                  </div>
+                )}
+              </div>
+              
+              {student.family_income && (
+                <>
+                  <Separator />
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Annual Family Income</label>
+                    <p className="text-lg font-semibold text-primary">
+                      ₹{student.family_income.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Academic Progress (Semester-wise) */}
+        {(student.sgpa1 || student.sgpa2 || student.sgpa3 || student.sgpa4 || student.sgpa5) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <GraduationCap className="h-5 w-5 text-primary" />
+                <span>Semester-wise Performance</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                {student.sgpa1 !== undefined && student.sgpa1 > 0 && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Semester 1</p>
+                    <p className="text-xl font-bold">{student.sgpa1.toFixed(2)}</p>
+                    <Progress value={(student.sgpa1 / 10) * 100} className="h-1 mt-2" />
+                  </div>
+                )}
+                {student.sgpa2 !== undefined && student.sgpa2 > 0 && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Semester 2</p>
+                    <p className="text-xl font-bold">{student.sgpa2.toFixed(2)}</p>
+                    <Progress value={(student.sgpa2 / 10) * 100} className="h-1 mt-2" />
+                  </div>
+                )}
+                {student.sgpa3 !== undefined && student.sgpa3 > 0 && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Semester 3</p>
+                    <p className="text-xl font-bold">{student.sgpa3.toFixed(2)}</p>
+                    <Progress value={(student.sgpa3 / 10) * 100} className="h-1 mt-2" />
+                  </div>
+                )}
+                {student.sgpa4 !== undefined && student.sgpa4 > 0 && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Semester 4</p>
+                    <p className="text-xl font-bold">{student.sgpa4.toFixed(2)}</p>
+                    <Progress value={(student.sgpa4 / 10) * 100} className="h-1 mt-2" />
+                  </div>
+                )}
+                {student.sgpa5 !== undefined && student.sgpa5 > 0 && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Semester 5</p>
+                    <p className="text-xl font-bold">{student.sgpa5.toFixed(2)}</p>
+                    <Progress value={(student.sgpa5 / 10) * 100} className="h-1 mt-2" />
+                  </div>
+                )}
+                {student.sgpa6 !== undefined && student.sgpa6 > 0 && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Semester 6</p>
+                    <p className="text-xl font-bold">{student.sgpa6.toFixed(2)}</p>
+                    <Progress value={(student.sgpa6 / 10) * 100} className="h-1 mt-2" />
+                  </div>
+                )}
+                {student.sgpa7 !== undefined && student.sgpa7 > 0 && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Semester 7</p>
+                    <p className="text-xl font-bold">{student.sgpa7.toFixed(2)}</p>
+                    <Progress value={(student.sgpa7 / 10) * 100} className="h-1 mt-2" />
+                  </div>
+                )}
+              </div>
+              
+              <Separator />
+              
+              <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
+                <span className="font-medium">Cumulative GPA</span>
+                <span className="text-2xl font-bold text-primary">{student.cgpa.toFixed(2)}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Course Details */}
+      {(student.course || student.section || student.year_enrollment || student.year_completion || student.specialization) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              <span>Course Details</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {student.course && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Program</label>
+                  <p className="text-lg font-medium">{student.course}</p>
+                </div>
+              )}
+              {student.section && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Section</label>
+                  <Badge variant="outline">{student.section}</Badge>
+                </div>
+              )}
+              {student.year_enrollment && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Year of Enrollment</label>
+                  <p className="text-lg font-medium">{student.year_enrollment}</p>
+                </div>
+              )}
+              {student.year_completion && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Expected Completion</label>
+                  <p className="text-lg font-medium">{student.year_completion}</p>
+                </div>
+              )}
+              {student.year_level && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Current Year</label>
+                  <Badge variant="secondary">Year {student.year_level}</Badge>
+                </div>
+              )}
+              {student.specialization && (
+                <div className="col-span-2">
+                  <label className="text-sm font-medium text-muted-foreground">Specialization</label>
+                  <p className="text-lg font-medium">{student.specialization}</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recommendations */}
       {student.phase !== "Green" && (
