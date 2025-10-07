@@ -523,23 +523,34 @@ def load_ml_model():
 
 async def populate_firebase_on_startup():
     """
-    Generate fresh predictions and push to Firebase on startup.
-    This ensures judges always see up-to-date data when backend wakes up.
+    Load preprocessed dataset with predictions and push to Firebase on startup.
+    This ensures the frontend always sees the latest data with 2,080+ students.
     """
     try:
-        logger.info("🔄 Generating fresh predictions on startup...")
+        logger.info("🔄 Loading preprocessed dataset for Firebase...")
         
-        # Load the merged dataset
-        merged_file = os.path.join(os.path.dirname(__file__), "data", "merged_dataset.csv")
-        if not os.path.exists(merged_file):
-            logger.warning(f"Dataset not found for startup population: {merged_file}")
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        
+        # Priority order: predicted_phase_data.csv > merged_with_predictions.csv > merged_dataset.csv
+        predicted_phase_file = os.path.join(data_dir, "predicted_phase_data.csv")
+        merged_with_pred_file = os.path.join(data_dir, "merged_with_predictions.csv")
+        merged_file = os.path.join(data_dir, "merged_dataset.csv")
+        
+        # Try to load the preprocessed large dataset first
+        if os.path.exists(predicted_phase_file):
+            df = pd.read_csv(predicted_phase_file)
+            logger.info(f"✓ Loaded {len(df)} students from predicted_phase_data.csv (preprocessed)")
+        elif os.path.exists(merged_with_pred_file):
+            df = pd.read_csv(merged_with_pred_file)
+            logger.info(f"Loaded {len(df)} students from merged_with_predictions.csv (demo with predictions)")
+        elif os.path.exists(merged_file):
+            df = pd.read_csv(merged_file)
+            logger.info(f"Loaded {len(df)} students from merged_dataset.csv - generating predictions...")
+            # Generate predictions on-the-fly for demo data
+            df = add_predictions_to_dataset(df, ml_model, ml_scaler)
+        else:
+            logger.warning(f"No dataset found for startup population in {data_dir}")
             return
-        
-        df = pd.read_csv(merged_file)
-        logger.info(f"Loaded {len(df)} student records for startup prediction")
-        
-        # Generate predictions
-        df = add_predictions_to_dataset(df, ml_model, ml_scaler)
         
         # Convert to the format expected by Firebase
         students = []
@@ -608,102 +619,9 @@ async def shutdown_event():
     logger.info("Application shutdown")
 
 
-def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Normalize column names and values for consistent processing.
-    
-    Args:
-        df: Raw dataframe from CSV
-        
-    Returns:
-        Normalized dataframe with standardized column names and values
-    """
-    # Create a copy to avoid modifying original
-    normalized_df = df.copy()
-    
-    # Normalize column names - remove spaces, convert to lowercase
-    normalized_df.columns = [col.strip().lower().replace(' ', '_') for col in normalized_df.columns]
-    
-    # Ensure required columns exist
-    required_cols = ['enrollment_no', 'fees_paid', 'gpa', 'marks_10', 'marks_12', 
-                    'attendance_percent', 'backlogs', 'suspension']
-    missing_cols = [col for col in required_cols if col not in normalized_df.columns]
-    if missing_cols:
-        raise ValueError(f"Missing required columns: {missing_cols}")
-    
-    # Normalize string values (Y/N fields)
-    for col in ['fees_paid', 'suspension']:
-        if col in normalized_df.columns:
-            normalized_df[col] = normalized_df[col].astype(str).str.upper().str.strip()
-    
-    # Ensure numeric columns are properly typed
-    numeric_cols = ['gpa', 'marks_10', 'marks_12', 'attendance_percent', 'backlogs']
-    for col in numeric_cols:
-        if col in normalized_df.columns:
-            normalized_df[col] = pd.to_numeric(normalized_df[col], errors='coerce')
-    
-    logger.info(f"Normalized {len(normalized_df)} student records")
-    return normalized_df
-
-
-def compute_ml_proba(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compute ML dropout probabilities for students using the trained model.
-    
-    Args:
-        df: Normalized dataframe with student data
-        
-    Returns:
-        Dataframe with additional 'ml_proba' column (float between 0 and 1)
-        Returns original df if model not loaded
-    """
-    global ml_model, ml_scaler, ml_feature_names, model_loaded
-    
-    if not model_loaded or ml_model is None or ml_scaler is None:
-        # No model available - add null column for consistency
-        df['ml_proba'] = None
-        return df
-    
-    try:
-        # Prepare feature matrix in the same order as training
-        df_features = df.copy()
-        
-        # Create feature flags (same as training script)
-        df_features['fees_flag'] = (df_features['fees_paid'] == 'N').astype(int)
-        df_features['suspension_flag'] = (df_features['suspension'] == 'Y').astype(int)
-        
-        # Handle missing values with same defaults as training
-        df_features['attendance_percent'].fillna(70.0, inplace=True)
-        df_features['gpa'].fillna(5.0, inplace=True)
-        df_features['marks_10'].fillna(60.0, inplace=True)
-        df_features['marks_12'].fillna(60.0, inplace=True)
-        df_features['backlogs'].fillna(0, inplace=True)
-        
-        # Extract features in exact training order
-        X = df_features[ml_feature_names].values
-        
-        # Scale features
-        X_scaled = ml_scaler.transform(X)
-        
-        # Predict probabilities (probability of dropout = class 1)
-        ml_probabilities = ml_model.predict_proba(X_scaled)[:, 1]
-        
-        # Add to dataframe
-        df['ml_proba'] = ml_probabilities
-        
-        logger.info(f"Computed ML probabilities for {len(df)} students")
-        logger.info(f"ML proba range: {ml_probabilities.min():.3f} - {ml_probabilities.max():.3f}")
-        
-        return df
-        
-    except Exception as e:
-        logger.error(f"Failed to compute ML probabilities: {e}")
-        # Fallback: add null column
-        df['ml_proba'] = None
-        return df
-
-
+# ==========================================
 # API Endpoints
+# ==========================================
 @app.get("/", summary="Health Check")
 async def root():
     """Health check endpoint"""
