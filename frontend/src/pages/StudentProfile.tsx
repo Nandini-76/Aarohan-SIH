@@ -39,11 +39,31 @@ const StudentProfile: React.FC = () => {
       // Try Firebase first (has comprehensive data)
       try {
         const { getStudentFromFirebase } = await import('../services/firebase');
-        const data = await getStudentFromFirebase(id);
+        const firebaseData = await getStudentFromFirebase(id);
         
-        if (data) {
+        if (firebaseData) {
           console.log('✓ Fetched student from Firebase with comprehensive data');
-          setStudent(data);
+          
+          // Normalize Firebase data to match expected Student interface
+          const normalizedData = {
+            ...firebaseData,
+            // Ensure phase field is set from final_phase
+            phase: firebaseData.final_phase || firebaseData.phase || firebaseData.prediction || 'Green',
+            // Ensure risk_reason is set from override_reason
+            risk_reason: firebaseData.override_reason || firebaseData.risk_reason || '',
+            // Ensure prediction field is set
+            prediction: firebaseData.final_phase || firebaseData.prediction || 'Green',
+          };
+          
+          console.log('Normalized student data:', {
+            enrollment_no: normalizedData.enrollment_no,
+            name: normalizedData.name,
+            final_phase: normalizedData.final_phase,
+            phase: normalizedData.phase,
+            prediction: normalizedData.prediction,
+          });
+          
+          setStudent(normalizedData);
           return;
         }
       } catch (firebaseError) {
