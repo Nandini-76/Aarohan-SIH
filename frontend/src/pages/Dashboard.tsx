@@ -21,10 +21,6 @@ const Dashboard: React.FC = () => {
   // Filter state
   const [showFilter, setShowFilter] = useState(false);
   const [filterDepartment, setFilterDepartment] = useState('');
-  const [filterYear, setFilterYear] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
-  const [filterHometown, setFilterHometown] = useState('');
-  const [filterFeeStatus, setFilterFeeStatus] = useState('');
   const [filterAttendance, setFilterAttendance] = useState('');
   const [filterCgpa, setFilterCgpa] = useState('');
   const [filterBacklogs, setFilterBacklogs] = useState('');
@@ -115,23 +111,6 @@ const Dashboard: React.FC = () => {
     if (filterDepartment) {
       filtered = filtered.filter(s => s.department === filterDepartment);
     }
-    // Apply Year filter
-    if (filterYear) {
-      filtered = filtered.filter(s => s.year_level?.toString() === filterYear);
-    }
-    // Apply Category filter
-    if (filterCategory) {
-      filtered = filtered.filter(s => s.category === filterCategory);
-    }
-    // Apply Hometown filter
-    if (filterHometown) {
-      filtered = filtered.filter(s => s.hometown?.toLowerCase().includes(filterHometown.toLowerCase()));
-    }
-    // Apply Fee Status filter
-    if (filterFeeStatus) {
-      if (filterFeeStatus === 'paid') filtered = filtered.filter(s => s.fees_flag === 0);
-      if (filterFeeStatus === 'unpaid') filtered = filtered.filter(s => s.fees_flag === 1);
-    }
     // Apply Attendance filter
     if (filterAttendance) {
       if (filterAttendance === '<60') filtered = filtered.filter(s => s.attendance < 60);
@@ -168,7 +147,7 @@ const Dashboard: React.FC = () => {
       return a.enrollment_no.localeCompare(b.enrollment_no);
     });
     setFilteredStudents(sortedFiltered);
-  }, [students, searchTerm, filterDepartment, filterYear, filterCategory, filterHometown, filterFeeStatus, filterAttendance, filterCgpa, filterBacklogs, filterRisk]);
+  }, [students, searchTerm, filterDepartment, filterAttendance, filterCgpa, filterBacklogs, filterRisk]);
 
   const fetchStudents = async () => {
     try {
@@ -678,47 +657,6 @@ const Dashboard: React.FC = () => {
                         ))}
                       </select>
                     </div>
-                    {/* Year Level Filter */}
-                    <div>
-                      <label className="block text-xs font-semibold mb-1">Year</label>
-                      <select className="w-full border rounded p-1" value={filterYear} onChange={e => setFilterYear(e.target.value)}>
-                        <option value="">All Years</option>
-                        <option value="1">Year 1</option>
-                        <option value="2">Year 2</option>
-                        <option value="3">Year 3</option>
-                        <option value="4">Year 4</option>
-                      </select>
-                    </div>
-                    {/* Category Filter */}
-                    <div>
-                      <label className="block text-xs font-semibold mb-1">Category</label>
-                      <select className="w-full border rounded p-1" value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
-                        <option value="">All Categories</option>
-                        {[...new Set(students.map(s => s.category).filter(Boolean))].map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {/* Hometown Filter */}
-                    <div>
-                      <label className="block text-xs font-semibold mb-1">Hometown</label>
-                      <input
-                        type="text"
-                        placeholder="Search hometown..."
-                        className="w-full border rounded p-1"
-                        value={filterHometown}
-                        onChange={e => setFilterHometown(e.target.value)}
-                      />
-                    </div>
-                    {/* Fee Status Filter */}
-                    <div>
-                      <label className="block text-xs font-semibold mb-1">Fee Status</label>
-                      <select className="w-full border rounded p-1" value={filterFeeStatus} onChange={e => setFilterFeeStatus(e.target.value)}>
-                        <option value="">All</option>
-                        <option value="paid">Paid</option>
-                        <option value="unpaid">Unpaid</option>
-                      </select>
-                    </div>
                     {/* Attendance Filter */}
                     <div>
                       <label className="block text-xs font-semibold mb-1">Attendance</label>
@@ -763,15 +701,11 @@ const Dashboard: React.FC = () => {
                     <div className="flex justify-end gap-2 pt-2">
                       <Button size="sm" variant="secondary" onClick={() => { 
                         setFilterDepartment(''); 
-                        setFilterYear(''); 
-                        setFilterCategory(''); 
-                        setFilterHometown(''); 
-                        setFilterFeeStatus(''); 
                         setFilterAttendance(''); 
                         setFilterCgpa(''); 
                         setFilterBacklogs(''); 
                         setFilterRisk(''); 
-                      }}>Clear All</Button>
+                      }}>Clear Filters</Button>
                       <Button size="sm" onClick={() => setShowFilter(false)}>Apply</Button>
                     </div>
                   </div>
@@ -805,14 +739,9 @@ const Dashboard: React.FC = () => {
                   <TableHead>Enrollment No.</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Department</TableHead>
-                  <TableHead>Year</TableHead>
-                  <TableHead>Hometown</TableHead>
-                  <TableHead>Category</TableHead>
                   <TableHead>Attendance</TableHead>
                   <TableHead>CGPA</TableHead>
                   <TableHead>Backlogs</TableHead>
-                  <TableHead>Family Income</TableHead>
-                  <TableHead>Fee Status</TableHead>
                   <TableHead>Risk Level</TableHead>
                   <TableHead className="max-w-xs">Risk Factors</TableHead>
                 </TableRow>
@@ -832,19 +761,6 @@ const Dashboard: React.FC = () => {
                       <Badge variant="outline">{student.department || "N/A"}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">
-                        {student.year_level ? `Year ${student.year_level}` : "N/A"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {student.hometown || "N/A"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {student.category || "General"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
                       <span className={cn(
                         "font-medium",
                         student.attendance < 70 ? "text-destructive" : 
@@ -862,24 +778,6 @@ const Dashboard: React.FC = () => {
                       )}>
                         {student.backlogs}
                       </span>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {student.family_income ? (
-                        <span className="font-medium">
-                          ₹{(student.family_income / 100000).toFixed(1)}L
-                        </span>
-                      ) : "N/A"}
-                    </TableCell>
-                    <TableCell>
-                      {student.fees_flag === 0 ? (
-                        <Badge variant="secondary" className="bg-success/10 text-success text-xs">
-                          ✅ Paid
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive" className="text-xs">
-                          ⚠️ Unpaid
-                        </Badge>
-                      )}
                     </TableCell>
                     <TableCell>
                       <RiskBadge 
