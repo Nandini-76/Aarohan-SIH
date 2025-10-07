@@ -11,3 +11,5 @@ numpy
 requests
 # Firebase for data persistence
 firebase-admin
+# Excel file support for preprocessing
+openpyxl

@@ -12,6 +12,7 @@ for simulation and historical data retrieval.
 """
 
 import os
+import sys
 import json
 import logging
 import subprocess
@@ -357,6 +358,99 @@ class MetricsResponse(BaseModel):
 
 
 # ML Model Management
+async def run_preprocessing_if_needed():
+    """
+    Run preprocessing pipeline if predicted_phase_data.csv doesn't exist or is outdated.
+    This ensures the large dataset is processed and ready for the backend.
+    """
+    try:
+        data_dir = Path(__file__).parent / "data"
+        predicted_data_file = data_dir / "predicted_phase_data.csv"
+        cleaned_data_file = data_dir / "cleaned_data.csv"
+        
+        # Check if we need to run preprocessing
+        needs_preprocessing = False
+        
+        if not predicted_data_file.exists():
+            logger.info("Predicted data file not found - preprocessing needed")
+            needs_preprocessing = True
+        elif not cleaned_data_file.exists():
+            logger.info("Cleaned data file not found - preprocessing needed")
+            needs_preprocessing = True
+        else:
+            # Check if source data is newer than processed data
+            full_college_data_dir = Path(__file__).parent.parent / "Full-college-data"
+            if full_college_data_dir.exists():
+                # Get the latest modification time of source files
+                source_files = list(full_college_data_dir.rglob("*.csv")) + list(full_college_data_dir.rglob("*.xlsx"))
+                if source_files:
+                    latest_source_time = max(f.stat().st_mtime for f in source_files)
+                    predicted_time = predicted_data_file.stat().st_mtime
+                    
+                    if latest_source_time > predicted_time:
+                        logger.info("Source data is newer than predicted data - preprocessing needed")
+                        needs_preprocessing = True
+        
+        if needs_preprocessing:
+            logger.info("="*60)
+            logger.info("RUNNING PREPROCESSING PIPELINE")
+            logger.info("="*60)
+            
+            # Step 1: Run data preprocessing
+            logger.info("\nStep 1: Preprocessing college data...")
+            preprocess_script = Path(__file__).parent / "preprocess_college_data.py"
+            
+            if preprocess_script.exists():
+                result = subprocess.run(
+                    [sys.executable, str(preprocess_script)],
+                    capture_output=True,
+                    text=True,
+                    timeout=300  # 5 minutes timeout
+                )
+                
+                if result.returncode == 0:
+                    logger.info("✓ Data preprocessing completed successfully")
+                    logger.info(result.stdout)
+                else:
+                    logger.error(f"Data preprocessing failed: {result.stderr}")
+                    logger.warning("Continuing with existing data if available...")
+                    return
+            else:
+                logger.warning(f"Preprocessing script not found: {preprocess_script}")
+            
+            # Step 2: Generate predictions
+            if cleaned_data_file.exists():
+                logger.info("\nStep 2: Generating ML predictions...")
+                predict_script = Path(__file__).parent / "generate_predictions.py"
+                
+                if predict_script.exists():
+                    result = subprocess.run(
+                        [sys.executable, str(predict_script)],
+                        capture_output=True,
+                        text=True,
+                        timeout=600  # 10 minutes timeout
+                    )
+                    
+                    if result.returncode == 0:
+                        logger.info("✓ Prediction generation completed successfully")
+                        logger.info(result.stdout)
+                    else:
+                        logger.error(f"Prediction generation failed: {result.stderr}")
+                        logger.warning("Continuing with existing data if available...")
+                else:
+                    logger.warning(f"Prediction script not found: {predict_script}")
+            
+            logger.info("="*60)
+            logger.info("PREPROCESSING PIPELINE COMPLETED")
+            logger.info("="*60)
+        else:
+            logger.info("✓ Predicted data file exists and is up to date - skipping preprocessing")
+            
+    except Exception as e:
+        logger.error(f"Error during preprocessing check: {e}")
+        logger.warning("Continuing with existing data if available...")
+
+
 def load_ml_model():
     """
     Load trained ML model and scaler if available.
@@ -488,7 +582,10 @@ async def populate_firebase_on_startup():
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize ML model and Firebase on startup"""
+    """Initialize ML model, run preprocessing if needed, and initialize Firebase on startup"""
+    # Run preprocessing pipeline if needed
+    await run_preprocessing_if_needed()
+    
     # Load ML model
     load_ml_model()
     
@@ -682,17 +779,28 @@ async def get_all_students():
         List of all student profiles including final_phase and override_reason if available
     """
     try:
-        # Check if predictions file exists first  
-        predictions_file = os.path.join(os.path.dirname(__file__), "data", "merged_with_predictions.csv")
-        if os.path.exists(predictions_file):
-            # Load predictions file directly
+        # Priority order for loading data:
+        # 1. predicted_phase_data.csv (large preprocessed dataset with predictions)
+        # 2. merged_with_predictions.csv (demo dataset with predictions)
+        # 3. merged_dataset.csv (demo dataset without predictions - generate on-the-fly)
+        
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        
+        # Try to load predicted_phase_data.csv (from preprocessing pipeline)
+        predicted_phase_file = os.path.join(data_dir, "predicted_phase_data.csv")
+        if os.path.exists(predicted_phase_file):
+            df = pd.read_csv(predicted_phase_file)
+            logger.info(f"✓ Loaded {len(df)} student records from predicted_phase_data.csv (preprocessed)")
+        # Fall back to merged_with_predictions.csv (demo data with predictions)
+        elif os.path.exists(os.path.join(data_dir, "merged_with_predictions.csv")):
+            predictions_file = os.path.join(data_dir, "merged_with_predictions.csv")
             df = pd.read_csv(predictions_file)
             logger.info(f"Loaded {len(df)} student records with predictions from {predictions_file}")
+        # Fall back to merged_dataset.csv (demo data without predictions)
         else:
-            # Load merged dataset and generate predictions on-the-fly
-            merged_file = os.path.join(os.path.dirname(__file__), "data", "merged_dataset.csv")
+            merged_file = os.path.join(data_dir, "merged_dataset.csv")
             if not os.path.exists(merged_file):
-                raise HTTPException(status_code=404, detail=f"Dataset not found: {merged_file}")
+                raise HTTPException(status_code=404, detail=f"No dataset found in {data_dir}")
             
             df = pd.read_csv(merged_file)
             logger.info(f"Loaded {len(df)} student records from merged dataset")

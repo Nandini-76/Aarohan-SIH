@@ -1,0 +1,161 @@
+﻿Enrollment_No,Student_Name,Gender,Age,Section,Caste,Father Occupation,Mother Occupation,Hometown,Course,Specialization,Year_Enrollment,Year_Completion,Attendance,SGPA1,SGPA2,SGPA3,SGPA4,SGPA5,SGPA6,SGPA7,CGPA,Family_Income,Class_10_Percentage,Class_12_Percentage,Fees_Status,Backlogs,Suspension
+BTECH2022A001,Akash Kapoor,Male,19,A,OBC,Laborer,Homemaker,Bikaner,B.Tech,AI/ML,2022,2026,97.26,9.39,8.65,9.22,9.39,9.5,9.5,9.41,9.29,200000,91.1,69.22,Partial,1,No
+BTECH2022A002,Asha Dugar,Female,20,A,General,Farmer,Homemaker,Hyderabad,B.Tech,AI/ML,2022,2026,82.54,8.54,6.88,8.18,8.7,7.8,8.62,7.72,8.06,400000,48.62,68.27,Partial,0,No
+BTECH2022A003,Ira Rathore,Female,20,A,General,Engineer,Farmer,Nagaur,B.Tech,Electronics,2022,2026,86.58,8.44,8.45,7.72,9.5,8.56,9.5,8.04,8.6,60725,18.53,23.69,Partial,4,No
+BTECH2022A004,Suraj Kumawat,Male,19,A,General,Farmer,Homemaker,Phalodi,B.Tech,Mechanical,2022,2026,33.56,2.91,4.04,3.46,2.96,4.28,4.24,3.36,3.61,400000,72.06,92.02,Partial,0,Yes
+BTECH2022A005,Aman Gupta,Male,18,A,EWS,Businessman,Homemaker,Ajmer,B.Tech,Electronics,2022,2026,91.47,7.94,9.18,9.28,7.65,8.37,9.42,8.61,8.64,2700000,56.11,41.5,Paid,0,No
+BTECH2022A006,Irfan Shukla,Male,21,A,General,Teacher,Homemaker,Banswara,B.Tech,Electronics,2022,2026,77.42,7.06,7.83,7.49,7.97,7.42,7.55,6.49,7.4,700000,40.06,36.12,Paid,8,Yes
+BTECH2022A007,Rakesh Yadav,Male,19,A,OBC,Laborer,Homemaker,Sawai Madhopur,B.Tech,Civil,2022,2026,70.61,6.58,6.64,6.56,6.97,7.64,6.71,6.52,6.8,300000,64.79,54.22,Partial,0,No
+BTECH2022A008,Sunita Solanki,Female,18,A,General,Teacher,Homemaker,Nagaur,B.Tech,Civil,2022,2026,64.97,6.56,6.65,6.59,7.06,5.62,6.56,5.7,6.39,500000,57.95,39.09,Partial,0,No
+BTECH2022A009,Neha Dugar,Female,18,A,General,Businessman,Homemaker,Sawai Madhopur,B.Tech,Information Technology,2022,2026,15.13,2.76,1.11,2.92,1.89,1.44,1.21,2.45,1.97,1100000,79.54,64.76,Paid,0,No
+BTECH2022A010,Mamta Lodha,Female,20,A,General,Businessman,Homemaker,Barmer,B.Tech,Electrical,2022,2026,72.89,6.39,8.16,6.77,6.74,6.5,7.41,6.22,6.88,2800000,49.42,78.39,Paid,0,No
+BTECH2022A011,Brijesh Rathore,Male,20,A,OBC,Doctor,Homemaker,Indore,B.Tech,Computer Science,2022,2026,80.87,7.96,9.06,7.4,8.43,7.34,5.73,6.74,7.52,1100000,46.91,16.15,Paid,0,No
+BTECH2022A012,Aarti Kumawat,Female,18,A,General,Businessman,Homemaker,Churu,B.Tech,AI/ML,2022,2026,94.17,8.35,9.13,9.11,9.22,8.83,9.09,9.5,9.03,68196,61.67,43.36,Partial,0,No
+BTECH2022A013,Asha Nehru,Female,19,A,General,Teacher,Farmer,Hyderabad,B.Tech,Electrical,2022,2026,52.24,4.65,5.29,4.18,5.19,6.13,6.09,6.13,5.38,400000,49.74,57.9,Partial,0,No
+BTECH2022A014,Om Choudhary,Male,18,A,General,Engineer,Homemaker,Bikaner,B.Tech,Information Technology,2022,2026,58.2,6.25,5.32,5.22,6.67,6.65,5.98,6.06,6.02,1500000,59.74,33.17,Paid,7,Yes
+BTECH2022A015,Rahul Kothari,Male,20,A,General,Businessman,Homemaker,Ajmer,B.Tech,Civil,2022,2026,67.94,5.82,7.35,6.52,5.85,6.56,8.07,6.99,6.74,700000,29.82,31.82,Paid,0,Yes
+BTECH2022A016,Irfan Kumawat,Male,18,A,EWS,Teacher,Homemaker,Ganganagar,B.Tech,Mechanical,2022,2026,76.46,7.98,6.98,6.94,7.69,6.73,7.44,8.97,7.53,600000,81.9,38.58,Paid,3,No
+BTECH2022A017,Praveen Kapoor,Male,20,A,EWS,Businessman,Homemaker,Tonk,B.Tech,Electrical,2022,2026,85.38,7.2,6.68,8.17,7.57,8.68,8.97,7.89,7.88,1800000,83.63,72.42,Paid,0,No
+BTECH2022A018,Dev Kothari,Male,19,A,General,Farmer,Homemaker,Alwar,B.Tech,Electrical,2022,2026,75.3,7.95,5.55,7.74,5.13,5.86,6.77,6.51,6.5,600000,25.07,47.14,Paid,2,No
+BTECH2022A019,Irfan Bhardwaj,Male,22,A,OBC,Farmer,Farmer,Barmer,B.Tech,Computer Science,2022,2026,64.34,5.03,5.58,4.72,6.43,5.5,6.88,6.6,5.82,200000,82.12,68.41,Partial,6,Yes
+BTECH2022A020,Vineet Bhardwaj,Male,18,A,EWS,Businessman,Homemaker,Bengaluru,B.Tech,Mechanical,2022,2026,73.53,6.68,7.44,5.95,7.04,5.6,7.45,6.64,6.69,1000000,77.95,93.99,Paid,0,No
+BTECH2022A021,Suhana Singh,Female,19,A,General,Farmer,Teacher,Bikaner,B.Tech,AI/ML,2022,2026,93.35,9.5,9.22,8.85,9.23,8.43,8.95,8.34,8.93,400000,48.68,48.58,Partial,3,No
+BTECH2022A022,Nikhil Khurana,Male,18,A,SC/ST,Businessman,Homemaker,Bhilwara,B.Tech,Electronics,2022,2026,56.63,6.56,4.87,5.07,5.43,5.15,3.4,5.76,5.18,700000,59.41,83.16,Paid,0,No
+BTECH2022A023,Anand Meghwal,Male,22,A,EWS,Businessman,Homemaker,Delhi,B.Tech,Computer Science,2022,2026,87.26,7.52,8.1,8.68,7.25,9.5,8.27,8.91,8.32,1800000,64.53,68.06,Paid,4,No
+BTECH2022A024,Prithvi Beniwal,Male,21,A,General,Farmer,Homemaker,Tonk,B.Tech,Civil,2022,2026,81.73,8.22,7.52,7.8,7.19,5.58,8.35,6.83,7.36,300000,38.47,80.55,Partial,2,No
+BTECH2022A025,Vikas Soni,Male,19,A,General,Engineer,Homemaker,Alwar,B.Tech,AI/ML,2022,2026,63.13,6.96,5.15,4.65,6.78,5.81,6.67,7.12,6.16,1700000,67.87,37.11,Paid,3,No
+BTECH2022A026,Megha Solanki,Female,20,A,EWS,Farmer,Homemaker,Jodhpur,B.Tech,Civil,2022,2026,67.79,7.33,6.5,7.63,5.99,7.47,7.55,6.3,6.97,53443,61.8,42.75,Partial,0,No
+BTECH2022A027,Vikas Verma,Male,21,A,OBC,Doctor,Homemaker,Kota,B.Tech,Civil,2022,2026,46.82,4.49,5.03,4.21,6.0,5.03,6.03,4.14,4.99,1700000,32.58,26.62,Paid,0,No
+BTECH2022A028,Vikram Jain,Male,20,A,General,Farmer,Farmer,Mumbai,B.Tech,Computer Science,2022,2026,52.73,4.57,4.55,4.81,6.05,6.74,5.74,5.27,5.39,600000,97.54,78.35,Paid,1,No
+BTECH2022A029,Om Nagar,Male,19,A,General,Teacher,Businesswoman,Banswara,B.Tech,Electronics,2022,2026,76.29,7.95,7.05,7.91,7.38,7.3,7.0,7.2,7.4,800000,69.7,88.73,Paid,0,No
+BTECH2022A030,Gautam Malik,Male,18,A,General,Doctor,Homemaker,Bengaluru,B.Tech,Information Technology,2022,2026,88.39,9.5,7.69,8.58,7.76,8.78,8.25,7.22,8.25,900000,54.3,82.47,Paid,0,No
+BTECH2022A031,Swati Solanki,Female,18,A,OBC,Doctor,Homemaker,Churu,B.Tech,Electrical,2022,2026,79.96,9.04,6.27,8.76,8.11,6.31,8.26,8.45,7.89,2300000,35.86,35.01,Paid,8,Yes
+BTECH2022A032,Prashant Tiwari,Male,21,A,SC/ST,Businessman,Homemaker,Beawar,B.Tech,Mechanical,2022,2026,89.53,6.77,8.32,8.23,8.33,8.01,9.03,7.95,8.09,2300000,94.03,90.24,Paid,0,No
+BTECH2022A033,Subhash Patel,Male,21,A,EWS,Businessman,Homemaker,Nagaur,B.Tech,Civil,2022,2026,91.28,7.88,9.04,9.39,7.48,7.69,9.3,9.5,8.61,2400000,93.66,56.37,Paid,0,No
+BTECH2022A034,Priya Chauhan,Female,20,A,General,Businessman,Homemaker,Alwar,B.Tech,Mechanical,2022,2026,66.71,7.38,6.84,5.89,6.77,7.06,8.31,5.63,6.84,2500000,49.7,59.21,Paid,7,Yes
+BTECH2022A035,Priyanka Solanki,Female,19,A,OBC,Engineer,Homemaker,Dausa,B.Tech,Computer Science,2022,2026,80.89,6.69,7.79,7.62,8.13,8.28,9.48,7.19,7.88,1200000,78.9,39.92,Paid,1,No
+BTECH2022A036,Radha Gupta,Female,19,A,OBC,Businessman,Homemaker,Tonk,B.Tech,AI/ML,2022,2026,65.18,7.08,6.47,5.64,7.04,6.58,7.29,7.05,6.74,2400000,37.98,81.67,Paid,0,No
+BTECH2022A037,Aman Kumar,Male,20,A,General,Teacher,Homemaker,Kota,B.Tech,Information Technology,2022,2026,74.67,7.37,6.92,7.55,7.15,6.56,7.69,7.5,7.25,700000,43.97,45.03,Paid,0,No
+BTECH2022A038,Aditya Meghwal,Male,21,A,General,Businessman,Homemaker,Sumerpur,B.Tech,Electrical,2022,2026,70.94,6.83,6.03,6.33,6.36,5.76,7.85,6.73,6.56,800000,30.99,21.52,Paid,4,No
+BTECH2022A039,Radha Singh,Female,21,A,EWS,Businessman,Homemaker,Nathdwara,B.Tech,Computer Science,2022,2026,82.09,7.48,8.67,7.48,8.86,8.19,8.89,8.18,8.25,500000,52.44,88.49,Partial,0,Yes
+BTECH2022A040,Kishan Purohit,Male,20,A,SC/ST,Teacher,Homemaker,Kota,B.Tech,Information Technology,2022,2026,54.46,4.26,6.7,5.34,6.53,4.98,5.37,4.44,5.37,500000,98.72,38.89,Partial,1,No
+BTECH2022B001,Vivek Lodha,Male,20,B,General,Laborer,Homemaker,Jodhpur,B.Tech,Electronics,2022,2026,74.28,7.73,6.81,7.82,7.51,6.45,6.74,7.53,7.23,300000,79.0,68.33,Partial,4,No
+BTECH2022B002,Yash Chauhan,Male,18,B,OBC,Businessman,Homemaker,Devgarh,B.Tech,Electronics,2022,2026,72.54,8.45,6.56,6.09,7.18,6.63,6.67,7.32,6.99,800000,23.96,35.21,Paid,6,Yes
+BTECH2022B003,Kartik Malik,Male,18,B,General,Businessman,Homemaker,Banswara,B.Tech,Mechanical,2022,2026,95.65,9.5,8.88,8.51,8.14,8.64,8.44,8.32,8.63,2300000,81.65,55.63,Paid,0,No
+BTECH2022B004,Ira Purohit,Female,21,B,OBC,Businessman,Homemaker,Beawar,B.Tech,AI/ML,2022,2026,80.91,7.44,7.6,7.87,7.46,7.12,6.49,7.03,7.29,2100000,93.41,64.28,Paid,0,No
+BTECH2022B005,Vineet Malik,Male,20,B,OBC,Teacher,Homemaker,Karauli,B.Tech,Computer Science,2022,2026,74.92,6.34,8.56,6.64,7.76,6.25,7.48,7.55,7.23,700000,35.75,16.19,Paid,8,Yes
+BTECH2022B006,Geeta Singh,Female,18,B,OBC,Teacher,Homemaker,Nawalgarh,B.Tech,Mechanical,2022,2026,76.16,6.25,8.35,7.28,6.99,7.73,6.71,6.86,7.17,600000,36.82,75.82,Paid,0,No
+BTECH2022B007,Naveen Nehru,Male,18,B,EWS,Farmer,Homemaker,Bhilwara,B.Tech,Mechanical,2022,2026,80.98,6.83,7.3,7.6,6.53,9.0,6.97,7.7,7.42,300000,59.04,64.65,Partial,2,No
+BTECH2022B008,Om Gupta,Male,20,B,OBC,Businessman,Homemaker,Indore,B.Tech,Mechanical,2022,2026,81.5,7.82,8.05,6.81,9.5,7.62,8.51,7.08,7.91,1300000,40.05,71.56,Paid,0,No
+BTECH2022B009,Bhupendra Iyer,Male,18,B,General,Farmer,Homemaker,Devgarh,B.Tech,AI/ML,2022,2026,68.8,6.91,7.61,5.72,5.76,6.75,6.99,7.04,6.68,400000,55.15,81.63,Partial,6,Yes
+BTECH2022B010,Anand Bhati,Male,18,B,SC/ST,Businessman,Homemaker,Ajmer,B.Tech,Computer Science,2022,2026,56.35,6.1,5.56,3.57,7.24,5.9,5.65,5.25,5.61,83461,44.2,69.81,Partial,8,Yes
+BTECH2022B011,Ekta Nair,Female,19,B,General,Farmer,Homemaker,Pali,B.Tech,Mechanical,2022,2026,43.24,3.31,4.07,3.44,3.85,4.65,5.18,3.49,4.0,400000,75.69,71.71,Partial,0,No
+BTECH2022B012,Nidhi Meghwal,Female,20,B,General,Farmer,Homemaker,Pushkar,B.Tech,Information Technology,2022,2026,84.43,9.0,8.72,8.21,8.06,7.47,8.67,8.21,8.33,300000,20.01,17.41,Partial,0,No
+BTECH2022B013,Bhavya Beniwal,Female,20,B,General,Engineer,Homemaker,Delhi,B.Tech,Computer Science,2022,2026,53.71,5.55,4.87,5.48,4.5,6.7,6.21,6.45,5.68,1200000,48.14,58.0,Paid,0,No
+BTECH2022B014,Megha Tiwari,Female,18,B,General,Businessman,Homemaker,Barmer,B.Tech,Electronics,2022,2026,62.15,5.86,5.56,6.19,6.68,5.15,6.31,5.63,5.91,71395,15.81,22.7,Partial,6,Yes
+BTECH2022B015,Rakesh Kapoor,Male,20,B,SC/ST,Farmer,Farmer,Karauli,B.Tech,AI/ML,2022,2026,71.96,5.89,5.81,6.0,5.79,7.06,8.14,8.58,6.75,200000,56.78,92.38,Partial,5,Yes
+BTECH2022B016,Pooja Nair,Female,18,B,General,Doctor,Homemaker,Pali,B.Tech,Mechanical,2022,2026,84.82,9.02,8.56,8.12,7.27,8.55,8.11,9.26,8.41,1200000,50.16,73.1,Paid,0,No
+BTECH2022B017,Arjun Rao,Male,19,B,SC/ST,Engineer,Businesswoman,Sumerpur,B.Tech,Computer Science,2022,2026,71.35,6.92,6.66,6.96,8.08,5.4,6.83,5.69,6.65,2000000,15.43,41.04,Paid,5,Yes
+BTECH2022B018,Vinod Bhati,Male,20,B,OBC,Teacher,Homemaker,Indore,B.Tech,AI/ML,2022,2026,61.13,5.72,5.89,5.36,5.64,5.97,7.32,6.4,6.04,600000,35.13,65.88,Paid,1,No
+BTECH2022B019,Kartik Kapoor,Male,20,B,General,Farmer,Homemaker,Churu,B.Tech,Computer Science,2022,2026,45.91,4.99,4.73,4.64,5.68,4.96,4.41,5.96,5.05,400000,41.99,33.03,Partial,0,No
+BTECH2022B020,Prithvi Kothari,Male,21,B,SC/ST,Businessman,Homemaker,Hyderabad,B.Tech,Electronics,2022,2026,75.2,6.42,7.39,7.48,6.3,7.42,8.82,7.11,7.28,1200000,34.79,42.56,Paid,0,No
+BTECH2022B021,Yogesh Bhardwaj,Male,20,B,General,Engineer,Homemaker,Bengaluru,B.Tech,Civil,2022,2026,75.41,7.14,8.45,6.93,7.89,7.23,7.04,7.22,7.41,1000000,72.78,33.5,Paid,0,No
+BTECH2022B022,Rakesh Meghwal,Male,20,B,General,Farmer,Homemaker,Kishangarh,B.Tech,Civil,2022,2026,55.03,6.27,6.59,6.51,6.33,6.25,4.49,4.14,5.8,300000,50.88,47.87,Partial,7,Yes
+BTECH2022B023,Kiran Reddy,Female,18,B,OBC,Businessman,Homemaker,Jodhpur,B.Tech,Electronics,2022,2026,68.13,6.63,5.01,6.46,6.35,6.68,7.23,6.07,6.35,1600000,41.79,57.11,Paid,0,No
+BTECH2022B024,Tarun Khurana,Male,19,B,General,Businessman,Homemaker,Pushkar,B.Tech,Information Technology,2022,2026,80.46,8.0,7.78,7.19,6.83,7.62,7.5,7.88,7.54,600000,38.03,65.2,Paid,2,No
+BTECH2022B025,Om Singh,Male,19,B,General,Laborer,Homemaker,Sawai Madhopur,B.Tech,Electronics,2022,2026,69.86,5.89,7.79,6.85,7.81,6.41,7.8,8.5,7.29,200000,95.08,89.15,Partial,0,No
+BTECH2022B026,Yogesh Meghwal,Male,18,B,OBC,Engineer,Homemaker,Churu,B.Tech,Electrical,2022,2026,58.46,5.67,4.7,7.59,6.19,5.43,5.72,5.52,5.83,700000,42.65,24.71,Paid,7,Yes
+BTECH2022B027,Praveen Meghwal,Male,22,B,OBC,Businessman,Homemaker,Ajmer,B.Tech,Information Technology,2022,2026,50.35,4.71,5.48,4.94,4.68,5.39,5.59,4.05,4.98,2700000,71.36,86.19,Paid,0,No
+BTECH2022B028,Neelam Kumawat,Female,19,B,General,Businessman,Homemaker,Kishangarh,B.Tech,AI/ML,2022,2026,81.03,8.08,7.61,8.47,8.15,7.69,6.98,6.93,7.7,2600000,93.67,36.67,Paid,0,No
+BTECH2022B029,Vikram Kapoor,Male,21,B,EWS,Businessman,Homemaker,Banswara,B.Tech,Electronics,2022,2026,83.9,8.8,9.08,7.61,7.47,8.49,8.35,7.79,8.23,2100000,38.46,88.59,Paid,0,No
+BTECH2022B030,Rupa Singh,Female,20,B,OBC,Doctor,Homemaker,Phalodi,B.Tech,Civil,2022,2026,84.62,7.92,8.3,7.46,8.88,8.78,7.41,8.97,8.25,1800000,19.87,46.94,Paid,0,No
+BTECH2022B031,Neelam Jat,Female,20,B,SC/ST,Laborer,Farmer,Nathdwara,B.Tech,AI/ML,2022,2026,64.74,8.34,5.49,6.77,6.32,7.26,6.35,6.67,6.74,100000,69.4,34.2,Partial,0,No
+BTECH2022B032,Manoj Khurana,Male,19,B,General,Businessman,Teacher,Pushkar,B.Tech,Mechanical,2022,2026,57.68,5.4,5.46,6.08,4.28,6.16,5.79,5.77,5.56,2600000,43.88,79.0,Paid,0,No
+BTECH2022B033,Vikram Khurana,Male,20,B,OBC,Farmer,Homemaker,Nathdwara,B.Tech,Computer Science,2022,2026,80.61,7.61,7.57,7.69,8.44,8.34,6.23,8.84,7.82,400000,60.14,98.82,Partial,5,Yes
+BTECH2022B034,Aarti Iyer,Female,19,B,SC/ST,Doctor,Homemaker,Ganganagar,B.Tech,AI/ML,2022,2026,80.42,7.46,7.63,8.15,7.35,8.56,8.41,7.2,7.82,1400000,84.32,92.18,Paid,0,No
+BTECH2022B035,Neelam Nair,Female,18,B,OBC,Businessman,Farmer,Alwar,B.Tech,Electrical,2022,2026,68.61,5.77,7.62,6.11,6.39,6.52,7.22,6.59,6.6,800000,64.7,71.02,Paid,7,Yes
+BTECH2022B036,Suhana Banerjee,Female,20,B,SC/ST,Laborer,Homemaker,Ajmer,B.Tech,Mechanical,2022,2026,84.85,7.38,7.69,7.54,7.42,8.54,8.53,7.56,7.81,100000,98.03,93.55,Partial,0,No
+BTECH2022B037,Bhavya Kothari,Female,19,B,General,Doctor,Homemaker,Sumerpur,B.Tech,AI/ML,2022,2026,70.75,6.76,7.87,7.52,6.97,6.47,7.78,6.42,7.11,2000000,57.86,33.35,Paid,7,Yes
+BTECH2022B038,Sanjay Joshi,Male,18,B,General,Laborer,Teacher,Kishangarh,B.Tech,Civil,2022,2026,66.47,7.68,6.07,7.84,5.48,6.78,7.94,6.28,6.87,100000,43.93,29.5,Partial,0,No
+BTECH2022B039,Prakash Beniwal,Male,20,B,General,Farmer,Homemaker,Bengaluru,B.Tech,Electrical,2022,2026,92.27,8.63,9.06,8.11,9.25,9.37,8.97,8.65,8.86,300000,48.56,45.21,Partial,0,No
+BTECH2022B040,Subhash Malik,Male,18,B,General,Doctor,Homemaker,Karauli,B.Tech,Mechanical,2022,2026,86.89,8.53,8.55,9.5,8.47,9.1,8.41,8.03,8.66,2200000,87.72,80.71,Paid,3,No
+BTECH2022C001,Megha Lodha,Female,22,C,SC/ST,Businessman,Homemaker,Mumbai,B.Tech,Computer Science,2022,2026,89.26,8.04,8.35,8.46,8.4,8.99,7.4,8.35,8.28,2900000,70.56,87.18,Paid,0,No
+BTECH2022C002,Tania Kothari,Female,22,C,General,Teacher,Homemaker,Ganganagar,B.Tech,Civil,2022,2026,56.98,5.75,5.57,5.75,5.15,6.78,6.23,5.78,5.86,800000,37.19,80.42,Paid,0,No
+BTECH2022C003,Sunit Rathore,Male,21,C,EWS,Farmer,Farmer,Delhi,B.Tech,Electrical,2022,2026,69.42,7.81,7.33,7.06,7.01,6.77,6.94,7.07,7.14,400000,32.02,22.96,Partial,2,No
+BTECH2022C004,Sandeep Bishnoi,Male,19,C,EWS,Businessman,Homemaker,Pratapgarh,B.Tech,Electrical,2022,2026,62.2,4.55,6.91,6.54,6.6,5.77,5.89,7.31,6.22,2500000,41.83,64.46,Paid,6,Yes
+BTECH2022C005,Raghav Kumar,Male,18,C,General,Teacher,Homemaker,Sikar,B.Tech,Electrical,2022,2026,54.63,6.34,5.11,5.45,5.9,5.54,5.7,5.95,5.71,500000,33.9,88.35,Partial,0,No
+BTECH2022C006,Deepanshu Singh,Male,22,C,General,Teacher,Homemaker,Nawalgarh,B.Tech,Electronics,2022,2026,25.2,1.0,4.08,3.02,3.16,2.62,3.78,2.8,2.92,800000,37.97,46.54,Paid,0,No
+BTECH2022C007,Geeta Reddy,Female,19,C,SC/ST,Businessman,Homemaker,Udaipur,B.Tech,AI/ML,2022,2026,88.62,8.63,8.72,7.72,8.52,7.77,7.78,7.66,8.11,2400000,78.65,96.89,Paid,5,Yes
+BTECH2022C008,Rekha Joshi,Female,22,C,EWS,Businessman,Homemaker,Bikaner,B.Tech,AI/ML,2022,2026,51.56,6.57,5.34,4.08,3.11,6.03,4.54,4.96,4.95,1100000,35.94,22.19,Paid,4,No
+BTECH2022C009,Isha Rao,Female,22,C,General,Laborer,Homemaker,Nawalgarh,B.Tech,Information Technology,2022,2026,90.28,8.87,7.64,9.5,9.5,8.34,8.37,7.6,8.55,200000,82.49,46.17,Partial,8,Yes
+BTECH2022C010,Rajan Khurana,Male,21,C,General,Businessman,Farmer,Tonk,B.Tech,Computer Science,2022,2026,46.2,5.29,3.96,4.06,4.73,4.84,3.85,4.04,4.4,700000,93.27,81.59,Paid,1,No
+BTECH2022C011,Ajay Saini,Male,19,C,OBC,Farmer,Homemaker,Indore,B.Tech,Electronics,2022,2026,89.28,9.38,7.4,8.8,9.37,6.65,7.14,8.52,8.18,400000,71.62,67.97,Partial,1,No
+BTECH2022C012,Yashoda Bhati,Female,19,C,OBC,Businessman,Homemaker,Tonk,B.Tech,Information Technology,2022,2026,76.77,7.08,7.33,7.57,8.37,7.44,6.59,5.95,7.19,800000,80.92,79.68,Paid,3,No
+BTECH2022C013,Kiran Prasad,Female,21,C,General,Engineer,Homemaker,Nathdwara,B.Tech,Electronics,2022,2026,38.07,4.59,4.94,5.18,5.8,3.97,3.0,4.86,4.62,1700000,82.97,83.67,Paid,3,No
+BTECH2022C014,Manoj Joshi,Male,19,C,SC/ST,Businessman,Homemaker,Indore,B.Tech,Computer Science,2022,2026,73.48,7.56,7.05,7.38,6.65,6.78,7.9,8.1,7.35,81351,57.94,38.76,Partial,7,Yes
+BTECH2022C015,Tania Jat,Female,18,C,General,Engineer,Farmer,Khichan,B.Tech,Civil,2022,2026,69.91,6.21,7.25,6.61,7.41,6.4,7.96,6.87,6.96,1400000,48.91,66.4,Paid,0,No
+BTECH2022C016,Nikhil Verma,Male,20,C,General,Laborer,Homemaker,Delhi,B.Tech,AI/ML,2022,2026,69.83,6.44,6.4,6.39,7.53,6.6,5.9,6.5,6.54,100000,46.53,94.51,Partial,7,Yes
+BTECH2022C017,Sahil Chauhan,Male,22,C,General,Engineer,Homemaker,Jodhpur,B.Tech,Civil,2022,2026,89.03,8.39,9.18,8.36,8.21,8.16,9.23,8.97,8.64,1700000,18.58,25.9,Paid,8,Yes
+BTECH2022C018,Pawan Sharma,Male,20,C,General,Engineer,Homemaker,Nathdwara,B.Tech,Mechanical,2022,2026,80.21,7.83,6.9,7.02,7.4,8.01,8.57,8.52,7.75,1800000,51.13,72.2,Paid,6,Yes
+BTECH2022C019,Karanveer Purohit,Male,20,C,General,Businessman,Homemaker,Tonk,B.Tech,Computer Science,2022,2026,78.89,7.68,7.03,8.01,7.26,7.14,6.52,8.48,7.45,59174,46.68,57.37,Partial,3,No
+BTECH2022C020,Mayank Bhati,Male,18,C,General,Laborer,Homemaker,Pali,B.Tech,Electrical,2022,2026,73.64,7.36,7.94,6.87,7.12,7.64,7.3,6.46,7.24,200000,90.96,62.98,Partial,2,No
+BTECH2022C021,Harish Singh,Male,20,C,General,Laborer,Homemaker,Jaipur,B.Tech,Electronics,2022,2026,62.51,6.81,5.35,7.1,6.31,7.14,7.81,7.13,6.81,200000,82.96,69.21,Partial,4,Yes
+BTECH2022C022,Simran Bishnoi,Female,23,C,General,Engineer,Homemaker,Hyderabad,B.Tech,Civil,2022,2026,79.14,6.16,6.7,7.37,7.27,7.65,7.39,8.57,7.3,1000000,22.16,17.71,Paid,0,No
+BTECH2022C023,Satish Meena,Male,18,C,General,Engineer,Farmer,Hyderabad,B.Tech,Electronics,2022,2026,59.57,5.86,4.29,4.55,4.8,6.3,5.69,6.54,5.43,2000000,47.15,42.31,Paid,4,No
+BTECH2022C024,Suresh Nair,Male,19,C,EWS,Businessman,Homemaker,Delhi,B.Tech,Electrical,2022,2026,74.99,6.59,6.55,8.74,8.12,7.66,6.93,8.34,7.56,900000,34.46,78.18,Paid,0,No
+BTECH2022C025,Swati Shukla,Female,21,C,General,Businessman,Teacher,Kishangarh,B.Tech,AI/ML,2022,2026,89.12,8.68,8.35,8.85,9.5,8.26,6.7,8.14,8.35,1400000,22.96,31.29,Paid,0,No
+BTECH2022C026,Arvind Jat,Male,20,C,General,Laborer,Homemaker,Jaipur,B.Tech,Electrical,2022,2026,90.99,8.57,7.95,9.43,9.5,8.65,9.14,7.39,8.66,200000,28.25,20.79,Partial,0,No
+BTECH2022C027,Rajat Meena,Male,20,C,OBC,Businessman,Homemaker,Beawar,B.Tech,Civil,2022,2026,73.22,7.28,6.76,5.96,6.47,7.33,8.38,7.53,7.1,500000,41.4,46.86,Partial,0,No
+BTECH2022C028,Chandni Rao,Female,20,C,EWS,Businessman,Homemaker,Banswara,B.Tech,Electrical,2022,2026,38.76,4.54,5.09,3.53,4.34,4.4,3.5,3.87,4.18,1100000,53.31,40.7,Paid,3,No
+BTECH2022C029,Sandeep Nair,Male,19,C,General,Laborer,Homemaker,Bikaner,B.Tech,Information Technology,2022,2026,83.23,8.84,7.35,8.14,7.69,7.67,6.57,7.87,7.73,100000,86.88,64.23,Partial,4,No
+BTECH2022C030,Ritik Kumar,Male,19,C,OBC,Laborer,Homemaker,Jodhpur,B.Tech,Computer Science,2022,2026,83.05,8.32,7.57,8.14,7.69,8.91,7.82,8.78,8.18,200000,96.89,73.0,Partial,0,No
+BTECH2022C031,Gautam Bhati,Male,21,C,SC/ST,Businessman,Homemaker,Pali,B.Tech,Computer Science,2022,2026,84.98,7.65,7.38,8.55,8.32,8.56,8.82,7.93,8.17,2800000,38.83,85.42,Paid,0,No
+BTECH2022C032,Anil Patel,Male,21,C,OBC,Laborer,Homemaker,Barmer,B.Tech,Electronics,2022,2026,50.41,4.1,4.13,3.74,4.18,4.24,4.99,5.31,4.38,300000,85.26,40.04,Partial,5,Yes
+BTECH2022C033,Tania Malik,Female,21,C,General,Businessman,Farmer,Ajmer,B.Tech,Computer Science,2022,2026,68.46,6.13,7.05,5.94,6.72,6.09,6.36,6.49,6.4,2700000,71.94,89.15,Paid,0,No
+BTECH2022C034,Shilpa Kumar,Female,21,C,OBC,Laborer,Homemaker,Sikar,B.Tech,Electrical,2022,2026,77.94,7.98,7.48,9.05,6.74,7.57,7.25,8.02,7.73,200000,64.68,82.23,Partial,1,No
+BTECH2022C035,Divya Purohit,Female,19,C,General,Laborer,Homemaker,Jodhpur,B.Tech,Electrical,2022,2026,86.86,7.66,9.02,9.5,7.91,8.08,8.29,8.93,8.48,300000,60.76,59.96,Partial,5,Yes
+BTECH2022C036,Kiran Bhati,Female,19,C,OBC,Teacher,Farmer,Bengaluru,B.Tech,Civil,2022,2026,58.58,6.36,7.38,5.95,5.92,5.53,4.91,6.04,6.01,800000,84.79,94.57,Paid,0,No
+BTECH2022C037,Priyanka Patel,Female,20,C,SC/ST,Doctor,Homemaker,Delhi,B.Tech,Civil,2022,2026,70.26,6.58,5.52,7.83,7.32,7.36,6.58,6.41,6.8,2100000,75.2,98.4,Paid,3,No
+BTECH2022C038,Nikhil Yadav,Male,20,C,General,Businessman,Homemaker,Barmer,B.Tech,AI/ML,2022,2026,68.93,5.74,6.88,6.12,6.69,6.72,6.3,7.62,6.58,2100000,86.13,46.53,Paid,2,Yes
+BTECH2022C039,Sapna Meena,Female,20,C,SC/ST,Laborer,Homemaker,Nagaur,B.Tech,Information Technology,2022,2026,96.63,9.5,8.13,9.13,8.3,8.93,9.07,9.07,8.88,200000,92.61,58.03,Partial,0,No
+BTECH2022C040,Gautam Bhardwaj,Male,20,C,General,Laborer,Homemaker,Khichan,B.Tech,Civil,2022,2026,85.35,9.14,8.88,7.5,9.31,9.5,7.39,8.76,8.64,200000,73.74,94.15,Partial,0,No
+BTECH2022D001,Geeta Agarwal,Female,21,D,SC/ST,Businessman,Homemaker,Kota,B.Tech,Electrical,2022,2026,67.52,5.28,6.47,6.27,5.6,5.35,6.99,6.19,6.02,2500000,42.01,28.27,Paid,8,Yes
+BTECH2022D002,Kanchan Beniwal,Female,19,D,General,Laborer,Farmer,Bikaner,B.Tech,Information Technology,2022,2026,81.23,7.47,7.53,8.08,6.83,7.8,7.15,7.17,7.43,200000,18.6,19.3,Partial,8,Yes
+BTECH2022D003,Praveen Bhati,Male,19,D,General,Engineer,Homemaker,Barmer,B.Tech,Civil,2022,2026,91.01,7.43,8.0,7.92,8.6,8.45,7.84,8.42,8.09,1900000,40.41,20.79,Paid,0,No
+BTECH2022D004,Shaurya Kumar,Male,18,D,General,Businessman,Homemaker,Ajmer,B.Tech,Electrical,2022,2026,76.89,8.5,6.82,9.07,6.85,8.78,7.56,7.17,7.82,2900000,36.13,44.3,Paid,0,No
+BTECH2022D005,Irfan Iyer,Male,20,D,EWS,Businessman,Homemaker,Ganganagar,B.Tech,Civil,2022,2026,96.17,8.85,9.48,9.5,9.42,7.67,9.16,9.01,9.01,900000,39.01,82.53,Paid,0,Yes
+BTECH2022D006,Kailash Bishnoi,Male,18,D,General,Farmer,Homemaker,Khichan,B.Tech,Mechanical,2022,2026,66.14,5.71,7.57,7.06,6.64,4.64,5.45,6.82,6.27,500000,80.94,85.77,Partial,7,Yes
+BTECH2022D007,Yashoda Gupta,Female,19,D,General,Engineer,Homemaker,Ganganagar,B.Tech,Information Technology,2022,2026,87.5,9.15,7.92,9.32,8.54,8.51,7.83,8.28,8.51,1000000,69.13,87.46,Paid,4,No
+BTECH2022D008,Kanchan Nair,Female,19,D,General,Engineer,Homemaker,Ganganagar,B.Tech,AI/ML,2022,2026,79.25,6.66,7.15,8.53,6.88,8.25,7.13,7.77,7.48,800000,62.76,45.3,Paid,6,Yes
+BTECH2022D009,Akash Rathore,Male,19,D,OBC,Doctor,Homemaker,Bhilwara,B.Tech,Electronics,2022,2026,41.83,3.99,5.07,3.55,4.84,4.8,4.26,4.01,4.36,1700000,93.09,48.56,Paid,0,No
+BTECH2022D010,Harish Purohit,Male,20,D,OBC,Engineer,Homemaker,Ajmer,B.Tech,Electronics,2022,2026,94.75,8.39,8.7,9.5,9.5,8.77,9.5,9.1,9.07,1700000,32.28,44.41,Paid,0,No
+BTECH2022D011,Vinod Rao,Male,18,D,General,Doctor,Homemaker,Karauli,B.Tech,Civil,2022,2026,90.2,8.12,9.5,8.72,9.06,8.87,8.54,9.32,8.88,900000,67.56,92.92,Paid,0,No
+BTECH2022D012,Harish Khurana,Male,18,D,General,Farmer,Homemaker,Churu,B.Tech,Electronics,2022,2026,73.55,7.41,6.95,8.01,6.53,6.15,7.59,5.91,6.94,300000,39.99,18.65,Partial,8,Yes
+BTECH2022D013,Sanjay Nagar,Male,21,D,General,Doctor,Homemaker,Jaipur,B.Tech,Mechanical,2022,2026,84.59,8.76,8.39,6.71,8.81,8.91,7.52,7.98,8.15,1900000,33.89,25.9,Paid,0,No
+BTECH2022D014,Baldev Meghwal,Male,19,D,General,Farmer,Homemaker,Churu,B.Tech,Computer Science,2022,2026,66.35,5.59,7.01,6.92,6.15,5.39,5.77,6.13,6.14,300000,63.32,78.08,Partial,4,No
+BTECH2022D015,Kavita Rao,Female,18,D,General,Laborer,Homemaker,Bikaner,B.Tech,Mechanical,2022,2026,56.6,6.3,5.71,6.03,5.94,5.49,6.76,6.33,6.08,100000,88.58,62.83,Partial,5,Yes
+BTECH2022D016,Vishal Patel,Male,19,D,SC/ST,Businessman,Farmer,Delhi,B.Tech,Information Technology,2022,2026,65.96,5.79,6.66,6.37,6.09,6.53,6.04,5.84,6.19,600000,83.75,80.11,Paid,0,No
+BTECH2022D017,Sunit Bhati,Male,20,D,General,Businessman,Homemaker,Sawai Madhopur,B.Tech,Electrical,2022,2026,95.45,8.68,8.76,9.39,9.17,7.74,9.5,8.19,8.78,2400000,37.37,92.38,Paid,8,Yes
+BTECH2022D018,Nupur Sharma,Female,18,D,General,Doctor,Homemaker,Churu,B.Tech,Mechanical,2022,2026,70.53,7.37,6.78,8.09,6.93,8.09,6.14,7.4,7.26,2000000,36.03,74.19,Paid,0,No
+BTECH2022D019,Kartik Choudhary,Male,20,D,General,Farmer,Homemaker,Khichan,B.Tech,Information Technology,2022,2026,74.07,6.2,7.35,6.46,7.83,7.29,7.26,5.47,6.84,400000,73.97,68.63,Partial,0,No
+BTECH2022D020,Lata Meghwal,Female,18,D,EWS,Teacher,Homemaker,Jodhpur,B.Tech,Information Technology,2022,2026,53.92,5.68,6.0,6.23,4.77,5.43,6.41,6.54,5.87,400000,55.93,61.96,Partial,0,No
+BTECH2022D021,Aarti Saini,Female,18,D,EWS,Engineer,Farmer,Nathdwara,B.Tech,Civil,2022,2026,77.26,7.8,7.13,6.73,7.24,7.96,6.91,7.53,7.33,1600000,46.8,71.11,Paid,0,No
+BTECH2022D022,Dev Iyer,Male,19,D,SC/ST,Teacher,Homemaker,Ganganagar,B.Tech,Information Technology,2022,2026,66.46,6.58,5.8,7.84,5.41,5.75,6.57,7.37,6.47,500000,33.77,23.25,Partial,5,Yes
+BTECH2022D023,Yash Purohit,Male,19,D,General,Engineer,Farmer,Beawar,B.Tech,Mechanical,2022,2026,41.38,5.54,3.59,4.99,4.95,5.22,4.64,3.31,4.61,1900000,29.31,36.27,Paid,2,No
+BTECH2022D024,Rajat Lodha,Male,20,D,General,Teacher,Homemaker,Tonk,B.Tech,Information Technology,2022,2026,51.5,4.0,5.34,6.57,5.23,6.31,5.02,4.77,5.32,700000,68.46,68.1,Paid,0,No
+BTECH2022D025,Nitin Nagar,Male,20,D,General,Businessman,Homemaker,Bhilwara,B.Tech,Information Technology,2022,2026,54.07,6.4,6.52,5.85,5.04,4.88,5.32,3.68,5.38,2400000,36.52,35.54,Paid,0,No
+BTECH2022D026,Akash Sharma,Male,22,D,General,Doctor,Farmer,Bhilwara,B.Tech,Electrical,2022,2026,95.15,7.97,8.21,9.45,8.4,9.5,8.78,8.52,8.69,1400000,71.59,48.12,Paid,1,No
+BTECH2022D027,Divyaa Meena,Female,19,D,OBC,Teacher,Homemaker,Indore,B.Tech,Computer Science,2022,2026,51.42,7.23,4.46,5.42,6.22,3.89,3.98,4.89,5.16,80519,59.42,68.83,Partial,0,No
+BTECH2022D028,Ashok Agarwal,Male,19,D,SC/ST,Businessman,Homemaker,Alwar,B.Tech,Computer Science,2022,2026,80.12,7.45,8.14,7.93,6.58,8.37,7.86,6.39,7.53,2200000,26.98,47.29,Paid,0,No
+BTECH2022D029,Rajan Nair,Male,20,D,SC/ST,Teacher,Homemaker,Khichan,B.Tech,Computer Science,2022,2026,81.23,7.32,8.08,6.45,8.12,6.76,6.95,7.54,7.32,600000,44.88,54.97,Paid,6,Yes
+BTECH2022D030,Brijesh Verma,Male,19,D,SC/ST,Farmer,Farmer,Bhilwara,B.Tech,Electrical,2022,2026,92.71,8.45,8.03,8.98,9.5,9.28,9.21,7.29,8.68,500000,35.96,19.0,Partial,0,No
+BTECH2022D031,Neha Saini,Female,19,D,General,Laborer,Farmer,Khichan,B.Tech,Mechanical,2022,2026,42.83,3.55,4.5,3.84,1.73,4.61,5.58,3.97,3.97,100000,37.79,22.44,Partial,3,No
+BTECH2022D032,Vinod Tiwari,Male,18,D,OBC,Laborer,Homemaker,Banswara,B.Tech,Electronics,2022,2026,86.74,8.36,7.97,7.81,9.08,9.37,7.25,9.26,8.44,100000,90.7,44.0,Partial,8,Yes
+BTECH2022D033,Deepanshu Bhati,Male,18,D,General,Businessman,Farmer,Bhilwara,B.Tech,Information Technology,2022,2026,88.72,9.5,9.5,9.21,8.57,9.21,9.18,8.59,9.11,1200000,67.01,90.99,Paid,7,Yes
+BTECH2022D034,Manoj Choudhary,Male,22,D,General,Teacher,Homemaker,Delhi,B.Tech,Electronics,2022,2026,82.44,7.08,7.89,7.72,8.05,7.86,7.87,9.09,7.94,700000,97.23,65.7,Paid,3,No
+BTECH2022D035,Sonal Shukla,Female,21,D,SC/ST,Doctor,Homemaker,Nawalgarh,B.Tech,AI/ML,2022,2026,66.75,6.87,6.78,7.42,6.6,5.76,5.92,7.29,6.66,1400000,72.73,81.94,Paid,0,No
+BTECH2022D036,Sunit Patel,Male,20,D,General,Teacher,Homemaker,Sikar,B.Tech,Information Technology,2022,2026,73.67,6.21,7.64,6.16,7.86,7.26,7.1,7.58,7.12,600000,28.1,49.13,Paid,7,Yes
+BTECH2022D037,Ira Tiwari,Female,19,D,General,Farmer,Homemaker,Karauli,B.Tech,AI/ML,2022,2026,38.82,4.89,3.1,3.48,4.44,4.1,4.45,3.32,3.97,200000,87.24,98.85,Partial,8,Yes
+BTECH2022D038,Bhavya Reddy,Female,18,D,General,Businessman,Homemaker,Pushkar,B.Tech,Mechanical,2022,2026,94.7,9.09,9.36,9.33,8.71,9.5,8.93,8.18,9.01,2600000,55.78,82.66,Paid,6,Yes
+BTECH2022D039,Akash Chauhan,Male,18,D,OBC,Businessman,Homemaker,Ganganagar,B.Tech,Information Technology,2022,2026,73.24,8.11,6.11,7.6,6.55,5.66,7.94,7.9,7.12,2300000,55.94,79.66,Paid,5,Yes
+BTECH2022D040,Megha Gupta,Female,19,D,SC/ST,Teacher,Homemaker,Barmer,B.Tech,Mechanical,2022,2026,76.21,7.39,8.25,6.49,8.61,8.25,6.49,6.43,7.42,400000,35.1,84.39,Partial,3,No
