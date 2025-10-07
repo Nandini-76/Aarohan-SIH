@@ -552,30 +552,57 @@ async def populate_firebase_on_startup():
             logger.warning(f"No dataset found for startup population in {data_dir}")
             return
         
-        # Convert to the format expected by Firebase
+        # Convert to the format expected by Firebase (handle NaN values properly)
+        # Helper functions to safely convert values (Firebase doesn't accept NaN)
+        def safe_float(value, default=0.0):
+            """Convert to float, return default if NaN or invalid"""
+            try:
+                val = float(value)
+                if pd.isna(val) or val != val:  # Check for NaN
+                    return default
+                return val
+            except (ValueError, TypeError):
+                return default
+        
+        def safe_int(value, default=0):
+            """Convert to int, return default if NaN or invalid"""
+            try:
+                val = float(value)
+                if pd.isna(val) or val != val:  # Check for NaN
+                    return default
+                return int(val)
+            except (ValueError, TypeError):
+                return default
+        
+        def safe_str(value, default=''):
+            """Convert to string, return default if NaN"""
+            if pd.isna(value):
+                return default
+            return str(value)
+        
         students = []
         for _, row in df.iterrows():
             cleaned_student = {
-                "student_id": str(row.get('enrollment_no', '')),
-                "enrollment_no": str(row.get('enrollment_no', '')),
-                "name": generate_student_name(str(row.get('enrollment_no', ''))),
-                "department": str(row.get('department', '')) if pd.notna(row.get('department')) else None,
-                "attendance": float(row.get('attendance', 0)),
-                "cgpa": float(row.get('cgpa', 0)),
-                "backlogs": int(row.get('backlogs', 0)),
-                "marks_10th": float(row.get('marks_10th', 0)),
-                "marks_12th": float(row.get('marks_12th', 0)),
-                "fees_flag": int(row.get('fees_flag', 0)),
-                "suspension_flag": int(row.get('suspension_flag', 0)),
-                "gender": str(row.get('gender', 'M')),
-                "age_at_enrollment": int(row.get('age_at_enrollment', 0)) if pd.notna(row.get('age_at_enrollment')) else None,
-                "category": str(row.get('category', '')) if pd.notna(row.get('category')) else None,
-                "prediction": str(row.get('final_phase', 'Green')),
-                "final_phase": str(row.get('final_phase', 'Green')),
-                "model_phase": str(row.get('model_phase', 'Green')),
-                "risk_label": _convert_phase_to_risk_label(str(row.get('final_phase', 'Green'))),
-                "override_reason": str(row.get('override_reason', row.get('red_reason', ''))),
-                "ml_probability": float(row.get('ml_probability', 0)) if pd.notna(row.get('ml_probability')) else None,
+                "student_id": safe_str(row.get('enrollment_no', '')),
+                "enrollment_no": safe_str(row.get('enrollment_no', '')),
+                "name": generate_student_name(safe_str(row.get('enrollment_no', ''))),
+                "department": safe_str(row.get('department', '')) if pd.notna(row.get('department')) else None,
+                "attendance": safe_float(row.get('attendance', 0)),
+                "cgpa": safe_float(row.get('cgpa', 0)),
+                "backlogs": safe_int(row.get('backlogs', 0)),
+                "marks_10th": safe_float(row.get('marks_10th', 0)),
+                "marks_12th": safe_float(row.get('marks_12th', 0)),
+                "fees_flag": safe_int(row.get('fees_flag', 0)),
+                "suspension_flag": safe_int(row.get('suspension_flag', 0)),
+                "gender": safe_str(row.get('gender', 'M')),
+                "age_at_enrollment": safe_int(row.get('age_at_enrollment', 0)) if pd.notna(row.get('age_at_enrollment')) else None,
+                "category": safe_str(row.get('category', '')) if pd.notna(row.get('category')) else None,
+                "prediction": safe_str(row.get('final_phase', 'Green')),
+                "final_phase": safe_str(row.get('final_phase', 'Green')),
+                "model_phase": safe_str(row.get('model_phase', 'Green')),
+                "risk_label": _convert_phase_to_risk_label(safe_str(row.get('final_phase', 'Green'))),
+                "override_reason": safe_str(row.get('override_reason', row.get('red_reason', ''))),
+                "ml_probability": safe_float(row.get('ml_probability', 0)) if pd.notna(row.get('ml_probability')) else 0.0,
                 "rule_override": bool(row.get('rule_override', False))
             }
             students.append(cleaned_student)
