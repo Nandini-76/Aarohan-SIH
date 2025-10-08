@@ -586,10 +586,11 @@ async def populate_firebase_on_startup():
         
         students = []
         for _, row in df.iterrows():
+            # Base fields (always present)
             cleaned_student = {
                 "student_id": safe_str(row.get('enrollment_no', '')),
                 "enrollment_no": safe_str(row.get('enrollment_no', '')),
-                "name": generate_student_name(safe_str(row.get('enrollment_no', ''))),
+                "name": safe_str(row.get('student_name', '')) or generate_student_name(safe_str(row.get('enrollment_no', ''))),
                 "department": safe_str(row.get('department', '')) if pd.notna(row.get('department')) else None,
                 "attendance": safe_float(row.get('attendance', 0)),
                 "cgpa": safe_float(row.get('cgpa', 0)),
@@ -609,6 +610,34 @@ async def populate_firebase_on_startup():
                 "ml_probability": safe_float(row.get('ml_probability', 0)) if pd.notna(row.get('ml_probability')) else 0.0,
                 "rule_override": bool(row.get('rule_override', False))
             }
+            
+            # Add comprehensive fields if present (from comprehensive_predicted.csv)
+            comprehensive_fields = {
+                'hometown': safe_str(row.get('hometown', '')) if pd.notna(row.get('hometown')) else None,
+                'age': safe_int(row.get('age', 0)) if pd.notna(row.get('age')) else None,
+                'father_occupation': safe_str(row.get('father_occupation', '')) if pd.notna(row.get('father_occupation')) else None,
+                'mother_occupation': safe_str(row.get('mother_occupation', '')) if pd.notna(row.get('mother_occupation')) else None,
+                'family_income': safe_float(row.get('family_income', 0)) if pd.notna(row.get('family_income')) else None,
+                'section': safe_str(row.get('section', '')) if pd.notna(row.get('section')) else None,
+                'course': safe_str(row.get('course', '')) if pd.notna(row.get('course')) else None,
+                'year_level': safe_int(row.get('year_level', 0)) if pd.notna(row.get('year_level')) else None,
+                'year_enrollment': safe_int(row.get('year_enrollment', 0)) if pd.notna(row.get('year_enrollment')) else None,
+                'year_completion': safe_int(row.get('year_completion', 0)) if pd.notna(row.get('year_completion')) else None,
+                'specialization': safe_str(row.get('specialization', '')) if pd.notna(row.get('specialization')) else None,
+                'sgpa1': safe_float(row.get('sgpa1', 0)) if pd.notna(row.get('sgpa1')) else None,
+                'sgpa2': safe_float(row.get('sgpa2', 0)) if pd.notna(row.get('sgpa2')) else None,
+                'sgpa3': safe_float(row.get('sgpa3', 0)) if pd.notna(row.get('sgpa3')) else None,
+                'sgpa4': safe_float(row.get('sgpa4', 0)) if pd.notna(row.get('sgpa4')) else None,
+                'sgpa5': safe_float(row.get('sgpa5', 0)) if pd.notna(row.get('sgpa5')) else None,
+                'sgpa6': safe_float(row.get('sgpa6', 0)) if pd.notna(row.get('sgpa6')) else None,
+                'sgpa7': safe_float(row.get('sgpa7', 0)) if pd.notna(row.get('sgpa7')) else None,
+            }
+            
+            # Only add comprehensive fields if they exist in the dataframe
+            for field, value in comprehensive_fields.items():
+                if field in df.columns and value is not None:
+                    cleaned_student[field] = value
+            
             students.append(cleaned_student)
         
         # Push to Firebase
@@ -636,9 +665,16 @@ async def startup_event():
         firebase_success = init_firebase()
         if firebase_success:
             logger.info("Firebase initialized successfully - data will be persisted")
+            logger.info("🔒 Skipping automatic Firebase population - using manually populated comprehensive data")
+            logger.info("💡 To repopulate Firebase, run: python app/populate_firebase_manual.py")
             
-            # Populate Firebase with fresh predictions on startup
-            await populate_firebase_on_startup()
+            # NOTE: Automatic population disabled to preserve manually populated comprehensive data
+            # The comprehensive data (42 fields) was populated using populate_firebase_manual.py
+            # Frontend will load directly from Firebase which has all student information
+            # Backend only handles new predictions and updates via API endpoints
+            
+            # Uncomment below to re-enable automatic population (will overwrite Firebase data):
+            # await populate_firebase_on_startup()
         else:
             logger.warning("Firebase not configured - continuing without persistence layer")
     except Exception as e:
