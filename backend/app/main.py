@@ -524,10 +524,35 @@ def load_ml_model():
         ml_metrics = None
         model_loaded = False
 
+async def periodic_firebase_update():
+    """
+    Background task that runs every 5 hours to refresh Firebase data.
+    Updates predictions while preserving comprehensive fields.
+    """
+    import asyncio
+    while True:
+        try:
+            # Wait 5 hours (18,000 seconds)
+            await asyncio.sleep(18000)
+            
+            logger.info("⏰ Periodic update: Refreshing Firebase data (every 5 hours)")
+            
+            if is_firebase_initialized():
+                await populate_firebase_on_startup()
+                logger.info("✅ Periodic Firebase update completed successfully")
+            else:
+                logger.warning("⚠️ Firebase not initialized, skipping periodic update")
+                
+        except Exception as e:
+            logger.error(f"❌ Periodic Firebase update failed: {e}")
+            # Continue the loop even if update fails
+
+
 async def populate_firebase_on_startup():
     """
     Load preprocessed dataset with predictions and push to Firebase on startup.
     This ensures the frontend always sees the latest data with 2,080+ students.
+    Includes ALL comprehensive fields (42 total) from comprehensive_predicted.csv.
     """
     try:
         logger.info("🔄 Loading preprocessed dataset for Firebase...")
@@ -686,8 +711,13 @@ async def startup_event():
                 logger.info("� Running smart merge-update: Refreshing predictions, preserving comprehensive data...")
                 await populate_firebase_on_startup()
             else:
-                logger.info("📭 Firebase is empty - populating with initial data...")
+                logger.info("📭 Firebase is empty - populating with comprehensive data (42 fields)...")
                 await populate_firebase_on_startup()
+            
+            # Start background task for periodic updates every 5 hours
+            import asyncio
+            asyncio.create_task(periodic_firebase_update())
+            logger.info("⏰ Scheduled periodic Firebase updates every 5 hours")
         else:
             logger.warning("Firebase not configured - continuing without persistence layer")
     except Exception as e:
@@ -1212,6 +1242,56 @@ async def train_model(token: str = Query(..., description="Security token (use '
             message=f"Training failed with error: {str(e)}",
             metrics=None,
             model_path=None
+        )
+
+
+@app.post("/api/admin/refresh-firebase", summary="Manually Refresh All Firebase Data")
+async def refresh_firebase_data():
+    """
+    Manually trigger comprehensive Firebase data refresh.
+    - Updates all student predictions
+    - Preserves comprehensive fields (hometown, family, SGPA, etc.)
+    - Same as automatic 5-hour update
+    
+    Useful for:
+    - Forcing immediate update after data changes
+    - Testing Firebase population
+    - Recovery after errors
+    
+    Returns:
+        Status of Firebase refresh operation with update statistics
+    """
+    try:
+        if not is_firebase_initialized():
+            raise HTTPException(
+                status_code=503,
+                detail="Firebase not initialized. Configure environment variables."
+            )
+        
+        logger.info("🔄 Manual Firebase refresh triggered via API")
+        
+        # Run the same population logic as startup
+        await populate_firebase_on_startup()
+        
+        # Get updated count
+        from app.services.firebase_service import get_student_count
+        student_count = get_student_count()
+        
+        return {
+            "status": "success",
+            "message": "Firebase data refreshed successfully",
+            "students_in_firebase": student_count,
+            "timestamp": datetime.utcnow().isoformat(),
+            "update_type": "comprehensive",
+            "fields_per_student": 42,
+            "note": "All predictions updated, comprehensive fields preserved"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to refresh Firebase data: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Firebase refresh failed: {str(e)}"
         )
 
 
