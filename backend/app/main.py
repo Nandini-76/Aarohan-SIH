@@ -70,7 +70,8 @@ try:
         update_all_students,
         update_student_prediction,
         update_batch_predictions,
-        is_firebase_initialized
+        is_firebase_initialized,
+        merge_update_students
     )
 except ImportError:
     try:
@@ -80,7 +81,8 @@ except ImportError:
             update_all_students,
             update_student_prediction,
             update_batch_predictions,
-            is_firebase_initialized
+            is_firebase_initialized,
+            merge_update_students
         )
     except ImportError:
         # Configure logging first
@@ -94,6 +96,7 @@ except ImportError:
         def update_student_prediction(sid, data): return False
         def update_batch_predictions(preds): return False
         def is_firebase_initialized(): return False
+        def merge_update_students(students): return {"updated": 0, "added": 0, "preserved": 0}
 
 # Helper functions for API
 def generate_student_name(enrollment_no: str) -> str:
@@ -640,10 +643,14 @@ async def populate_firebase_on_startup():
             
             students.append(cleaned_student)
         
-        # Push to Firebase
+        # Smart merge-update: Updates predictions, preserves comprehensive fields
         if is_firebase_initialized():
-            update_all_students(students)
-            logger.info(f"✅ Successfully populated Firebase with {len(students)} students on startup")
+            result = merge_update_students(students)
+            logger.info(f"✅ Smart merge-update complete:")
+            logger.info(f"   - Updated: {result['updated']} students (predictions refreshed)")
+            logger.info(f"   - Added: {result['added']} new students")
+            logger.info(f"   - Preserved: {result['preserved']} comprehensive fields")
+            logger.info(f"   - Total students in Firebase: {result.get('total', len(students))}")
         else:
             logger.warning("Firebase not initialized, skipping startup population")
             
@@ -665,16 +672,22 @@ async def startup_event():
         firebase_success = init_firebase()
         if firebase_success:
             logger.info("Firebase initialized successfully - data will be persisted")
-            logger.info("🔒 Skipping automatic Firebase population - using manually populated comprehensive data")
-            logger.info("💡 To repopulate Firebase, run: python app/populate_firebase_manual.py")
             
-            # NOTE: Automatic population disabled to preserve manually populated comprehensive data
-            # The comprehensive data (42 fields) was populated using populate_firebase_manual.py
-            # Frontend will load directly from Firebase which has all student information
-            # Backend only handles new predictions and updates via API endpoints
+            # Smart merge-update on every startup
+            from app.services.firebase_service import get_student_count, get_last_update_timestamp
             
-            # Uncomment below to re-enable automatic population (will overwrite Firebase data):
-            # await populate_firebase_on_startup()
+            firebase_student_count = get_student_count()
+            last_update = get_last_update_timestamp()
+            
+            if firebase_student_count > 0:
+                logger.info(f"✓ Firebase has {firebase_student_count} students")
+                if last_update:
+                    logger.info(f"📅 Last updated: {last_update}")
+                logger.info("� Running smart merge-update: Refreshing predictions, preserving comprehensive data...")
+                await populate_firebase_on_startup()
+            else:
+                logger.info("📭 Firebase is empty - populating with initial data...")
+                await populate_firebase_on_startup()
         else:
             logger.warning("Firebase not configured - continuing without persistence layer")
     except Exception as e:

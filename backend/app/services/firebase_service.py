@@ -135,6 +135,10 @@ def update_all_students(students: list):
         # Store all students
         ref.set(students_dict)
         logger.info(f"Successfully stored {len(students_dict)} students in Firebase at /students")
+        
+        # Update last update timestamp
+        set_last_update_timestamp()
+        
         return True
         
     except Exception as e:
@@ -266,3 +270,180 @@ def is_firebase_initialized() -> bool:
         bool: True if Firebase is initialized and ready
     """
     return len(firebase_admin._apps) > 0
+
+
+def get_student_count() -> int:
+    """
+    Get the count of students currently in Firebase.
+    
+    Returns:
+        int: Number of students in Firebase, or 0 if error
+    """
+    try:
+        if not firebase_admin._apps:
+            return 0
+            
+        ref = db.reference("students")
+        data = ref.get()
+        
+        if data is None:
+            return 0
+            
+        count = len(data) if isinstance(data, dict) else 0
+        logger.info(f"Firebase currently has {count} students")
+        return count
+        
+    except Exception as e:
+        logger.error(f"Failed to get student count from Firebase: {e}")
+        return 0
+
+
+def get_last_update_timestamp() -> Optional[str]:
+    """
+    Get the timestamp of the last Firebase update.
+    
+    Returns:
+        str: ISO format timestamp of last update, or None if not available
+    """
+    try:
+        if not firebase_admin._apps:
+            return None
+            
+        ref = db.reference("metadata/lastUpdate")
+        timestamp = ref.get()
+        
+        if timestamp:
+            logger.info(f"Firebase last updated: {timestamp}")
+        else:
+            logger.info("No last update timestamp found in Firebase")
+            
+        return timestamp
+        
+    except Exception as e:
+        logger.error(f"Failed to get last update timestamp: {e}")
+        return None
+
+
+def set_last_update_timestamp():
+    """
+    Set the current timestamp as the last update time in Firebase.
+    """
+    try:
+        if not firebase_admin._apps:
+            return False
+            
+        ref = db.reference("metadata")
+        ref.update({
+            "lastUpdate": datetime.utcnow().isoformat(),
+            "serverTimestamp": {".sv": "timestamp"}
+        })
+        
+        logger.info("Updated Firebase lastUpdate timestamp")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to set last update timestamp: {e}")
+        return False
+
+
+def merge_update_students(new_students: list):
+    """
+    Smart merge-update: Updates ML predictions while preserving comprehensive fields.
+    
+    This function:
+    1. Fetches existing students from Firebase
+    2. Updates only ML prediction fields from new data
+    3. Preserves all comprehensive fields (hometown, family, SGPA, etc.)
+    4. Adds new students if they don't exist
+    
+    Args:
+        new_students: List of student dictionaries with updated predictions
+        
+    Returns:
+        dict: {"updated": count, "added": count, "preserved": count}
+    """
+    try:
+        if not firebase_admin._apps:
+            logger.warning("Firebase not initialized. Cannot merge-update students.")
+            return {"updated": 0, "added": 0, "preserved": 0}
+            
+        ref = db.reference("students")
+        existing_students = ref.get() or {}
+        
+        # Fields that should be UPDATED (ML predictions and basic academic metrics)
+        update_fields = {
+            'attendance', 'cgpa', 'backlogs', 'marks_10th', 'marks_12th',
+            'final_phase', 'model_phase', 'prediction', 'risk_label',
+            'override_reason', 'ml_probability', 'rule_override',
+            'fees_flag', 'suspension_flag'
+        }
+        
+        # Fields that should be PRESERVED (comprehensive original data)
+        preserve_fields = {
+            'student_name', 'name', 'hometown', 'age', 'category',
+            'father_occupation', 'mother_occupation', 'family_income',
+            'section', 'course', 'year_level', 'year_enrollment', 
+            'year_completion', 'specialization',
+            'sgpa1', 'sgpa2', 'sgpa3', 'sgpa4', 'sgpa5', 'sgpa6', 'sgpa7',
+            'age_at_enrollment', 'gender', 'department'
+        }
+        
+        updated_count = 0
+        added_count = 0
+        preserved_count = 0
+        
+        merged_students = {}
+        
+        for new_student in new_students:
+            enrollment = str(new_student.get('enrollment_no', ''))
+            if not enrollment:
+                continue
+            
+            existing = existing_students.get(enrollment, {})
+            
+            if existing:
+                # Student exists - merge update
+                merged = existing.copy()
+                
+                # Update prediction fields
+                for field in update_fields:
+                    if field in new_student:
+                        merged[field] = new_student[field]
+                
+                # Count preserved fields
+                for field in preserve_fields:
+                    if field in existing and field not in new_student:
+                        preserved_count += 1
+                
+                merged['lastUpdated'] = datetime.utcnow().isoformat()
+                merged_students[enrollment] = merged
+                updated_count += 1
+                
+            else:
+                # New student - add with all fields
+                merged_students[enrollment] = {
+                    **new_student,
+                    "lastUpdated": datetime.utcnow().isoformat()
+                }
+                added_count += 1
+        
+        # Update Firebase with merged data
+        ref.set(merged_students)
+        
+        result = {
+            "updated": updated_count,
+            "added": added_count,
+            "preserved": preserved_count,
+            "total": len(merged_students)
+        }
+        
+        logger.info(f"✅ Merge-update complete: {updated_count} updated, {added_count} added, {preserved_count} fields preserved")
+        
+        # Update last update timestamp
+        set_last_update_timestamp()
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to merge-update students in Firebase: {e}")
+        return {"updated": 0, "added": 0, "preserved": 0, "error": str(e)}
