@@ -410,9 +410,10 @@ def merge_update_students(new_students: list):
                     if field in new_student:
                         merged[field] = new_student[field]
                 
-                # Count preserved fields
+                # Count preserved fields (fields that exist in Firebase but not being updated)
                 for field in preserve_fields:
-                    if field in existing and field not in new_student:
+                    if field in existing and existing[field] is not None:
+                        # Field exists in Firebase and will be preserved
                         preserved_count += 1
                 
                 merged['lastUpdated'] = datetime.utcnow().isoformat()
