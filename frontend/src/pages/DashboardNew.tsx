@@ -32,7 +32,7 @@ const DEPARTMENT_COLORS: Record<string, string> = {
   'B.Tech': '#f59e0b',
 };
 
-const Dashboard: React.FC = () => {
+const DashboardNew: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -461,4 +461,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default DashboardNew;
