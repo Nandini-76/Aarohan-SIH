@@ -531,13 +531,17 @@ async def populate_firebase_on_startup():
         
         data_dir = os.path.join(os.path.dirname(__file__), "data")
         
-        # Priority order: predicted_phase_data.csv > merged_with_predictions.csv > merged_dataset.csv
+        # Priority order: comprehensive_predicted.csv > predicted_phase_data.csv > merged_with_predictions.csv > merged_dataset.csv
+        comprehensive_file = os.path.join(data_dir, "comprehensive_predicted.csv")
         predicted_phase_file = os.path.join(data_dir, "predicted_phase_data.csv")
         merged_with_pred_file = os.path.join(data_dir, "merged_with_predictions.csv")
         merged_file = os.path.join(data_dir, "merged_dataset.csv")
         
-        # Try to load the preprocessed large dataset first
-        if os.path.exists(predicted_phase_file):
+        # Try to load the comprehensive dataset first (all 42 fields)
+        if os.path.exists(comprehensive_file):
+            df = pd.read_csv(comprehensive_file)
+            logger.info(f"✓ Loaded {len(df)} students from comprehensive_predicted.csv (42 fields with all original data)")
+        elif os.path.exists(predicted_phase_file):
             df = pd.read_csv(predicted_phase_file)
             logger.info(f"✓ Loaded {len(df)} students from predicted_phase_data.csv (preprocessed)")
         elif os.path.exists(merged_with_pred_file):
@@ -725,15 +729,21 @@ async def get_all_students():
     """
     try:
         # Priority order for loading data:
-        # 1. predicted_phase_data.csv (large preprocessed dataset with predictions)
-        # 2. merged_with_predictions.csv (demo dataset with predictions)
-        # 3. merged_dataset.csv (demo dataset without predictions - generate on-the-fly)
+        # 1. comprehensive_predicted.csv (42 fields with all original data)
+        # 2. predicted_phase_data.csv (large preprocessed dataset with predictions)
+        # 3. merged_with_predictions.csv (demo dataset with predictions)
+        # 4. merged_dataset.csv (demo dataset without predictions - generate on-the-fly)
         
         data_dir = os.path.join(os.path.dirname(__file__), "data")
         
-        # Try to load predicted_phase_data.csv (from preprocessing pipeline)
-        predicted_phase_file = os.path.join(data_dir, "predicted_phase_data.csv")
-        if os.path.exists(predicted_phase_file):
+        # Try to load comprehensive_predicted.csv first (all original data + predictions)
+        comprehensive_file = os.path.join(data_dir, "comprehensive_predicted.csv")
+        if os.path.exists(comprehensive_file):
+            df = pd.read_csv(comprehensive_file)
+            logger.info(f"✓ Loaded {len(df)} student records from comprehensive_predicted.csv (42 fields)")
+        # Fall back to predicted_phase_data.csv (from preprocessing pipeline)
+        elif os.path.exists(os.path.join(data_dir, "predicted_phase_data.csv")):
+            predicted_phase_file = os.path.join(data_dir, "predicted_phase_data.csv")
             df = pd.read_csv(predicted_phase_file)
             logger.info(f"✓ Loaded {len(df)} student records from predicted_phase_data.csv (preprocessed)")
         # Fall back to merged_with_predictions.csv (demo data with predictions)
