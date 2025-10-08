@@ -39,11 +39,19 @@ const Dashboard: React.FC = () => {
   const [filterPhase, setFilterPhase] = useState('');
   const [filterGender, setFilterGender] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<'analytics' | 'departments'>('analytics');
+  // Persist view mode in sessionStorage
+  const [viewMode, setViewMode] = useState<'analytics' | 'departments'>(() => {
+    return (sessionStorage.getItem('dashboardViewMode') as 'analytics' | 'departments') || 'analytics';
+  });
   const [dataSource, setDataSource] = useState<'backend' | 'firebase' | null>(null);
   
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Save view mode to sessionStorage when it changes
+  useEffect(() => {
+    sessionStorage.setItem('dashboardViewMode', viewMode);
+  }, [viewMode]);
 
   // Fetch students from Firebase
   useEffect(() => {
@@ -139,17 +147,25 @@ const Dashboard: React.FC = () => {
     students.forEach(student => {
       let dept = student.department || student.course || 'Unknown';
       
-      // Normalize department names
-      if (dept.includes('BBA') || dept.includes('B.B.A')) dept = 'BBA';
-      else if (dept.includes('Agriculture')) dept = 'BSc Agriculture';
-      else if (dept.includes('BSc') || dept.includes('B.Sc')) dept = 'BSc';
-      else if (dept.includes('BTech') || dept.includes('B.Tech')) dept = 'BTech';
+      // Normalize department names - ORDER MATTERS!
+      // Check Agriculture first before BSc
+      if (dept.includes('Agriculture') || dept.includes('agriculture')) {
+        dept = 'BSc Agriculture';
+      } else if (dept.includes('BBA') || dept.includes('B.B.A')) {
+        dept = 'BBA';
+      } else if (dept.includes('BSc') || dept.includes('B.Sc') || dept.includes('CS')) {
+        dept = 'BSc';
+      } else if (dept.includes('BTech') || dept.includes('B.Tech') || dept.includes('Tech')) {
+        dept = 'BTech';
+      }
       
       if (!grouped[dept]) {
         grouped[dept] = [];
       }
       grouped[dept].push(student);
     });
+    
+    console.log('Grouped departments:', Object.keys(grouped), 'Counts:', Object.entries(grouped).map(([dept, studs]) => `${dept}: ${studs.length}`));
     
     return grouped;
   }, [students]);
@@ -300,15 +316,15 @@ const Dashboard: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="bg-white/95 backdrop-blur border-0">
-            <CardContent className="p-4">
+          <Card className="bg-white/95 backdrop-blur border-0 shadow-md">
+            <CardContent className="p-5">
               <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                 {/* View Mode Tabs */}
                 <div className="flex gap-2">
                   <Button
                     variant={viewMode === 'analytics' ? 'default' : 'outline'}
                     onClick={() => setViewMode('analytics')}
-                    className="gap-2"
+                    className="gap-2 min-w-[120px]"
                   >
                     <TrendingUp className="w-4 h-4" />
                     Analytics
@@ -316,7 +332,7 @@ const Dashboard: React.FC = () => {
                   <Button
                     variant={viewMode === 'departments' ? 'default' : 'outline'}
                     onClick={() => setViewMode('departments')}
-                    className="gap-2"
+                    className="gap-2 min-w-[120px]"
                   >
                     <AlertTriangle className="w-4 h-4" />
                     Departments
@@ -324,21 +340,21 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Search and Filters */}
-                <div className="flex gap-2 w-full md:w-auto">
-                  <div className="relative flex-1 md:w-64">
+                <div className="flex gap-3 w-full md:w-auto">
+                  <div className="relative flex-1 md:w-80">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
                       placeholder="Search students..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 h-10"
                     />
                   </div>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={() => setShowFilters(!showFilters)}
-                    className={showFilters ? 'bg-primary text-white' : ''}
+                    className={`h-10 w-10 ${showFilters ? 'bg-primary text-white hover:bg-primary/90' : ''}`}
                   >
                     <Filter className="w-4 h-4" />
                   </Button>
@@ -407,49 +423,62 @@ const Dashboard: React.FC = () => {
         </motion.div>
 
         {/* Content Area */}
-        {viewMode === 'analytics' ? (
-          <AnalyticsOverview students={students} />
-        ) : (
-          <div className="space-y-6">
-            {sortedDepartments.map((department, index) => (
-              <motion.div
-                key={department}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 * index }}
-              >
-                <DepartmentSection
-                  department={department}
-                  students={studentsByDepartment[department]}
-                  searchTerm={searchTerm}
-                  filterPhase={filterPhase}
-                  filterGender={filterGender}
-                  accentColor={DEPARTMENT_COLORS[department] || '#6366f1'}
-                  onStudentClick={handleStudentClick}
-                />
-              </motion.div>
-            ))}
+        <div className="mt-6">
+          {viewMode === 'analytics' ? (
+            <AnalyticsOverview students={students} />
+          ) : (
+            <div className="space-y-5">
+              {sortedDepartments.map((department, index) => (
+                <motion.div
+                  key={department}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: Math.min(0.1 * index, 0.3) }}
+                >
+                  <DepartmentSection
+                    department={department}
+                    students={studentsByDepartment[department]}
+                    searchTerm={searchTerm}
+                    filterPhase={filterPhase}
+                    filterGender={filterGender}
+                    accentColor={DEPARTMENT_COLORS[department] || '#6366f1'}
+                    onStudentClick={handleStudentClick}
+                  />
+                </motion.div>
+              ))}
 
-            {sortedDepartments.length === 0 && (
-              <Card className="bg-white/95 backdrop-blur border-0">
-                <CardContent className="p-12 text-center">
-                  <p className="text-gray-500">No students found matching your criteria.</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
+              {sortedDepartments.length === 0 && (
+                <Card className="bg-white/95 backdrop-blur border-0 shadow-md">
+                  <CardContent className="p-12 text-center">
+                    <p className="text-gray-600 text-lg">No students found matching your criteria.</p>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setFilterPhase('');
+                        setFilterGender('');
+                        setSearchTerm('');
+                      }}
+                      className="mt-4"
+                    >
+                      Clear All Filters
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Quick Actions */}
         <motion.div
-          className="flex justify-center pt-4"
+          className="flex justify-center pt-8 pb-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.5 }}
         >
           <Button 
             onClick={() => navigate('/simulation')}
-            className="bg-gradient-secondary hover:opacity-90 gap-2"
+            className="bg-gradient-secondary hover:opacity-90 gap-2 shadow-lg"
             size="lg"
           >
             <TrendingUp className="w-5 h-5" />

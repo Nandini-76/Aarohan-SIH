@@ -155,7 +155,7 @@ const DepartmentSection: React.FC<DepartmentSectionProps> = ({
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <CardContent className="p-6 space-y-6">
+              <CardContent className="p-5 space-y-5">
                 {Object.entries(studentsByYear)
                   .sort(([a], [b]) => Number(a) - Number(b))
                   .map(([year, yearStudents]) => {
@@ -166,37 +166,37 @@ const DepartmentSection: React.FC<DepartmentSectionProps> = ({
                     const isYearExpanded = expandedYears.has(Number(year));
 
                     return (
-                      <div key={year} className="border rounded-lg overflow-hidden">
+                      <div key={year} className="border rounded-lg overflow-hidden shadow-sm">
                         {/* Year Header */}
                         <div
                           className="bg-gray-50 p-4 cursor-pointer hover:bg-gray-100 transition-colors"
                           onClick={() => toggleYear(Number(year))}
                         >
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                               {isYearExpanded ? (
-                                <ChevronDown className="w-4 h-4 text-gray-600" />
+                                <ChevronDown className="w-4 h-4 text-gray-600 flex-shrink-0" />
                               ) : (
-                                <ChevronRight className="w-4 h-4 text-gray-600" />
+                                <ChevronRight className="w-4 h-4 text-gray-600 flex-shrink-0" />
                               )}
                               <h3 className="text-lg font-semibold text-gray-800">Year {year}</h3>
-                              <Badge>{stats.total} students</Badge>
+                              <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">{stats.total} students</Badge>
                             </div>
 
                             {/* Year Stats Summary */}
-                            <div className="flex items-center gap-4 text-sm">
-                              <div className="flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-blue-600" />
-                                <span className="text-gray-700">CGPA: {stats.avgCGPA}</span>
+                            <div className="flex items-center gap-3 md:gap-4 text-sm flex-wrap ml-7 md:ml-0">
+                              <div className="flex items-center gap-1.5">
+                                <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                <span className="text-gray-700 font-medium">CGPA: {stats.avgCGPA}</span>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4 text-purple-600" />
-                                <span className="text-gray-700">Att: {stats.avgAttendance}%</span>
+                              <div className="flex items-center gap-1.5">
+                                <Users className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                                <span className="text-gray-700 font-medium">Att: {stats.avgAttendance}%</span>
                               </div>
                               {(stats.red > 0 || stats.orange > 0) && (
-                                <div className="flex items-center gap-1">
-                                  <AlertCircle className="w-4 h-4 text-red-600" />
-                                  <span className="text-red-600 font-medium">
+                                <div className="flex items-center gap-1.5">
+                                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                                  <span className="text-red-600 font-semibold">
                                     {stats.red + stats.orange} at risk
                                   </span>
                                 </div>
@@ -284,14 +284,14 @@ const StudentCardGrid: React.FC<StudentCardGridProps> = ({
   const hasMore = visibleCount < students.length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {visibleStudents.map((student, index) => (
           <motion.div
             key={student.enrollment_no}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.02 }}
+            transition={{ duration: 0.3, delay: Math.min(index * 0.02, 0.5) }}
           >
             <StudentCard student={student} onClick={() => onStudentClick(student.enrollment_no)} />
           </motion.div>
@@ -299,11 +299,11 @@ const StudentCardGrid: React.FC<StudentCardGridProps> = ({
       </div>
 
       {hasMore && (
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-2">
           <Button
             variant="outline"
             onClick={() => setVisibleCount(prev => prev + studentsPerPage)}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto px-6 py-2 font-medium"
           >
             Load More ({students.length - visibleCount} remaining)
           </Button>
