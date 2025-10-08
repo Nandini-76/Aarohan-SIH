@@ -143,19 +143,24 @@ const Dashboard: React.FC = () => {
   // Group students by department
   const studentsByDepartment = useMemo(() => {
     const grouped: Record<string, Student[]> = {};
+    const rawDepartments = new Set<string>();
     
     students.forEach(student => {
-      let dept = student.department || student.course || 'Unknown';
+      const rawDept = student.department || student.course || 'Unknown';
+      rawDepartments.add(rawDept);
+      
+      let dept = rawDept;
+      const deptLower = dept.toLowerCase();
       
       // Normalize department names - ORDER MATTERS!
       // Check Agriculture first before BSc
-      if (dept.includes('Agriculture') || dept.includes('agriculture')) {
+      if (deptLower.includes('agriculture') || deptLower.includes('agri')) {
         dept = 'BSc Agriculture';
-      } else if (dept.includes('BBA') || dept.includes('B.B.A')) {
+      } else if (deptLower.includes('bba') || deptLower.includes('b.b.a')) {
         dept = 'BBA';
-      } else if (dept.includes('BSc') || dept.includes('B.Sc') || dept.includes('CS')) {
+      } else if (deptLower.includes('bsc') || deptLower.includes('b.sc') || deptLower.includes('cs') || deptLower.includes('computer')) {
         dept = 'BSc';
-      } else if (dept.includes('BTech') || dept.includes('B.Tech') || dept.includes('Tech')) {
+      } else if (deptLower.includes('btech') || deptLower.includes('b.tech') || deptLower.includes('tech') || deptLower.includes('engineering')) {
         dept = 'BTech';
       }
       
@@ -165,6 +170,8 @@ const Dashboard: React.FC = () => {
       grouped[dept].push(student);
     });
     
+    console.log('Raw department values from Firebase:', Array.from(rawDepartments));
+    
     console.log('Grouped departments:', Object.keys(grouped), 'Counts:', Object.entries(grouped).map(([dept, studs]) => `${dept}: ${studs.length}`));
     
     return grouped;
@@ -173,7 +180,18 @@ const Dashboard: React.FC = () => {
   // Get sorted departments (BBA, BSc, BSc Agriculture, BTech)
   const sortedDepartments = useMemo(() => {
     const order = ['BBA', 'BSc', 'BSc Agriculture', 'BTech'];
-    return order.filter(dept => studentsByDepartment[dept]?.length > 0);
+    const allDepartments = Object.keys(studentsByDepartment);
+    console.log('All departments in studentsByDepartment:', allDepartments);
+    console.log('Department counts:', allDepartments.map(d => `${d}: ${studentsByDepartment[d]?.length || 0}`));
+    
+    const filtered = order.filter(dept => {
+      const hasStudents = studentsByDepartment[dept]?.length > 0;
+      console.log(`Checking ${dept}: ${hasStudents ? 'has students' : 'no students'} (${studentsByDepartment[dept]?.length || 0})`);
+      return hasStudents;
+    });
+    
+    console.log('Filtered sorted departments:', filtered);
+    return filtered;
   }, [studentsByDepartment]);
 
   // Calculate overall stats
