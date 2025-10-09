@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, RefreshCw, Sliders, AlertTriangle, Info, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Play, RefreshCw, Sliders, AlertTriangle, Info, CheckCircle, Mail } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Label } from '../components/ui/label';
@@ -105,6 +105,7 @@ const Simulation: React.FC = () => {
         fees_flag: studentFromProfile.fees_flag,
         suspension_flag: studentFromProfile.suspension_flag,
         gender: studentFromProfile.gender,
+        email: '',
       });
     } else {
       setFormData({
@@ -117,6 +118,7 @@ const Simulation: React.FC = () => {
         fees_flag: 0,
         suspension_flag: 0,
         gender: 'M',
+        email: '',
       });
     }
     setResult(null);
@@ -339,6 +341,27 @@ const Simulation: React.FC = () => {
               </div>
             </div>
 
+            <Separator className="my-2" />
+
+            {/* Email Input for Report */}
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-xs flex items-center space-x-1">
+                <span>Email Address (Optional)</span>
+                <span className="text-muted-foreground">- Receive PDF report for Orange/Red risk</span>
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="e.g., student@example.com"
+                value={formData.email || ''}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="h-8 text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                📧 Report will be emailed if provided, or available for download
+              </p>
+            </div>
+
             {/* Action Buttons - Sticky at bottom */}
             <div className="flex space-x-2 pt-3 sticky bottom-0 bg-card pb-2">
               <Button
@@ -490,12 +513,82 @@ const Simulation: React.FC = () => {
                   </div>
                 )}
 
+                {/* Report Generation Status */}
+                {result.report_generated && (result.final_phase === "Orange" || result.final_phase === "Red") && (
+                  <div>
+                    <h4 className="text-sm font-semibold mb-2 flex items-center">
+                      <CheckCircle className="w-3 h-3 mr-1.5 text-green-600" />
+                      PDF Report Generated
+                    </h4>
+                    <div className="bg-green-50 border border-green-200 p-3 rounded-lg space-y-2">
+                      <div className="flex items-start space-x-2">
+                        <div className="flex-shrink-0">
+                          <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-green-800 font-medium mb-0.5">
+                            Multilingual Report Available
+                          </p>
+                          <p className="text-xs text-green-700 mb-2">
+                            Report generated in English, Hindi, and Rajasthani
+                          </p>
+                          
+                          {result.email_sent && formData.email && (
+                            <div className="flex items-center space-x-1 text-xs text-green-700 mb-2">
+                              <CheckCircle className="w-3 h-3" />
+                              <span>Report sent to {formData.email}</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <a
+                              href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/report/${result.report_id}?language=en`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                            >
+                              📄 English Report
+                            </a>
+                            <a
+                              href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/report/${result.report_id}?language=hi`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                            >
+                              📄 हिंदी रिपोर्ट
+                            </a>
+                            <a
+                              href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/report/${result.report_id}?language=rj`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                            >
+                              📄 राजस्थानी रिपोर्ट
+                            </a>
+                            <a
+                              href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/report/${result.report_id}/all`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 transition-colors"
+                            >
+                              📦 Download All (ZIP)
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Debug Info - Remove this after testing */}
                 {result && (
                   <div className="bg-gray-100 p-1.5 rounded text-[10px]">
                     <strong>Debug:</strong> Phase: {result.final_phase}, 
                     Has notification: {result.notification_message ? 'Yes' : 'No'}, 
-                    Message: {result.notification_message || 'None'}
+                    Message: {result.notification_message || 'None'},
+                    Report ID: {result.report_id || 'None'},
+                    Report Generated: {result.report_generated ? 'Yes' : 'No'},
+                    Email Sent: {result.email_sent ? 'Yes' : 'No'}
                   </div>
                 )}
 

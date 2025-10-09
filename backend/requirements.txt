@@ -13,3 +13,15 @@ requests
 firebase-admin
 # Excel file support for preprocessing
 openpyxl
+# PDF generation
+fpdf2
+# Email sending
+fastapi-mail
+aiosmtplib
+# Chart generation
+matplotlib
+pillow
+# Background tasks (optional, use BackgroundTasks for simple cases)
+# celery[redis]
+# Translation support
+python-i18n

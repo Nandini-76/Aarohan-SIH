@@ -1,0 +1,10 @@
+# Reports Directory
+
+This directory stores generated PDF reports for student dropout risk assessments.
+
+Reports are organized by simulation ID:
+- Each simulation gets its own subdirectory
+- Reports are generated in three languages: English, Hindi, and Rajasthani
+- Files are named: report_en.pdf, report_hi.pdf, report_rj.pdf
+
+Old reports are automatically cleaned up after 7 days.

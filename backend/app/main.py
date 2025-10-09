@@ -22,7 +22,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import uvicorn
-from fastapi import FastAPI, HTTPException, Query, Response, Request
+from fastapi import FastAPI, HTTPException, Query, Response, Request, BackgroundTasks
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -309,6 +310,7 @@ class SimulateRequest(BaseModel):
     fees_flag: Optional[int] = Field(0, ge=0, le=1, description="Fees payment flag (0=paid, 1=unpaid)")
     suspension_flag: Optional[int] = Field(0, ge=0, description="Suspension flag (0=no suspension, 1=suspended)")
     gender: Optional[str] = Field("M", pattern="^[MF]$", description="Gender")
+    email: Optional[str] = Field(None, description="Optional email address to receive report")
 
 class SimulateResponse(BaseModel):
     """Response model for simulation endpoint"""
@@ -319,6 +321,9 @@ class SimulateResponse(BaseModel):
     ml_probability: Optional[float] = Field(None, description="ML model dropout probability")
     rule_override: bool = Field(False, description="Whether red-zone rules overrode ML prediction")
     notification_message: Optional[str] = Field(None, description="Notification message sent if risk is Orange/Red")
+    report_id: Optional[str] = Field(None, description="Simulation ID for report generation (if orange/red)")
+    report_generated: bool = Field(False, description="Whether PDF report was generated")
+    email_sent: bool = Field(False, description="Whether report was sent via email")
 
 class TrainingResponse(BaseModel):
     """Response model for training endpoint"""
@@ -975,16 +980,18 @@ async def get_student_by_enrollment(enrollment_no: str):
 async def simulate_dropout_prediction(request: SimulateRequest):
     """
     Simulate dropout prediction for a student with given parameters using comprehensive rules.
+    Generates PDF reports for Orange/Red risk levels and sends via email if provided.
     
     Args:
-        request: Student parameters for simulation
+        request: Student parameters for simulation (includes optional email)
         
     Returns:
-        Prediction result with phase, reason, and probability
+        Prediction result with phase, reason, probability, and report info
     """
     try:
         # Convert request to dictionary and validate
         student_data = request.dict()
+        student_email = student_data.pop('email', None)  # Extract email before validation
         student_data = validate_student_input(student_data)
         
         # Use the improved prediction pipeline
@@ -1001,6 +1008,59 @@ async def simulate_dropout_prediction(request: SimulateRequest):
                    f"model_phase={prediction_result['model_phase']}, "
                    f"final_phase={prediction_result['final_phase']}")
 
+        # Initialize report fields
+        report_id = None
+        report_generated = False
+        email_sent = False
+        
+        # Generate PDF report for Orange or Red risk levels
+        if final_risk_level in ['Orange', 'Red']:
+            try:
+                # Import report and email services
+                from services.report_service import generate_all_reports
+                from services.email_service import send_report_email
+                
+                # Generate unique simulation ID
+                import uuid
+                report_id = f"sim_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+                
+                # Generate reports in all three languages
+                logger.info(f"Generating PDF reports for {report_id}...")
+                report_paths = generate_all_reports(
+                    simulation_data=student_data,
+                    prediction_result=prediction_result,
+                    simulation_id=report_id
+                )
+                
+                if report_paths:
+                    report_generated = True
+                    logger.info(f"Generated {len(report_paths)} report(s) for {report_id}")
+                    
+                    # Send email if email address was provided
+                    if student_email and '@' in student_email:
+                        logger.info(f"Sending report email to {student_email}...")
+                        student_name = student_data.get('enrollment_no', 'Student')
+                        email_sent = await send_report_email(
+                            recipient_email=student_email,
+                            student_name=student_name,
+                            risk_level=final_risk_level,
+                            report_paths=report_paths,
+                            simulation_id=report_id
+                        )
+                        
+                        if email_sent:
+                            logger.info(f"Report email sent successfully to {student_email}")
+                        else:
+                            logger.warning(f"Failed to send report email to {student_email}")
+                    else:
+                        logger.info("No email provided, report available for download only")
+                        
+            except Exception as report_error:
+                logger.error(f"Error generating/sending report: {report_error}")
+                # Don't fail the entire request if report generation fails
+                report_generated = False
+                email_sent = False
+
         # Prepare response
         response = SimulateResponse(
             enrollment_no=request.enrollment_no if hasattr(request, 'enrollment_no') else None,
@@ -1009,7 +1069,10 @@ async def simulate_dropout_prediction(request: SimulateRequest):
             override_reason=prediction_result['red_reason'],
             ml_probability=prediction_result['ml_probability'],
             rule_override=prediction_result['rule_override'],
-            notification_message=notification_message
+            notification_message=notification_message,
+            report_id=report_id,
+            report_generated=report_generated,
+            email_sent=email_sent
         )
         
         # Push latest simulation data to Firebase for judges to see
@@ -1022,7 +1085,9 @@ async def simulate_dropout_prediction(request: SimulateRequest):
                         "final_phase": prediction_result['final_phase'],
                         "risk_level": _convert_phase_to_risk_label(prediction_result['final_phase']),
                         "ml_probability": prediction_result['ml_probability'],
-                        "rule_override": prediction_result['rule_override']
+                        "rule_override": prediction_result['rule_override'],
+                        "report_id": report_id,
+                        "report_generated": report_generated
                     },
                     "backend_status": "active"
                 }
@@ -1039,6 +1104,113 @@ async def simulate_dropout_prediction(request: SimulateRequest):
         logger.error(f"Simulation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
 
+
+@app.get("/report/{simulation_id}", summary="Download Simulation Report")
+async def get_report(
+    simulation_id: str,
+    language: str = Query("en", description="Report language: en, hi, or rj")
+):
+    """
+    Download a generated PDF report for a simulation.
+    
+    Args:
+        simulation_id: Unique simulation identifier
+        language: Report language (en=English, hi=Hindi, rj=Rajasthani)
+        
+    Returns:
+        PDF file for download
+        
+    Raises:
+        HTTPException: If report not found
+    """
+    try:
+        # Validate language parameter
+        if language not in ['en', 'hi', 'rj']:
+            raise HTTPException(status_code=400, detail="Invalid language. Must be en, hi, or rj")
+        
+        # Construct report path
+        reports_dir = Path(__file__).parent / "reports" / simulation_id
+        report_file = reports_dir / f"report_{language}.pdf"
+        
+        # Check if report exists
+        if not report_file.exists():
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Report not found for simulation {simulation_id} in language {language}"
+            )
+        
+        # Map language codes to readable names
+        language_names = {"en": "English", "hi": "Hindi", "rj": "Rajasthani"}
+        language_name = language_names.get(language, language)
+        
+        # Return PDF file
+        return FileResponse(
+            path=str(report_file),
+            media_type="application/pdf",
+            filename=f"dropout_risk_report_{language}_{simulation_id}.pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="dropout_risk_report_{language_name}_{simulation_id}.pdf"'
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving report: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve report: {str(e)}")
+
+
+@app.get("/report/{simulation_id}/all", summary="Download All Reports (Zipped)")
+async def get_all_reports(simulation_id: str):
+    """
+    Download all three language reports as a zip file.
+    
+    Args:
+        simulation_id: Unique simulation identifier
+        
+    Returns:
+        ZIP file containing all three reports
+        
+    Raises:
+        HTTPException: If reports not found
+    """
+    try:
+        import zipfile
+        import tempfile
+        
+        # Construct reports directory path
+        reports_dir = Path(__file__).parent / "reports" / simulation_id
+        
+        if not reports_dir.exists():
+            raise HTTPException(
+                status_code=404, 
+                detail=f"No reports found for simulation {simulation_id}"
+            )
+        
+        # Create temporary zip file
+        temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
+        
+        with zipfile.ZipFile(temp_zip.name, 'w') as zipf:
+            for language in ['en', 'hi', 'rj']:
+                report_file = reports_dir / f"report_{language}.pdf"
+                if report_file.exists():
+                    zipf.write(report_file, arcname=f"report_{language}.pdf")
+        
+        # Return zip file
+        return FileResponse(
+            path=temp_zip.name,
+            media_type="application/zip",
+            filename=f"dropout_risk_reports_{simulation_id}.zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="dropout_risk_reports_{simulation_id}.zip"'
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating zip file: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create zip file: {str(e)}")
 
 
 @app.get("/simulations", response_model=SimulationListResponse, summary="Get All Past Simulations")
@@ -1061,6 +1233,163 @@ async def get_simulations():
     except Exception as e:
         logger.error(f"Failed to retrieve simulations: {e}")
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
+
+
+@app.post("/api/students/search", summary="Search Students")
+async def search_students(
+    query: Optional[str] = None,
+    enrollment: Optional[str] = None,
+    name: Optional[str] = None,
+    department: Optional[str] = None,
+    branch: Optional[str] = None,
+    year: Optional[int] = None,
+    risk_level: Optional[str] = None,
+    mentor_id: Optional[str] = None,
+    counselor_id: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    """
+    Flexible search across student records
+    
+    Supports:
+    - Free text query
+    - Field-specific filters
+    - Pagination
+    """
+    try:
+        from services.firebase_service import get_firestore_db
+        
+        db = get_firestore_db()
+        if not db:
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        # Start with all students
+        query_ref = db.collection('students')
+        
+        # Apply filters
+        if enrollment:
+            query_ref = query_ref.where('enrollment_no', '==', enrollment)
+        
+        if department:
+            query_ref = query_ref.where('department', '==', department)
+        
+        if branch:
+            query_ref = query_ref.where('branch', '==', branch)
+        
+        if year:
+            query_ref = query_ref.where('year', '==', year)
+        
+        if risk_level:
+            query_ref = query_ref.where('final_phase', '==', risk_level)
+        
+        if mentor_id:
+            query_ref = query_ref.where('mentor_id', '==', mentor_id)
+        
+        if counselor_id:
+            query_ref = query_ref.where('counselor_id', '==', counselor_id)
+        
+        # Execute query
+        results = query_ref.limit(limit).offset(offset).stream()
+        
+        students = []
+        for doc in results:
+            student_data = doc.to_dict()
+            student_data['id'] = doc.id
+            
+            # Apply free text search if provided
+            if query:
+                search_term = query.lower()
+                searchable_text = f"{student_data.get('name', '')} {student_data.get('enrollment_no', '')} {student_data.get('email', '')}".lower()
+                if search_term not in searchable_text:
+                    continue
+            
+            # Filter by name if provided
+            if name:
+                if name.lower() not in student_data.get('name', '').lower():
+                    continue
+            
+            # Filter by tags if provided
+            if tags:
+                student_tags = student_data.get('tags', [])
+                if not any(tag in student_tags for tag in tags):
+                    continue
+            
+            students.append(student_data)
+        
+        return {
+            "total": len(students),
+            "students": students,
+            "limit": limit,
+            "offset": offset
+        }
+        
+    except Exception as e:
+        logger.error(f"Student search failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+
+@app.post("/api/notify/one-click", summary="Send One-Click Notifications")
+async def send_one_click_notification(
+    sender_id: str,
+    recipient_ids: List[str],
+    message: str,
+    language: str = "en",
+    channels: List[str] = ["inapp", "email"],
+    template_id: Optional[str] = None,
+    background_tasks: BackgroundTasks = None
+):
+    """
+    Send bulk notifications from mentor to students
+    
+    Supports:
+    - Multiple recipients
+    - Multiple channels (in-app, email)
+    - Template-based or custom messages
+    - Background processing
+    """
+    try:
+        from services.notification_service import send_one_click_message
+        from services.i18n_service import get_translation
+        
+        # If template_id provided, load template
+        final_message = message
+        if template_id:
+            final_message = get_translation(f"template_{template_id}", language)
+        
+        # Send notifications in background if available
+        if background_tasks:
+            background_tasks.add_task(
+                send_one_click_message,
+                sender_id=sender_id,
+                recipient_ids=recipient_ids,
+                message=final_message,
+                language=language,
+                channels=channels
+            )
+        else:
+            # Send synchronously
+            result = await send_one_click_message(
+                sender_id=sender_id,
+                recipient_ids=recipient_ids,
+                message=final_message,
+                language=language,
+                channels=channels
+            )
+            
+            if result.get("failed", 0) > 0:
+                logger.warning(f"Some messages failed: {result}")
+        
+        return {
+            "status": "success",
+            "message": get_translation("mentor_one_click_sent", language, count=len(recipient_ids)),
+            "recipient_count": len(recipient_ids)
+        }
+        
+    except Exception as e:
+        logger.error(f"One-click notification failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/merge", response_model=MergeResponse, summary="Merge Distributed Datasets")

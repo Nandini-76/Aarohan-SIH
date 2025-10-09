@@ -74,6 +74,7 @@ export interface SimulationData {
   fees_flag: number; // 0 = paid, 1 = unpaid
   suspension_flag: number; // 0 = no suspension, 1 = suspended
   gender?: string;
+  email?: string; // Optional email to receive PDF report
 }
 
 export interface SimulationResult {
@@ -84,6 +85,9 @@ export interface SimulationResult {
   ml_probability: number | null;
   rule_override: boolean;
   notification_message?: string; // Notification message for Orange/Red risk
+  report_id?: string; // Simulation ID for generated reports
+  report_generated?: boolean; // Whether PDF report was generated
+  email_sent?: boolean; // Whether report was sent via email
   // Legacy compatibility
   phase?: "Green" | "Yellow" | "Orange" | "Red"; // Alias for final_phase
   risk_reason?: string; // Alias for override_reason
