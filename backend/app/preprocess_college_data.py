@@ -152,29 +152,32 @@ def extract_branch_from_path(file_path: str) -> str:
 def extract_year_from_filename(filename: str) -> int:
     """
     Extract year from filename (e.g., 'Year1', '1st_year', '2025')
+    BTech has 4 years, other degrees have 3 years
     """
-    # Try to find year patterns
-    year_patterns = [
+    # Try to find explicit year patterns first (Year1, Year2, etc.)
+    explicit_year_patterns = [
         r'Year\s*(\d)',
         r'(\d)st_year',
         r'(\d)nd_year',
         r'(\d)rd_year',
         r'(\d)th_year',
-        r'Students_(\d{4})',
     ]
     
-    for pattern in year_patterns:
+    for pattern in explicit_year_patterns:
         match = re.search(pattern, filename, re.IGNORECASE)
         if match:
-            year_num = match.group(1)
-            # If it's a 4-digit year like 2025, calculate the year level
-            if len(year_num) == 4:
-                year_int = int(year_num)
-                # 2025 = 1st year, 2024 = 2nd year, etc.
-                current_year = 2025
-                year_level = current_year - year_int + 1
-                return min(year_level, 4)  # Cap at 4
-            return int(year_num)
+            year_num = int(match.group(1))
+            return year_num
+    
+    # Try to extract enrollment year (2025, 2024, 2023, 2022)
+    year_match = re.search(r'Students_(\d{4})', filename, re.IGNORECASE)
+    if year_match:
+        year_int = int(year_match.group(1))
+        # Calculate year level based on enrollment year
+        # 2025 = 1st year, 2024 = 2nd year, 2023 = 3rd year, 2022 = 4th year
+        current_year = 2025
+        year_level = current_year - year_int + 1
+        return min(year_level, 4)  # Cap at 4 for BTech
     
     # Default to 1 if not found
     return 1
