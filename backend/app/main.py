@@ -1804,9 +1804,23 @@ async def get_departments():
                 (avg_attendance * 0.2)
             )
             
+            # Map CSV department names to frontend IDs and display names
+            id_mapping = {
+                'BBA': 'bba',
+                'CS': 'bsc',
+                'AGRI': 'bsc_agriculture',
+                'BTECH': 'btech'
+            }
+            display_names = {
+                'BBA': 'BBA',
+                'CS': 'BSc',
+                'AGRI': 'BSc Agriculture',
+                'BTECH': 'BTech'
+            }
+            
             departments.append({
-                "id": dept.replace(' ', '_').lower(),
-                "name": dept.title(),
+                "id": id_mapping.get(dept, dept.replace(' ', '_').lower()),
+                "name": display_names.get(dept, dept.title()),
                 "studentCount": int(total_students),
                 "riskDistribution": {
                     "critical": int(critical),
@@ -1835,7 +1849,7 @@ async def get_department_detail(dept_id: str):
     Get detailed information for a specific department including year-wise breakdown.
     
     Args:
-        dept_id: Department ID (e.g., 'btech', 'bba')
+        dept_id: Department ID (e.g., 'btech', 'bba', 'bsc', 'bsc_agriculture')
         
     Returns:
         Department details with year-wise statistics and analytics data
@@ -1843,10 +1857,21 @@ async def get_department_detail(dept_id: str):
     try:
         df = load_student_data()
         
-        # Normalize and filter by department
-        dept_name = dept_id.replace('_', ' ').upper()
+        # Map frontend IDs to CSV department values
+        dept_mapping = {
+            'bba': 'BBA',
+            'bsc': 'CS',
+            'bsc_agriculture': 'AGRI',
+            'btech': 'BTECH'
+        }
+        
+        csv_dept_name = dept_mapping.get(dept_id.lower())
+        if not csv_dept_name:
+            raise HTTPException(status_code=404, detail=f"Department not found: {dept_id}")
+        
+        # Filter by department using CSV values
         df['department_norm'] = df['department'].str.strip().str.upper()
-        dept_df = df[df['department_norm'] == dept_name]
+        dept_df = df[df['department_norm'] == csv_dept_name]
         
         if dept_df.empty:
             raise HTTPException(status_code=404, detail=f"Department not found: {dept_id}")
@@ -1886,11 +1911,19 @@ async def get_department_detail(dept_id: str):
         dept_df['attendance_range'] = pd.cut(dept_df['attendance'], bins=attendance_bins, labels=attendance_labels, include_lowest=True)
         attendance_distribution = dept_df['attendance_range'].value_counts().to_dict()
         
+        # Display name mapping
+        display_names = {
+            'BBA': 'BBA',
+            'CS': 'BSc',
+            'AGRI': 'BSc Agriculture',
+            'BTECH': 'BTech'
+        }
+        
         return {
             "success": True,
             "department": {
                 "id": dept_id,
-                "name": dept_name.title(),
+                "name": display_names.get(csv_dept_name, csv_dept_name),
                 "totalStudents": int(len(dept_df)),
                 "avgCgpa": round(float(dept_df['cgpa'].mean()), 2),
                 "avgAttendance": round(float(dept_df['attendance'].mean()), 1),
@@ -1939,10 +1972,21 @@ async def get_year_detail(dept_id: str, year_no: int):
     try:
         df = load_student_data()
         
+        # Map frontend IDs to CSV department values
+        dept_mapping = {
+            'bba': 'BBA',
+            'bsc': 'CS',
+            'bsc_agriculture': 'AGRI',
+            'btech': 'BTECH'
+        }
+        
+        csv_dept_name = dept_mapping.get(dept_id.lower())
+        if not csv_dept_name:
+            raise HTTPException(status_code=404, detail=f"Department not found: {dept_id}")
+        
         # Filter by department and year
-        dept_name = dept_id.replace('_', ' ').upper()
         df['department_norm'] = df['department'].str.strip().str.upper()
-        year_df = df[(df['department_norm'] == dept_name) & (df['year_level'] == year_no)]
+        year_df = df[(df['department_norm'] == csv_dept_name) & (df['year_level'] == year_no)]
         
         if year_df.empty:
             raise HTTPException(status_code=404, detail=f"No data found for {dept_id} Year {year_no}")
@@ -1983,10 +2027,18 @@ async def get_year_detail(dept_id: str, year_no: int):
             if not phase_data.empty:
                 attendance_by_phase[phase] = round(float(phase_data['attendance'].mean()), 1)
         
+        # Display name mapping
+        display_names = {
+            'BBA': 'BBA',
+            'CS': 'BSc',
+            'AGRI': 'BSc Agriculture',
+            'BTECH': 'BTech'
+        }
+        
         return {
             "success": True,
             "year": {
-                "department": dept_name.title(),
+                "department": display_names.get(csv_dept_name, csv_dept_name),
                 "year": year_no,
                 "totalStudents": int(len(year_df)),
                 "avgCgpa": round(float(year_df['cgpa'].mean()), 2),
@@ -2046,10 +2098,21 @@ async def get_year_students(
     try:
         df = load_student_data()
         
+        # Map frontend IDs to CSV department values
+        dept_mapping = {
+            'bba': 'BBA',
+            'bsc': 'CS',
+            'bsc_agriculture': 'AGRI',
+            'btech': 'BTECH'
+        }
+        
+        csv_dept_name = dept_mapping.get(dept_id.lower())
+        if not csv_dept_name:
+            raise HTTPException(status_code=404, detail=f"Department not found: {dept_id}")
+        
         # Filter by department and year
-        dept_name = dept_id.replace('_', ' ').upper()
         df['department_norm'] = df['department'].str.strip().str.upper()
-        students_df = df[(df['department_norm'] == dept_name) & (df['year_level'] == year_no)]
+        students_df = df[(df['department_norm'] == csv_dept_name) & (df['year_level'] == year_no)]
         
         # Apply filters
         if section:
@@ -2079,9 +2142,17 @@ async def get_year_students(
                 "status": "Active"  # Can be enhanced with actual status logic
             })
         
+        # Display name mapping
+        display_names = {
+            'BBA': 'BBA',
+            'CS': 'BSc',
+            'AGRI': 'BSc Agriculture',
+            'BTECH': 'BTech'
+        }
+        
         return {
             "success": True,
-            "department": dept_name.title(),
+            "department": display_names.get(csv_dept_name, csv_dept_name),
             "year": year_no,
             "totalCount": len(students),
             "filters": {
@@ -2112,10 +2183,21 @@ async def get_year_sections(dept_id: str, year_no: int):
     try:
         df = load_student_data()
         
+        # Map frontend IDs to CSV department values
+        dept_mapping = {
+            'bba': 'BBA',
+            'bsc': 'CS',
+            'bsc_agriculture': 'AGRI',
+            'btech': 'BTECH'
+        }
+        
+        csv_dept_name = dept_mapping.get(dept_id.lower())
+        if not csv_dept_name:
+            raise HTTPException(status_code=404, detail=f"Department not found: {dept_id}")
+        
         # Filter by department and year
-        dept_name = dept_id.replace('_', ' ').upper()
         df['department_norm'] = df['department'].str.strip().str.upper()
-        year_df = df[(df['department_norm'] == dept_name) & (df['year_level'] == year_no)]
+        year_df = df[(df['department_norm'] == csv_dept_name) & (df['year_level'] == year_no)]
         
         if year_df.empty:
             raise HTTPException(status_code=404, detail=f"No data found for {dept_id} Year {year_no}")
@@ -2142,9 +2224,17 @@ async def get_year_sections(dept_id: str, year_no: int):
                     "needsAttention": int(len(section_df[section_df['attendance'] < 75]))
                 })
         
+        # Display name mapping
+        display_names = {
+            'BBA': 'BBA',
+            'CS': 'BSc',
+            'AGRI': 'BSc Agriculture',
+            'BTECH': 'BTech'
+        }
+        
         return {
             "success": True,
-            "department": dept_name.title(),
+            "department": display_names.get(csv_dept_name, csv_dept_name),
             "year": year_no,
             "sections": sections
         }
