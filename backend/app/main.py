@@ -459,6 +459,48 @@ async def run_preprocessing_if_needed():
         logger.warning("Continuing with existing data if available...")
 
 
+def load_student_data() -> pd.DataFrame:
+    """
+    Load student data from the most comprehensive available dataset.
+    Priority: comprehensive_predicted.csv > predicted_phase_data.csv > merged_with_predictions.csv
+    
+    Returns:
+        DataFrame with student data including predictions
+    """
+    data_dir = Path(__file__).parent / "data"
+    
+    # Try files in priority order
+    file_paths = [
+        data_dir / "comprehensive_predicted.csv",
+        data_dir / "predicted_phase_data.csv",
+        data_dir / "merged_with_predictions.csv",
+        data_dir / "merged_dataset.csv"
+    ]
+    
+    for file_path in file_paths:
+        if file_path.exists():
+            df = pd.read_csv(file_path)
+            logger.info(f"Loaded {len(df)} students from {file_path.name}")
+            
+            # Ensure required columns exist
+            if 'final_phase' not in df.columns and 'predicted_phase' in df.columns:
+                df['final_phase'] = df['predicted_phase']
+            
+            # Add student_name if missing (generate from enrollment_no)
+            if 'student_name' not in df.columns and 'enrollment_no' in df.columns:
+                df['student_name'] = df['enrollment_no'].apply(
+                    lambda x: f"Student {str(x)[-4:]}" if pd.notna(x) else "Unknown"
+                )
+            
+            # Ensure year_level exists
+            if 'year_level' not in df.columns and 'year' in df.columns:
+                df['year_level'] = df['year']
+            
+            return df
+    
+    raise FileNotFoundError("No student data file found in data directory")
+
+
 def load_ml_model():
     """
     Load trained ML model and scaler if available.
@@ -1709,6 +1751,407 @@ async def firebase_status():
             "error": str(e),
             "status": "error"
         }
+
+
+# ============================================================
+# DASHBOARD REDESIGN API ENDPOINTS
+# ============================================================
+
+@app.get("/api/departments", summary="Get All Departments with Summary")
+async def get_departments():
+    """
+    Get all departments with summary statistics.
+    
+    Returns:
+        List of departments with:
+        - Department ID and name
+        - Total student count
+        - Risk distribution (critical, at_risk, monitor, safe)
+        - Average CGPA and attendance
+        - Performance score
+    """
+    try:
+        df = load_student_data()
+        
+        # Normalize department names
+        df['department_norm'] = df['department'].str.strip().str.upper()
+        
+        departments = []
+        for dept in df['department_norm'].unique():
+            if pd.isna(dept) or dept == '':
+                continue
+                
+            dept_df = df[df['department_norm'] == dept]
+            
+            # Calculate risk distribution
+            phase_counts = dept_df['final_phase'].value_counts().to_dict()
+            critical = phase_counts.get('Red', 0)
+            at_risk = phase_counts.get('Orange', 0)
+            monitor = phase_counts.get('Yellow', 0)
+            safe = phase_counts.get('Green', 0)
+            
+            # Calculate averages
+            avg_cgpa = float(dept_df['cgpa'].mean()) if 'cgpa' in dept_df.columns else 0.0
+            avg_attendance = float(dept_df['attendance'].mean()) if 'attendance' in dept_df.columns else 0.0
+            
+            # Calculate performance score (0-100)
+            # Based on: 50% safe students + 30% avg CGPA/10 + 20% avg attendance/100
+            total_students = len(dept_df)
+            safe_pct = (safe / total_students * 100) if total_students > 0 else 0
+            performance_score = (
+                (safe_pct * 0.5) +
+                ((avg_cgpa / 10) * 100 * 0.3) +
+                (avg_attendance * 0.2)
+            )
+            
+            departments.append({
+                "id": dept.replace(' ', '_').lower(),
+                "name": dept.title(),
+                "studentCount": int(total_students),
+                "riskDistribution": {
+                    "critical": int(critical),
+                    "atRisk": int(at_risk),
+                    "monitor": int(monitor),
+                    "safe": int(safe)
+                },
+                "avgCgpa": round(avg_cgpa, 2),
+                "avgAttendance": round(avg_attendance, 1),
+                "performanceScore": round(performance_score, 1)
+            })
+        
+        return {
+            "success": True,
+            "departments": sorted(departments, key=lambda x: x['name'])
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching departments: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/departments/{dept_id}", summary="Get Department Details with Year Breakdown")
+async def get_department_detail(dept_id: str):
+    """
+    Get detailed information for a specific department including year-wise breakdown.
+    
+    Args:
+        dept_id: Department ID (e.g., 'btech', 'bba')
+        
+    Returns:
+        Department details with year-wise statistics and analytics data
+    """
+    try:
+        df = load_student_data()
+        
+        # Normalize and filter by department
+        dept_name = dept_id.replace('_', ' ').upper()
+        df['department_norm'] = df['department'].str.strip().str.upper()
+        dept_df = df[df['department_norm'] == dept_name]
+        
+        if dept_df.empty:
+            raise HTTPException(status_code=404, detail=f"Department not found: {dept_id}")
+        
+        # Year-wise breakdown
+        years_data = []
+        for year in sorted(dept_df['year_level'].dropna().unique()):
+            year_df = dept_df[dept_df['year_level'] == year]
+            
+            phase_counts = year_df['final_phase'].value_counts().to_dict()
+            
+            years_data.append({
+                "year": int(year),
+                "studentCount": int(len(year_df)),
+                "avgCgpa": round(float(year_df['cgpa'].mean()), 2),
+                "avgAttendance": round(float(year_df['attendance'].mean()), 1),
+                "riskDistribution": {
+                    "critical": int(phase_counts.get('Red', 0)),
+                    "atRisk": int(phase_counts.get('Orange', 0)),
+                    "monitor": int(phase_counts.get('Yellow', 0)),
+                    "safe": int(phase_counts.get('Green', 0))
+                }
+            })
+        
+        # Department-level analytics
+        phase_counts = dept_df['final_phase'].value_counts().to_dict()
+        
+        # CGPA distribution
+        cgpa_bins = [0, 4, 5, 6, 7, 8, 9, 10]
+        cgpa_labels = ['<4', '4-5', '5-6', '6-7', '7-8', '8-9', '9-10']
+        dept_df['cgpa_range'] = pd.cut(dept_df['cgpa'], bins=cgpa_bins, labels=cgpa_labels, include_lowest=True)
+        cgpa_distribution = dept_df['cgpa_range'].value_counts().to_dict()
+        
+        # Attendance distribution
+        attendance_bins = [0, 30, 50, 75, 90, 100]
+        attendance_labels = ['<30%', '30-50%', '50-75%', '75-90%', '90-100%']
+        dept_df['attendance_range'] = pd.cut(dept_df['attendance'], bins=attendance_bins, labels=attendance_labels, include_lowest=True)
+        attendance_distribution = dept_df['attendance_range'].value_counts().to_dict()
+        
+        return {
+            "success": True,
+            "department": {
+                "id": dept_id,
+                "name": dept_name.title(),
+                "totalStudents": int(len(dept_df)),
+                "avgCgpa": round(float(dept_df['cgpa'].mean()), 2),
+                "avgAttendance": round(float(dept_df['attendance'].mean()), 1),
+                "riskDistribution": {
+                    "critical": int(phase_counts.get('Red', 0)),
+                    "atRisk": int(phase_counts.get('Orange', 0)),
+                    "monitor": int(phase_counts.get('Yellow', 0)),
+                    "safe": int(phase_counts.get('Green', 0))
+                }
+            },
+            "years": years_data,
+            "analytics": {
+                "cgpaDistribution": [{"range": k, "count": int(v)} for k, v in cgpa_distribution.items()],
+                "attendanceDistribution": [{"range": k, "count": int(v)} for k, v in attendance_distribution.items()],
+                "yearComparison": [
+                    {
+                        "year": year["year"],
+                        "avgCgpa": year["avgCgpa"],
+                        "avgAttendance": year["avgAttendance"],
+                        "atRiskCount": year["riskDistribution"]["critical"] + year["riskDistribution"]["atRisk"]
+                    }
+                    for year in years_data
+                ]
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching department details: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/departments/{dept_id}/years/{year_no}", summary="Get Year Details with Section Breakdown")
+async def get_year_detail(dept_id: str, year_no: int):
+    """
+    Get detailed information for a specific year within a department.
+    
+    Args:
+        dept_id: Department ID
+        year_no: Year number (1-4)
+        
+    Returns:
+        Year details with section breakdown, analytics, and student list
+    """
+    try:
+        df = load_student_data()
+        
+        # Filter by department and year
+        dept_name = dept_id.replace('_', ' ').upper()
+        df['department_norm'] = df['department'].str.strip().str.upper()
+        year_df = df[(df['department_norm'] == dept_name) & (df['year_level'] == year_no)]
+        
+        if year_df.empty:
+            raise HTTPException(status_code=404, detail=f"No data found for {dept_id} Year {year_no}")
+        
+        # Section breakdown
+        sections_data = []
+        if 'section' in year_df.columns:
+            for section in sorted(year_df['section'].dropna().unique()):
+                section_df = year_df[year_df['section'] == section]
+                phase_counts = section_df['final_phase'].value_counts().to_dict()
+                
+                sections_data.append({
+                    "name": str(section),
+                    "studentCount": int(len(section_df)),
+                    "avgCgpa": round(float(section_df['cgpa'].mean()), 2),
+                    "avgAttendance": round(float(section_df['attendance'].mean()), 1),
+                    "riskDistribution": {
+                        "critical": int(phase_counts.get('Red', 0)),
+                        "atRisk": int(phase_counts.get('Orange', 0)),
+                        "monitor": int(phase_counts.get('Yellow', 0)),
+                        "safe": int(phase_counts.get('Green', 0))
+                    }
+                })
+        
+        # Year-level analytics
+        phase_counts = year_df['final_phase'].value_counts().to_dict()
+        
+        # CGPA histogram data
+        cgpa_bins = [0, 4, 5, 6, 7, 8, 9, 10]
+        cgpa_labels = ['<4', '4-5', '5-6', '6-7', '7-8', '8-9', '9-10']
+        year_df['cgpa_range'] = pd.cut(year_df['cgpa'], bins=cgpa_bins, labels=cgpa_labels, include_lowest=True)
+        cgpa_histogram = year_df['cgpa_range'].value_counts().sort_index().to_dict()
+        
+        # Attendance trend (by risk phase)
+        attendance_by_phase = {}
+        for phase in ['Green', 'Yellow', 'Orange', 'Red']:
+            phase_data = year_df[year_df['final_phase'] == phase]
+            if not phase_data.empty:
+                attendance_by_phase[phase] = round(float(phase_data['attendance'].mean()), 1)
+        
+        return {
+            "success": True,
+            "year": {
+                "department": dept_name.title(),
+                "year": year_no,
+                "totalStudents": int(len(year_df)),
+                "avgCgpa": round(float(year_df['cgpa'].mean()), 2),
+                "avgAttendance": round(float(year_df['attendance'].mean()), 1),
+                "avgBacklogs": round(float(year_df['backlogs'].mean()), 1) if 'backlogs' in year_df.columns else 0,
+                "riskDistribution": {
+                    "critical": int(phase_counts.get('Red', 0)),
+                    "atRisk": int(phase_counts.get('Orange', 0)),
+                    "monitor": int(phase_counts.get('Yellow', 0)),
+                    "safe": int(phase_counts.get('Green', 0))
+                }
+            },
+            "sections": sections_data,
+            "analytics": {
+                "cgpaHistogram": [{"range": k, "count": int(v)} for k, v in cgpa_histogram.items()],
+                "attendanceByPhase": attendance_by_phase,
+                "riskTrend": {
+                    "labels": ["Safe", "Monitor", "At Risk", "Critical"],
+                    "values": [
+                        phase_counts.get('Green', 0),
+                        phase_counts.get('Yellow', 0),
+                        phase_counts.get('Orange', 0),
+                        phase_counts.get('Red', 0)
+                    ]
+                }
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching year details: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/departments/{dept_id}/years/{year_no}/students", summary="Get Student List for Year")
+async def get_year_students(
+    dept_id: str, 
+    year_no: int,
+    section: Optional[str] = Query(None, description="Filter by section"),
+    risk: Optional[str] = Query(None, description="Filter by risk phase (Red, Orange, Yellow, Green)"),
+    search: Optional[str] = Query(None, description="Search by name or enrollment number")
+):
+    """
+    Get list of students for a specific year with optional filters.
+    
+    Args:
+        dept_id: Department ID
+        year_no: Year number
+        section: Optional section filter
+        risk: Optional risk phase filter
+        search: Optional search term
+        
+    Returns:
+        Filtered list of students with compact data
+    """
+    try:
+        df = load_student_data()
+        
+        # Filter by department and year
+        dept_name = dept_id.replace('_', ' ').upper()
+        df['department_norm'] = df['department'].str.strip().str.upper()
+        students_df = df[(df['department_norm'] == dept_name) & (df['year_level'] == year_no)]
+        
+        # Apply filters
+        if section:
+            students_df = students_df[students_df['section'] == section]
+        
+        if risk:
+            students_df = students_df[students_df['final_phase'] == risk]
+        
+        if search:
+            search_term = search.lower()
+            students_df = students_df[
+                students_df['enrollment_no'].astype(str).str.lower().str.contains(search_term) |
+                students_df['student_name'].astype(str).str.lower().str.contains(search_term)
+            ]
+        
+        # Convert to compact format
+        students = []
+        for _, row in students_df.iterrows():
+            students.append({
+                "enrollmentNo": str(row.get('enrollment_no', '')),
+                "name": str(row.get('student_name', 'Unknown')),
+                "section": str(row.get('section', '')) if pd.notna(row.get('section')) else None,
+                "cgpa": round(float(row.get('cgpa', 0)), 2),
+                "attendance": round(float(row.get('attendance', 0)), 1),
+                "backlogs": int(row.get('backlogs', 0)),
+                "riskPhase": str(row.get('final_phase', 'Unknown')),
+                "status": "Active"  # Can be enhanced with actual status logic
+            })
+        
+        return {
+            "success": True,
+            "department": dept_name.title(),
+            "year": year_no,
+            "totalCount": len(students),
+            "filters": {
+                "section": section,
+                "risk": risk,
+                "search": search
+            },
+            "students": students
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching students: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/departments/{dept_id}/years/{year_no}/sections", summary="Get Section Breakdown for Year")
+async def get_year_sections(dept_id: str, year_no: int):
+    """
+    Get detailed section breakdown for a specific year.
+    
+    Args:
+        dept_id: Department ID
+        year_no: Year number
+        
+    Returns:
+        List of sections with statistics
+    """
+    try:
+        df = load_student_data()
+        
+        # Filter by department and year
+        dept_name = dept_id.replace('_', ' ').upper()
+        df['department_norm'] = df['department'].str.strip().str.upper()
+        year_df = df[(df['department_norm'] == dept_name) & (df['year_level'] == year_no)]
+        
+        if year_df.empty:
+            raise HTTPException(status_code=404, detail=f"No data found for {dept_id} Year {year_no}")
+        
+        sections = []
+        if 'section' in year_df.columns:
+            for section in sorted(year_df['section'].dropna().unique()):
+                section_df = year_df[year_df['section'] == section]
+                phase_counts = section_df['final_phase'].value_counts().to_dict()
+                
+                sections.append({
+                    "name": str(section),
+                    "studentCount": int(len(section_df)),
+                    "avgCgpa": round(float(section_df['cgpa'].mean()), 2),
+                    "avgAttendance": round(float(section_df['attendance'].mean()), 1),
+                    "avgBacklogs": round(float(section_df['backlogs'].mean()), 1) if 'backlogs' in section_df.columns else 0,
+                    "riskDistribution": {
+                        "critical": int(phase_counts.get('Red', 0)),
+                        "atRisk": int(phase_counts.get('Orange', 0)),
+                        "monitor": int(phase_counts.get('Yellow', 0)),
+                        "safe": int(phase_counts.get('Green', 0))
+                    },
+                    "topPerformers": int(len(section_df[section_df['cgpa'] >= 8])),
+                    "needsAttention": int(len(section_df[section_df['attendance'] < 75]))
+                })
+        
+        return {
+            "success": True,
+            "department": dept_name.title(),
+            "year": year_no,
+            "sections": sections
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching sections: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Development server entry point
