@@ -12,6 +12,7 @@ import { useToast } from '../hooks/use-toast';
 import SiteHeader from '../components/SiteHeader';
 import AnalyticsOverview from '../components/AnalyticsOverview';
 import DepartmentSection from '../components/DepartmentSection';
+import DepartmentCard from '../components/DepartmentCard';
 import { Skeleton, StatCardSkeleton } from '../components/ui/skeleton';
 import {
   Select,
@@ -43,6 +44,7 @@ const Dashboard: React.FC = () => {
   const [viewMode, setViewMode] = useState<'analytics' | 'departments'>(() => {
     return (sessionStorage.getItem('dashboardViewMode') as 'analytics' | 'departments') || 'analytics';
   });
+  const [departmentLayout, setDepartmentLayout] = useState<'cards' | 'list'>('cards');
   const [dataSource, setDataSource] = useState<'backend' | 'firebase' | null>(null);
   
   const navigate = useNavigate();
@@ -204,6 +206,43 @@ const Dashboard: React.FC = () => {
       green: students.filter(s => (s.final_phase || s.phase) === 'Green').length,
     };
   }, [students]);
+
+  // Department card data for new card view
+  const departmentCardsData = useMemo(() => {
+    return sortedDepartments.map(dept => {
+      const deptStudents = studentsByDepartment[dept] || [];
+      const critical = deptStudents.filter(s => (s.final_phase || s.phase) === 'Red').length;
+      const atRisk = deptStudents.filter(s => (s.final_phase || s.phase) === 'Orange').length;
+      const monitor = deptStudents.filter(s => (s.final_phase || s.phase) === 'Yellow').length;
+      const safe = deptStudents.filter(s => (s.final_phase || s.phase) === 'Green').length;
+      
+      const avgCgpa = deptStudents.length > 0
+        ? deptStudents.reduce((sum, s) => sum + (s.cgpa || 0), 0) / deptStudents.length
+        : 0;
+      
+      const avgAttendance = deptStudents.length > 0
+        ? deptStudents.reduce((sum, s) => sum + (s.attendance || 0), 0) / deptStudents.length
+        : 0;
+      
+      // Performance score: 50% safe + 30% CGPA + 20% attendance
+      const performanceScore = (
+        (safe / deptStudents.length * 100 * 0.5) +
+        ((avgCgpa / 10) * 100 * 0.3) +
+        (avgAttendance * 0.2)
+      );
+      
+      return {
+        id: dept.toLowerCase().replace(/\s+/g, '_'),
+        name: dept,
+        studentCount: deptStudents.length,
+        riskDistribution: { critical, atRisk, monitor, safe },
+        avgCgpa,
+        avgAttendance,
+        performanceScore,
+        color: DEPARTMENT_COLORS[dept]
+      };
+    });
+  }, [sortedDepartments, studentsByDepartment]);
 
   const handleStudentClick = (enrollmentNo: string) => {
     navigate(`/student/${enrollmentNo}`);
@@ -444,7 +483,30 @@ const Dashboard: React.FC = () => {
         <div className="mt-6">
           {viewMode === 'analytics' ? (
             <AnalyticsOverview students={students} />
+          ) : departmentLayout === 'cards' ? (
+            // New Card Grid View
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {departmentCardsData.map((dept, index) => (
+                <motion.div
+                  key={dept.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: Math.min(0.1 * index, 0.3) }}
+                >
+                  <DepartmentCard {...dept} />
+                </motion.div>
+              ))}
+
+              {departmentCardsData.length === 0 && (
+                <Card className="bg-white/95 backdrop-blur border-0 shadow-md col-span-full">
+                  <CardContent className="p-12 text-center">
+                    <p className="text-gray-600 text-lg">No departments found.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           ) : (
+            // Original List View (fallback)
             <div className="space-y-5">
               {sortedDepartments.map((department, index) => (
                 <motion.div
