@@ -357,13 +357,13 @@ const Dashboard: React.FC = () => {
             <Badge variant="destructive" className="text-sm px-3 py-1">
               {overallStats.red} Critical
             </Badge>
-            <Badge className="text-sm px-3 py-1 bg-orange-500 hover:bg-orange-600">
+            <Badge className="text-sm px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white">
               {overallStats.orange} At Risk
             </Badge>
-            <Badge className="text-sm px-3 py-1 bg-yellow-500 hover:bg-yellow-600">
+            <Badge className="text-sm px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-black">
               {overallStats.yellow} Monitor
             </Badge>
-            <Badge className="text-sm px-3 py-1 bg-green-500 hover:bg-green-600">
+            <Badge className="text-sm px-3 py-1 bg-green-500 hover:bg-green-600 text-white">
               {overallStats.green} Safe
             </Badge>
           </div>

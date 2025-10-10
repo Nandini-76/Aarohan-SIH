@@ -105,7 +105,7 @@ export const DepartmentCard: React.FC<DepartmentCardProps> = ({
                 </Badge>
                 <Badge 
                   variant="default" 
-                  className="px-2 py-1 bg-orange-500 hover:bg-orange-600"
+                  className="px-2 py-1 bg-orange-500 hover:bg-orange-600 text-white"
                 >
                   {riskDistribution.atRisk} At Risk
                 </Badge>

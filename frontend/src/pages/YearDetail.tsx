@@ -545,7 +545,7 @@ const YearDetail: React.FC = () => {
                 >
                   <Card 
                     className="hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => handleSectionClick(section)}
+                    onClick={() => navigate(`/department/${deptId}/year/${yearNo}/section/${section.name}`)}
                   >
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
@@ -572,13 +572,13 @@ const YearDetail: React.FC = () => {
                           <Badge variant="destructive" className="text-xs">
                             {section.riskDistribution.critical} Critical
                           </Badge>
-                          <Badge className="bg-orange-500 hover:bg-orange-600 text-xs">
+                          <Badge className="bg-orange-500 hover:bg-orange-600 text-white text-xs">
                             {section.riskDistribution.atRisk} At Risk
                           </Badge>
                           <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black text-xs">
                             {section.riskDistribution.monitor} Monitor
                           </Badge>
-                          <Badge className="bg-green-500 hover:bg-green-600 text-xs">
+                          <Badge className="bg-green-500 hover:bg-green-600 text-white text-xs">
                             {section.riskDistribution.safe} Safe
                           </Badge>
                         </div>
