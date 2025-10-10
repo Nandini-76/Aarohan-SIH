@@ -13,6 +13,7 @@ import SiteHeader from '../components/SiteHeader';
 import AnalyticsOverview from '../components/AnalyticsOverview';
 import DepartmentSection from '../components/DepartmentSection';
 import DepartmentCard from '../components/DepartmentCard';
+import GlobalSearch from '../components/GlobalSearch';
 import { Skeleton, StatCardSkeleton } from '../components/ui/skeleton';
 import {
   Select,
@@ -46,6 +47,7 @@ const Dashboard: React.FC = () => {
   });
   const [departmentLayout, setDepartmentLayout] = useState<'cards' | 'list'>('cards');
   const [dataSource, setDataSource] = useState<'backend' | 'firebase' | null>(null);
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -396,15 +398,22 @@ const Dashboard: React.FC = () => {
                   </Button>
                 </div>
 
-                {/* Search and Filters */}
+                {/* Global Search and Filters */}
                 <div className="flex gap-3 w-full md:w-auto">
                   <div className="relative flex-1 md:w-80">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
-                      placeholder="Search students..."
+                      placeholder="Search students globally..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 h-10"
+                      onFocus={() => setIsGlobalSearchOpen(true)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && searchTerm.length >= 2) {
+                          setIsGlobalSearchOpen(true);
+                        }
+                      }}
+                      className="pl-10 h-10 cursor-pointer"
+                      title="Click to open global search"
                     />
                   </div>
                   <Button
@@ -566,6 +575,13 @@ const Dashboard: React.FC = () => {
           </Button>
         </motion.div>
       </main>
+
+      {/* Global Search Modal */}
+      <GlobalSearch
+        isOpen={isGlobalSearchOpen}
+        onClose={() => setIsGlobalSearchOpen(false)}
+        initialSearchTerm={searchTerm}
+      />
     </motion.div>
   );
 };

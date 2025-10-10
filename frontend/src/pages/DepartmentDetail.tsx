@@ -6,13 +6,16 @@ import {
   Users, 
   TrendingUp, 
   AlertTriangle,
-  ArrowRight 
+  ArrowRight,
+  Search
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 import { Skeleton } from '../components/ui/skeleton';
 import SiteHeader from '../components/SiteHeader';
+import GlobalSearch from '../components/GlobalSearch';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { useToast } from '../hooks/use-toast';
 
@@ -70,6 +73,8 @@ const DepartmentDetail: React.FC = () => {
   const [years, setYears] = useState<YearData[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchDepartmentData();
@@ -153,20 +158,40 @@ const DepartmentDetail: React.FC = () => {
           <span className="text-foreground font-medium">{department.name}</span>
         </div>
 
-        {/* Header with Back Button */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigate('/dashboard')}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-4xl font-bold">{department.name}</h1>
-            <p className="text-muted-foreground mt-1">
-              {department.totalStudents} students enrolled
-            </p>
+        {/* Header with Back Button and Search */}
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate('/dashboard')}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-4xl font-bold">{department.name}</h1>
+              <p className="text-muted-foreground mt-1">
+                {department.totalStudents} students enrolled
+              </p>
+            </div>
+          </div>
+
+          {/* Global Search */}
+          <div className="relative w-80">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search students globally..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={() => setIsGlobalSearchOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchTerm.length >= 2) {
+                  setIsGlobalSearchOpen(true);
+                }
+              }}
+              className="pl-10 cursor-pointer"
+              title="Click to open global search"
+            />
           </div>
         </div>
 
@@ -344,6 +369,13 @@ const DepartmentDetail: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Global Search Modal */}
+      <GlobalSearch
+        isOpen={isGlobalSearchOpen}
+        onClose={() => setIsGlobalSearchOpen(false)}
+        initialSearchTerm={searchTerm}
+      />
     </div>
   );
 };

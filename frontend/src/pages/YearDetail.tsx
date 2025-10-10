@@ -34,6 +34,7 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import SiteHeader from '../components/SiteHeader';
+import GlobalSearch from '../components/GlobalSearch';
 import {
   PieChart,
   Pie,
@@ -127,6 +128,10 @@ const YearDetail: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRisk, setFilterRisk] = useState('');
 
+  // Global search
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [globalSearchTerm, setGlobalSearchTerm] = useState('');
+
   useEffect(() => {
     fetchYearData();
   }, [deptId, yearNo]);
@@ -142,14 +147,15 @@ const YearDetail: React.FC = () => {
       }
 
       const data = await response.json();
+      console.log('Year data received:', data);
       setYearData(data.year);
-      setSections(data.sections);
+      setSections(data.sections || []);
       setAnalytics(data.analytics);
     } catch (error) {
       console.error('Error fetching year data:', error);
       toast({
         title: "Error",
-        description: "Failed to load year data",
+        description: `Failed to load year data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
@@ -312,7 +318,7 @@ const YearDetail: React.FC = () => {
           <span className="text-foreground font-medium">Year {yearNo}</span>
         </nav>
 
-        {/* Back Button & Header */}
+        {/* Back Button, Header & Global Search */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <Button
@@ -331,6 +337,24 @@ const YearDetail: React.FC = () => {
                 Detailed analytics and student performance
               </p>
             </div>
+          </div>
+
+          {/* Global Search */}
+          <div className="relative w-80">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search students globally..."
+              value={globalSearchTerm}
+              onChange={(e) => setGlobalSearchTerm(e.target.value)}
+              onFocus={() => setIsGlobalSearchOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && globalSearchTerm.length >= 2) {
+                  setIsGlobalSearchOpen(true);
+                }
+              }}
+              className="pl-10 cursor-pointer"
+              title="Click to open global search"
+            />
           </div>
         </div>
 
@@ -510,8 +534,9 @@ const YearDetail: React.FC = () => {
 
           {/* Sections Tab */}
           <TabsContent value="sections" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sections.map((section, index) => (
+            {sections && sections.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sections.map((section, index) => (
                 <motion.div
                   key={section.name}
                   initial={{ opacity: 0, y: 20 }}
@@ -563,6 +588,15 @@ const YearDetail: React.FC = () => {
                 </motion.div>
               ))}
             </div>
+            ) : (
+              <div className="text-center py-12">
+                <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg font-medium">No sections found</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Section data is not available for this year
+                </p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 
@@ -753,6 +787,13 @@ const YearDetail: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Global Search Modal */}
+        <GlobalSearch
+          isOpen={isGlobalSearchOpen}
+          onClose={() => setIsGlobalSearchOpen(false)}
+          initialSearchTerm={globalSearchTerm}
+        />
       </div>
     </div>
   );

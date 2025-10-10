@@ -2244,6 +2244,76 @@ async def get_year_sections(dept_id: str, year_no: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/students/search", summary="Global Student Search")
+async def search_students(query: str = Query(..., description="Search term for name or enrollment")):
+    """
+    Global search endpoint to find students by name or enrollment number.
+    
+    Args:
+        query: Search term (name or enrollment number)
+        
+    Returns:
+        List of matching students with their details
+    """
+    try:
+        if len(query) < 2:
+            raise HTTPException(status_code=400, detail="Search query must be at least 2 characters")
+        
+        df = load_student_data()
+        
+        # Search in both enrollment_no and student_name (case-insensitive)
+        search_term = query.lower()
+        df['enrollment_no_lower'] = df['enrollment_no'].astype(str).str.lower()
+        df['student_name_lower'] = df['student_name'].astype(str).str.lower()
+        
+        # Filter rows that match either enrollment or name
+        matches_df = df[
+            df['enrollment_no_lower'].str.contains(search_term, na=False) |
+            df['student_name_lower'].str.contains(search_term, na=False)
+        ]
+        
+        # Limit results to prevent overload
+        matches_df = matches_df.head(100)
+        
+        # Department display name mapping
+        dept_display_names = {
+            'BBA': 'BBA',
+            'CS': 'BSc',
+            'AGRI': 'BSc Agriculture',
+            'BTECH': 'BTech'
+        }
+        
+        # Convert to student format
+        students = []
+        for _, row in matches_df.iterrows():
+            dept_code = str(row.get('department', '')).strip().upper()
+            students.append({
+                "enrollmentNo": str(row.get('enrollment_no', '')),
+                "name": str(row.get('student_name', '')),
+                "department": dept_display_names.get(dept_code, dept_code),
+                "year": int(row.get('year_level', 0)) if pd.notna(row.get('year_level')) else 0,
+                "section": str(row.get('section', '')),
+                "cgpa": round(float(row.get('cgpa', 0)), 2) if pd.notna(row.get('cgpa')) else 0.0,
+                "attendance": round(float(row.get('attendance', 0)), 1) if pd.notna(row.get('attendance')) else 0.0,
+                "backlogs": int(row.get('backlogs', 0)) if pd.notna(row.get('backlogs')) else 0,
+                "riskPhase": str(row.get('final_phase', 'Unknown')),
+                "status": "Active"
+            })
+        
+        return {
+            "success": True,
+            "query": query,
+            "count": len(students),
+            "students": students
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error searching students: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Development server entry point
 if __name__ == "__main__":
     uvicorn.run(
