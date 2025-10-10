@@ -38,8 +38,8 @@ const Dashboard: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterPhase, setFilterPhase] = useState('');
-  const [filterGender, setFilterGender] = useState('');
+  const [filterPhase, setFilterPhase] = useState('all');
+  const [filterGender, setFilterGender] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   // Persist view mode in sessionStorage
   const [viewMode, setViewMode] = useState<'analytics' | 'departments'>(() => {
@@ -444,7 +444,7 @@ const Dashboard: React.FC = () => {
                         <SelectValue placeholder="All Phases" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Phases</SelectItem>
+                        <SelectItem value="all">All Phases</SelectItem>
                         <SelectItem value="Red">Red (Critical)</SelectItem>
                         <SelectItem value="Orange">Orange (At Risk)</SelectItem>
                         <SelectItem value="Yellow">Yellow (Monitor)</SelectItem>
@@ -462,7 +462,7 @@ const Dashboard: React.FC = () => {
                         <SelectValue placeholder="All Genders" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Genders</SelectItem>
+                        <SelectItem value="all">All Genders</SelectItem>
                         <SelectItem value="Male">Male</SelectItem>
                         <SelectItem value="Female">Female</SelectItem>
                       </SelectContent>
@@ -473,8 +473,8 @@ const Dashboard: React.FC = () => {
                     <Button
                       variant="outline"
                       onClick={() => {
-                        setFilterPhase('');
-                        setFilterGender('');
+                        setFilterPhase('all');
+                        setFilterGender('all');
                         setSearchTerm('');
                       }}
                       className="w-full"
@@ -543,8 +543,8 @@ const Dashboard: React.FC = () => {
                     <Button
                       variant="outline"
                       onClick={() => {
-                        setFilterPhase('');
-                        setFilterGender('');
+                        setFilterPhase('all');
+                        setFilterGender('all');
                         setSearchTerm('');
                       }}
                       className="mt-4"

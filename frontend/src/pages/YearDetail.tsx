@@ -126,7 +126,7 @@ const YearDetail: React.FC = () => {
 
   // Filters for section student table
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRisk, setFilterRisk] = useState('');
+  const [filterRisk, setFilterRisk] = useState('all');
 
   // Global search
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
@@ -169,7 +169,7 @@ const YearDetail: React.FC = () => {
       const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
       const params = new URLSearchParams();
       params.append('section', sectionName);
-      if (filterRisk) params.append('risk', filterRisk);
+      if (filterRisk && filterRisk !== 'all') params.append('risk', filterRisk);
       if (searchTerm) params.append('search', searchTerm);
 
       const response = await fetch(
@@ -198,7 +198,7 @@ const YearDetail: React.FC = () => {
     setSelectedSection(section);
     setIsSectionModalOpen(true);
     setSearchTerm('');
-    setFilterRisk('');
+    setFilterRisk('all');
     fetchSectionStudents(section.name);
   };
 
@@ -702,7 +702,7 @@ const YearDetail: React.FC = () => {
                         <SelectValue placeholder="All Risks" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Risks</SelectItem>
+                        <SelectItem value="all">All Risks</SelectItem>
                         <SelectItem value="Red">Critical</SelectItem>
                         <SelectItem value="Orange">At Risk</SelectItem>
                         <SelectItem value="Yellow">Monitor</SelectItem>

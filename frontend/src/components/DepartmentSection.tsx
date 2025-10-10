@@ -67,8 +67,8 @@ const DepartmentSection: React.FC<DepartmentSectionProps> = ({
         student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.enrollment_no.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesPhase = !filterPhase || (student.final_phase || student.phase) === filterPhase;
-      const matchesGender = !filterGender || student.gender === filterGender;
+      const matchesPhase = !filterPhase || filterPhase === 'all' || (student.final_phase || student.phase) === filterPhase;
+      const matchesGender = !filterGender || filterGender === 'all' || student.gender === filterGender;
 
       return matchesSearch && matchesPhase && matchesGender;
     });

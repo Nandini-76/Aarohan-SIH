@@ -55,10 +55,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   // Filters
-  const [filterDepartment, setFilterDepartment] = useState('');
-  const [filterYear, setFilterYear] = useState('');
-  const [filterSection, setFilterSection] = useState('');
-  const [filterRisk, setFilterRisk] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('all');
+  const [filterYear, setFilterYear] = useState('all');
+  const [filterSection, setFilterSection] = useState('all');
+  const [filterRisk, setFilterRisk] = useState('all');
 
   useEffect(() => {
     if (isOpen && searchTerm.length >= 2) {
@@ -108,19 +108,19 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
   const applyFilters = () => {
     let filtered = [...students];
 
-    if (filterDepartment) {
+    if (filterDepartment && filterDepartment !== 'all') {
       filtered = filtered.filter(s => s.department === filterDepartment);
     }
 
-    if (filterYear) {
+    if (filterYear && filterYear !== 'all') {
       filtered = filtered.filter(s => s.year === parseInt(filterYear));
     }
 
-    if (filterSection) {
+    if (filterSection && filterSection !== 'all') {
       filtered = filtered.filter(s => s.section === filterSection);
     }
 
-    if (filterRisk) {
+    if (filterRisk && filterRisk !== 'all') {
       filtered = filtered.filter(s => s.riskPhase === filterRisk);
     }
 
@@ -128,10 +128,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
   };
 
   const clearFilters = () => {
-    setFilterDepartment('');
-    setFilterYear('');
-    setFilterSection('');
-    setFilterRisk('');
+    setFilterDepartment('all');
+    setFilterYear('all');
+    setFilterSection('all');
+    setFilterRisk('all');
   };
 
   const exportToCSV = () => {
@@ -267,7 +267,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
                       <SelectValue placeholder="All Departments" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Departments</SelectItem>
+                      <SelectItem value="all">All Departments</SelectItem>
                       {uniqueDepartments.map((dept) => (
                         <SelectItem key={dept} value={dept}>
                           {dept}
@@ -281,7 +281,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
                       <SelectValue placeholder="All Years" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Years</SelectItem>
+                      <SelectItem value="all">All Years</SelectItem>
                       {uniqueYears.map((year) => (
                         <SelectItem key={year} value={year.toString()}>
                           Year {year}
@@ -295,7 +295,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
                       <SelectValue placeholder="All Sections" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Sections</SelectItem>
+                      <SelectItem value="all">All Sections</SelectItem>
                       {uniqueSections.map((section) => (
                         <SelectItem key={section} value={section}>
                           Section {section}
@@ -309,7 +309,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
                       <SelectValue placeholder="All Risk Levels" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Risk Levels</SelectItem>
+                      <SelectItem value="all">All Risk Levels</SelectItem>
                       <SelectItem value="Red">Critical</SelectItem>
                       <SelectItem value="Orange">At Risk</SelectItem>
                       <SelectItem value="Yellow">Monitor</SelectItem>
