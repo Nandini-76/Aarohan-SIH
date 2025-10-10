@@ -26,6 +26,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 import SiteHeader from '../components/SiteHeader';
 import {
   PieChart,
@@ -106,25 +113,23 @@ const YearDetail: React.FC = () => {
 
   const [yearData, setYearData] = useState<YearData | null>(null);
   const [sections, setSections] = useState<SectionData[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Filters for student table
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterSection, setFilterSection] = useState('');
-  const [filterRisk, setFilterRisk] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Section detail modal
+  const [selectedSection, setSelectedSection] = useState<SectionData | null>(null);
+  const [sectionStudents, setSectionStudents] = useState<Student[]>([]);
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
+  const [loadingSectionStudents, setLoadingSectionStudents] = useState(false);
+
+  // Filters for section student table
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterRisk, setFilterRisk] = useState('');
 
   useEffect(() => {
     fetchYearData();
   }, [deptId, yearNo]);
-
-  useEffect(() => {
-    if (activeTab === 'students') {
-      fetchStudents();
-    }
-  }, [activeTab, filterSection, filterRisk, searchTerm]);
 
   const fetchYearData = async () => {
     setIsLoading(true);
@@ -152,11 +157,12 @@ const YearDetail: React.FC = () => {
     }
   };
 
-  const fetchStudents = async () => {
+  const fetchSectionStudents = async (sectionName: string) => {
+    setLoadingSectionStudents(true);
     try {
       const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
       const params = new URLSearchParams();
-      if (filterSection) params.append('section', filterSection);
+      params.append('section', sectionName);
       if (filterRisk) params.append('risk', filterRisk);
       if (searchTerm) params.append('search', searchTerm);
 
@@ -169,7 +175,7 @@ const YearDetail: React.FC = () => {
       }
 
       const data = await response.json();
-      setStudents(data.students);
+      setSectionStudents(data.students);
     } catch (error) {
       console.error('Error fetching students:', error);
       toast({
@@ -177,7 +183,17 @@ const YearDetail: React.FC = () => {
         description: "Failed to load student data",
         variant: "destructive",
       });
+    } finally {
+      setLoadingSectionStudents(false);
     }
+  };
+
+  const handleSectionClick = (section: SectionData) => {
+    setSelectedSection(section);
+    setIsSectionModalOpen(true);
+    setSearchTerm('');
+    setFilterRisk('');
+    fetchSectionStudents(section.name);
   };
 
   const getRiskChartData = () => {
@@ -206,8 +222,8 @@ const YearDetail: React.FC = () => {
     }
   };
 
-  const exportToCSV = () => {
-    if (students.length === 0) {
+  const exportSectionToCSV = () => {
+    if (sectionStudents.length === 0) {
       toast({
         title: "No Data",
         description: "No students to export",
@@ -219,7 +235,7 @@ const YearDetail: React.FC = () => {
     const headers = ['Enrollment No', 'Name', 'Section', 'CGPA', 'Attendance', 'Backlogs', 'Risk Phase', 'Status'];
     const csvContent = [
       headers.join(','),
-      ...students.map(s =>
+      ...sectionStudents.map(s =>
         [s.enrollmentNo, s.name, s.section, s.cgpa, s.attendance, s.backlogs, s.riskPhase, s.status].join(',')
       )
     ].join('\n');
@@ -228,13 +244,13 @@ const YearDetail: React.FC = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${deptId}_year${yearNo}_students.csv`;
+    a.download = `${deptId}_year${yearNo}_section${selectedSection?.name}_students.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
 
     toast({
       title: "Export Successful",
-      description: `Exported ${students.length} students to CSV`,
+      description: `Exported ${sectionStudents.length} students to CSV`,
       variant: "default",
     });
   };
@@ -405,10 +421,9 @@ const YearDetail: React.FC = () => {
 
         {/* Tabs Section */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="sections">Sections</TabsTrigger>
-            <TabsTrigger value="students">Students</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -503,7 +518,10 @@ const YearDetail: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="hover:shadow-lg transition-shadow">
+                  <Card 
+                    className="hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => handleSectionClick(section)}
+                  >
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
                         <span>Section {section.name}</span>
@@ -546,123 +564,195 @@ const YearDetail: React.FC = () => {
               ))}
             </div>
           </TabsContent>
+        </Tabs>
 
-          {/* Students Tab */}
-          <TabsContent value="students" className="space-y-6">
-            {/* Filters */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search by name or enrollment..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
+        {/* Section Detail Modal */}
+        <Dialog open={isSectionModalOpen} onOpenChange={setIsSectionModalOpen}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span>Section {selectedSection?.name} - Detail View</span>
+                <Button variant="outline" size="sm" onClick={exportSectionToCSV}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
+              </DialogTitle>
+              <DialogDescription>
+                {selectedSection && (
+                  <div className="flex gap-6 mt-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Students</p>
+                      <p className="text-2xl font-bold">{selectedSection.studentCount}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg CGPA</p>
+                      <p className="text-2xl font-bold">{selectedSection.avgCgpa.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg Attendance</p>
+                      <p className="text-2xl font-bold">{selectedSection.avgAttendance.toFixed(1)}%</p>
                     </div>
                   </div>
-                  <Select value={filterSection} onValueChange={setFilterSection}>
-                    <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Sections" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All Sections</SelectItem>
-                      {sections.map((section) => (
-                        <SelectItem key={section.name} value={section.name}>
-                          Section {section.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterRisk} onValueChange={setFilterRisk}>
-                    <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Risks" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All Risks</SelectItem>
-                      <SelectItem value="Red">Critical</SelectItem>
-                      <SelectItem value="Orange">At Risk</SelectItem>
-                      <SelectItem value="Yellow">Monitor</SelectItem>
-                      <SelectItem value="Green">Safe</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" onClick={exportToCSV}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Export CSV
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                )}
+              </DialogDescription>
+            </DialogHeader>
 
-            {/* Student Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Student List ({students.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4 font-semibold">Enrollment No</th>
-                        <th className="text-left py-3 px-4 font-semibold">Name</th>
-                        <th className="text-left py-3 px-4 font-semibold">Section</th>
-                        <th className="text-left py-3 px-4 font-semibold">CGPA</th>
-                        <th className="text-left py-3 px-4 font-semibold">Attendance</th>
-                        <th className="text-left py-3 px-4 font-semibold">Backlogs</th>
-                        <th className="text-left py-3 px-4 font-semibold">Risk</th>
-                        <th className="text-left py-3 px-4 font-semibold">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {students.map((student, index) => (
-                        <motion.tr
-                          key={student.enrollmentNo}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: index * 0.02 }}
-                          className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
-                          onClick={() => navigate(`/student/${student.enrollmentNo}`)}
+            <div className="space-y-6 mt-4">
+              {/* Section Risk Chart */}
+              {selectedSection && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Risk Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Critical', value: selectedSection.riskDistribution.critical, color: RISK_COLORS.critical },
+                            { name: 'At Risk', value: selectedSection.riskDistribution.atRisk, color: RISK_COLORS.atRisk },
+                            { name: 'Monitor', value: selectedSection.riskDistribution.monitor, color: RISK_COLORS.monitor },
+                            { name: 'Safe', value: selectedSection.riskDistribution.safe, color: RISK_COLORS.safe },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={(entry) => `${entry.name}: ${entry.value}`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
                         >
-                          <td className="py-3 px-4 font-mono text-sm">{student.enrollmentNo}</td>
-                          <td className="py-3 px-4">{student.name}</td>
-                          <td className="py-3 px-4">{student.section}</td>
-                          <td className="py-3 px-4">
-                            <span className="font-semibold">{student.cgpa.toFixed(2)}</span>
-                          </td>
-                          <td className="py-3 px-4">{student.attendance.toFixed(1)}%</td>
-                          <td className="py-3 px-4">
-                            <Badge variant={student.backlogs > 0 ? 'destructive' : 'outline'}>
-                              {student.backlogs}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge variant={getRiskBadgeColor(student.riskPhase)}>
-                              {student.riskPhase}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge variant="secondary">{student.status}</Badge>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          {[
+                            { name: 'Critical', value: selectedSection.riskDistribution.critical, color: RISK_COLORS.critical },
+                            { name: 'At Risk', value: selectedSection.riskDistribution.atRisk, color: RISK_COLORS.atRisk },
+                            { name: 'Monitor', value: selectedSection.riskDistribution.monitor, color: RISK_COLORS.monitor },
+                            { name: 'Safe', value: selectedSection.riskDistribution.safe, color: RISK_COLORS.safe },
+                          ].map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
 
-                  {students.length === 0 && (
-                    <div className="text-center py-12">
-                      <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">No students found</p>
+              {/* Filters */}
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search by name or enrollment..."
+                          value={searchTerm}
+                          onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            if (selectedSection) fetchSectionStudents(selectedSection.name);
+                          }}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <Select 
+                      value={filterRisk} 
+                      onValueChange={(value) => {
+                        setFilterRisk(value);
+                        if (selectedSection) fetchSectionStudents(selectedSection.name);
+                      }}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="All Risks" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">All Risks</SelectItem>
+                        <SelectItem value="Red">Critical</SelectItem>
+                        <SelectItem value="Orange">At Risk</SelectItem>
+                        <SelectItem value="Yellow">Monitor</SelectItem>
+                        <SelectItem value="Green">Safe</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Student Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Students ({sectionStudents.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loadingSectionStudents ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="text-center">
+                        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Loading students...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-3 px-4 font-semibold">Enrollment No</th>
+                            <th className="text-left py-3 px-4 font-semibold">Name</th>
+                            <th className="text-left py-3 px-4 font-semibold">CGPA</th>
+                            <th className="text-left py-3 px-4 font-semibold">Attendance</th>
+                            <th className="text-left py-3 px-4 font-semibold">Backlogs</th>
+                            <th className="text-left py-3 px-4 font-semibold">Risk</th>
+                            <th className="text-left py-3 px-4 font-semibold">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sectionStudents.map((student, index) => (
+                            <tr
+                              key={student.enrollmentNo}
+                              className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                              onClick={() => {
+                                setIsSectionModalOpen(false);
+                                navigate(`/student/${student.enrollmentNo}`);
+                              }}
+                            >
+                              <td className="py-3 px-4 font-mono text-sm">{student.enrollmentNo}</td>
+                              <td className="py-3 px-4">{student.name}</td>
+                              <td className="py-3 px-4">
+                                <span className="font-semibold">{student.cgpa.toFixed(2)}</span>
+                              </td>
+                              <td className="py-3 px-4">{student.attendance.toFixed(1)}%</td>
+                              <td className="py-3 px-4">
+                                <Badge variant={student.backlogs > 0 ? 'destructive' : 'outline'}>
+                                  {student.backlogs}
+                                </Badge>
+                              </td>
+                              <td className="py-3 px-4">
+                                <Badge variant={getRiskBadgeColor(student.riskPhase)}>
+                                  {student.riskPhase}
+                                </Badge>
+                              </td>
+                              <td className="py-3 px-4">
+                                <Badge variant="secondary">{student.status}</Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      {sectionStudents.length === 0 && !loadingSectionStudents && (
+                        <div className="text-center py-12">
+                          <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                          <p className="text-muted-foreground">No students found</p>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </CardContent>
+              </Card>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
