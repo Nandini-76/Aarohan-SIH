@@ -136,9 +136,9 @@ const DepartmentDetail: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Department Not Found</h2>
-            <Button onClick={() => navigate('/dashboard')}>
+            <Button onClick={() => navigate(-1)}>
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+              Go Back
             </Button>
           </div>
         </div>
@@ -164,7 +164,7 @@ const DepartmentDetail: React.FC = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(-1)}
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
@@ -294,7 +294,7 @@ const DepartmentDetail: React.FC = () => {
                           </Badge>
                         )}
                         {year.riskDistribution.atRisk > 0 && (
-                          <Badge className="text-xs px-1.5 py-0.5 bg-orange-500">
+                          <Badge className="text-xs px-1.5 py-0.5 bg-orange-500 text-white">
                             {year.riskDistribution.atRisk}
                           </Badge>
                         )}
@@ -304,7 +304,7 @@ const DepartmentDetail: React.FC = () => {
                           </Badge>
                         )}
                         {year.riskDistribution.safe > 0 && (
-                          <Badge className="text-xs px-1.5 py-0.5 bg-green-500">
+                          <Badge className="text-xs px-1.5 py-0.5 bg-green-500 text-white">
                             {year.riskDistribution.safe}
                           </Badge>
                         )}

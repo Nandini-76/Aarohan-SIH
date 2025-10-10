@@ -205,7 +205,7 @@ const StudentProfile: React.FC = () => {
           <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(-1)}
               className="p-2"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -220,8 +220,8 @@ const StudentProfile: React.FC = () => {
               <p className="text-muted-foreground mb-6">
                 The student with enrollment number "{enrollmentNo}" could not be found.
               </p>
-              <Button onClick={() => navigate('/dashboard')}>
-                Back to Dashboard
+              <Button onClick={() => navigate(-1)}>
+                Go Back
               </Button>
             </CardContent>
           </Card>
@@ -247,7 +247,7 @@ const StudentProfile: React.FC = () => {
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(-1)}
             className="p-2"
           >
             <ArrowLeft className="h-4 w-4" />

@@ -192,6 +192,8 @@ const SectionStudents: React.FC = () => {
         return { backgroundColor: '#f97316', color: 'white' };
       case 'yellow':
         return { backgroundColor: '#eab308', color: 'black' };
+      case 'green':
+        return { backgroundColor: '#22c55e', color: 'white' };
       default:
         return {};
     }

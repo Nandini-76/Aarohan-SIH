@@ -117,7 +117,7 @@ export const DepartmentCard: React.FC<DepartmentCardProps> = ({
                 </Badge>
                 <Badge 
                   variant="default" 
-                  className="px-2 py-1 bg-green-500 hover:bg-green-600"
+                  className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white"
                 >
                   {riskDistribution.safe} Safe
                 </Badge>
