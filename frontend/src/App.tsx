@@ -8,6 +8,8 @@ import DashboardLayout from "./components/DashboardLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
+import DepartmentDetail from "./pages/DepartmentDetail";
+import YearDetail from "./pages/YearDetail";
 import StudentProfile from "./pages/StudentProfile";
 import Simulation from "./pages/Simulation";
 import Profile from "./pages/Profile";
@@ -32,6 +34,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/department/:deptId" element={<DepartmentDetail />} />
+              <Route path="/department/:deptId/year/:yearNo" element={<YearDetail />} />
               <Route path="/student/:enrollmentNo" element={<StudentProfile />} />
               <Route path="/simulation" element={<Simulation />} />
               <Route
