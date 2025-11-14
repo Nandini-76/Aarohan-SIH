@@ -216,6 +216,22 @@ Thumbs.db
 *_legacy.*
 *.bak.*
 
+# Temporary documentation and scripts
+*_FIX.md
+*_SUMMARY.md
+*_UPDATE.md
+*_CHECKLIST.md
+*_GUIDE.md
+*_IMPLEMENTATION.md
+*_STATUS.md
+*_COMMANDS.md
+*_PROGRESS.md
+cleanup_docs.bat
+cleanup_docs.py
+install_report_features.bat
+install_report_features.sh
+test_notification.py
+
 # Test files and outputs
 test-results/
 coverage/

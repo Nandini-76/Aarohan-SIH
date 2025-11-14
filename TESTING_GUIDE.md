@@ -1,152 +1,88 @@
-# Testing Firebase-First Architecture - Quick Guide
+# AAROHAN Testing Guide
 
-## ✅ Changes Deployed
+Comprehensive testing procedures for the AAROHAN Student Dropout Prediction System.
 
-Both backend and frontend have been deployed:
-- **Backend (Render):** Writes students to Firebase
-- **Frontend (Vercel):** Reads from Firebase with real-time updates
+---
 
-## ⚠️ IMPORTANT: Before Testing
+## 📋 Table of Contents
 
-### Add Firebase Environment Variables to Vercel
+- [Testing Overview](#-testing-overview)
+- [Local Testing](#-local-testing)
+- [Production Testing](#-production-testing)
+- [Test Scenarios](#-test-scenarios)
+- [Performance Testing](#-performance-testing)
+- [Troubleshooting](#-troubleshooting)
 
-**Go to:** https://vercel.com/your-project/settings/environment-variables
+---
 
-**Add these 7 variables:**
+## 🎯 Testing Overview
+
+### Testing Layers
+
+1. **Unit Tests** - Individual functions and components
+2. **Integration Tests** - API endpoints and Firebase integration
+3. **End-to-End Tests** - Full user workflows
+4. **Performance Tests** - Load and stress testing
+
+### Tools Used
+
+- **Backend**: pytest, requests
+- **Frontend**: Vitest, React Testing Library
+- **API Testing**: Postman, cURL
+- **Performance**: Artillery, Lighthouse
+
+---
+
+## 💻 Local Testing
+
+### Backend Tests
+
+**Run all tests:**
+```bash
+cd backend
+pytest
 ```
-VITE_FIREBASE_API_KEY=<your-key>
-VITE_FIREBASE_AUTH_DOMAIN=aarohan-f7274.firebaseapp.com
-VITE_FIREBASE_DATABASE_URL=https://aarohan-f7274-default-rtdb.firebaseio.com
-VITE_FIREBASE_PROJECT_ID=aarohan-f7274
-VITE_FIREBASE_STORAGE_BUCKET=aarohan-f7274.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=<your-id>
-VITE_FIREBASE_APP_ID=<your-id>
+
+**Run specific test file:**
+```bash
+pytest tests/test_prediction.py
 ```
 
-**How to get these values:**
-1. Firebase Console: https://console.firebase.google.com
-2. Select: aarohan-f7274
-3. Settings ⚙️ → Project Settings → Your apps → Web app
-4. Copy config values
+**Run with coverage:**
+```bash
+pytest --cov=app tests/
+```
 
-**After adding variables:**
-- Vercel will auto-redeploy
-- Or manually: Vercel Dashboard → Deployments → Click "..." → Redeploy
+**Test categories:**
+- `tests/test_api.py` - API endpoint tests
+- `tests/test_model.py` - ML model tests
+- `tests/test_firebase.py` - Firebase integration tests
 
-## 🧪 Test Sequence
+### Frontend Tests
 
-### Test 1: Verify Backend Populates Firebase
+**Run all tests:**
+```bash
+cd frontend
+npm test
+```
 
-**Goal:** Ensure backend writes to Firebase
+**Run in watch mode:**
+```bash
+npm test -- --watch
+```
 
-**Steps:**
-1. Visit backend: https://arohann.onrender.com/students
-2. Wait for JSON response (may take 30-60s if sleeping)
-3. Check backend logs on Render:
-   - Look for: "Students data pushed to Firebase successfully"
-
-**Verify in Firebase:**
-1. Go to: https://console.firebase.google.com
-2. Select: aarohan-f7274
-3. Click: Realtime Database
-4. Navigate to: `/students`
-5. Should see 56 student objects
-6. Each should have `lastUpdated` timestamp
-
-**Expected Result:** ✅ Firebase has all 56 students with timestamps
+**Run with coverage:**
+```bash
+npm test -- --coverage
+```
 
 ---
 
-### Test 2: Frontend Reads from Firebase (Instant Load)
+## 🌐 Production Testing
 
-**Goal:** Verify frontend loads instantly from Firebase
+### 1. Backend Health Check
 
-**Steps:**
-1. Open your Vercel dashboard URL
-2. Dashboard should load in < 1 second
-3. All 56 students displayed
-4. Blue indicator at top shows timestamp
-
-**Check Browser Console:**
-- Should see: "Successfully loaded 56 students from Firebase"
-- Should NOT see backend API calls
-- Should see: "Real-time update: 56 students received from Firebase"
-
-**Expected Result:** ✅ Dashboard loads instantly, no backend calls
-
----
-
-### Test 3: Real-Time Updates (Keep Dashboard Open)
-
-**Goal:** Verify dashboard auto-updates when backend runs
-
-**Steps:**
-1. Open dashboard in Browser Tab 1 (keep it open)
-2. Note the timestamp (e.g., "Last updated 10 minutes ago")
-3. In Browser Tab 2, visit: https://arohann.onrender.com/students
-4. Wait for backend to complete (30-60 seconds)
-5. **Switch back to Tab 1** (DON'T refresh)
-6. Watch for automatic update
-
-**What Should Happen:**
-- Toast notification appears: "Data Updated"
-- Timestamp changes to: "Just updated • Backend is active"
-- Dashboard refreshes automatically
-- No page reload needed
-
-**Check Browser Console (Tab 1):**
-- Should see: "Real-time update: 56 students received from Firebase"
-
-**Expected Result:** ✅ Dashboard auto-updates without refresh
-
----
-
-### Test 4: Multiple Users Simultaneously
-
-**Goal:** Verify scalability with multiple viewers
-
-**Steps:**
-1. Open dashboard in 3 different browsers:
-   - Chrome
-   - Firefox
-   - Edge (or Incognito Chrome)
-2. All should load instantly
-3. In a 4th tab, wake backend: https://arohann.onrender.com/students
-4. Watch all 3 browser windows
-5. All should update simultaneously
-
-**Expected Result:** ✅ All browsers update together, no backend overload
-
----
-
-### Test 5: Timestamp Accuracy
-
-**Goal:** Verify timestamp indicator shows correct info
-
-**Scenarios:**
-
-**Scenario A: Fresh Data (< 1 minute)**
-- Wake backend
-- Open dashboard within 60 seconds
-- Should show: "Just updated • Backend is active"
-
-**Scenario B: Recent Data (1-59 minutes)**
-- Wait 5 minutes after backend runs
-- Refresh dashboard
-- Should show: "Last updated 5 minutes ago"
-
-**Scenario C: Old Data (> 60 minutes)**
-- Wait 2 hours
-- Refresh dashboard
-- Should show: "Last updated 2 hours ago • Backend may be sleeping"
-
-**Expected Result:** ✅ Timestamp accurately reflects data age
-
----
-
-## 🐛 Troubleshooting
-
-### Issue: Dashboard shows "Unable to load data from Firebase"
+**Test API is running:**
 
 **Possible Causes:**
 1. Firebase env vars not set on Vercel
@@ -177,7 +113,352 @@ VITE_FIREBASE_APP_ID=<your-id>
 
 ---
 
-### Issue: "Firebase not configured" in console
+**Test API is running:**
+```bash
+curl https://arohann.onrender.com/
+```
+
+**Expected response:**
+```json
+{
+  "status": "ok",
+  "message": "AAROHAN API is running",
+  "ml_model_loaded": true
+}
+```
+
+### 2. Test Student Data Sync
+
+**Trigger Firebase sync:**
+```bash
+curl https://arohann.onrender.com/api/students
+```
+
+**Verify in Firebase Console:**
+1. Go to https://console.firebase.google.com
+2. Select your project
+3. Click "Realtime Database"
+4. Check `/students` node contains data
+
+### 3. Test Predictions
+
+**Make a prediction:**
+```bash
+curl -X POST https://arohann.onrender.com/api/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enrollment_no": "TEST001",
+    "attendance": 65.0,
+    "cgpa": 5.8,
+    "backlogs": 2,
+    "marks_10th": 75.0,
+    "marks_12th": 78.0,
+    "fees_flag": 0,
+    "suspension_flag": 0,
+    "gender": "M"
+  }'
+```
+
+**Expected:** Risk phase prediction (Green/Yellow/Orange/Red)
+
+### 4. Frontend Verification
+
+**Check dashboard loads:**
+1. Visit https://your-app.vercel.app
+2. Dashboard should load within 2 seconds
+3. Student data visible
+4. No console errors
+
+**Test real-time updates:**
+1. Keep dashboard open
+2. Trigger backend sync in another tab
+3. Dashboard should auto-update with toast notification
+
+---
+
+## 🧪 Test Scenarios
+
+### Scenario 1: Green Phase Student
+
+**Input:**
+- Attendance: 90%
+- CGPA: 8.5
+- Backlogs: 0
+- Fees: Paid
+- Suspension: None
+
+**Expected Output:**
+- Phase: Green
+- No notifications sent
+- Routine monitoring only
+
+### Scenario 2: Yellow Phase Student
+
+**Input:**
+- Attendance: 75%
+- CGPA: 6.5
+- Backlogs: 1
+- Fees: Paid
+- Suspension: None
+
+**Expected Output:**
+- Phase: Yellow
+- Counselor notified for watch
+- Passive monitoring
+
+### Scenario 3: Orange Phase Student
+
+**Input:**
+- Attendance: 65%
+- CGPA: 5.5
+- Backlogs: 3
+- Fees: Paid
+- Suspension: None
+
+**Expected Output:**
+- Phase: Orange
+- Phased intervention triggered
+- Counselor + mentor notified
+
+### Scenario 4: Red Phase Student
+
+**Input:**
+- Attendance: 50%
+- CGPA: 3.8
+- Backlogs: 5
+- Fees: Unpaid
+- Suspension: Yes
+
+**Expected Output:**
+- Phase: Red
+- Immediate alert to all stakeholders
+- High-priority intervention
+
+### Scenario 5: Rule Override
+
+**Input:**
+- Attendance: 58% (below 60% threshold)
+- CGPA: 7.0 (good)
+- Backlogs: 0
+
+**Expected Output:**
+- Model predicts: Yellow
+- Rule override to: Orange
+- Reason: "Attendance below 60% threshold"
+
+---
+
+## ⚡ Performance Testing
+
+### Load Testing with Artillery
+
+**Install Artillery:**
+```bash
+npm install -g artillery
+```
+
+**Create test configuration (`load-test.yml`):**
+```yaml
+config:
+  target: "https://arohann.onrender.com"
+  phases:
+    - duration: 60
+      arrivalRate: 10
+scenarios:
+  - name: "Health Check"
+    flow:
+      - get:
+          url: "/"
+  - name: "Prediction"
+    flow:
+      - post:
+          url: "/api/predict"
+          json:
+            enrollment_no: "TEST001"
+            attendance: 65.0
+            cgpa: 5.8
+            backlogs: 2
+            marks_10th: 75.0
+            marks_12th: 78.0
+            fees_flag: 0
+            suspension_flag: 0
+            gender: "M"
+```
+
+**Run test:**
+```bash
+artillery run load-test.yml
+```
+
+**Performance Targets:**
+- P95 response time: < 500ms
+- P99 response time: < 1000ms
+- Error rate: < 1%
+- Throughput: > 50 req/s
+
+### Frontend Performance (Lighthouse)
+
+**Run Lighthouse audit:**
+1. Open Chrome DevTools
+2. Go to "Lighthouse" tab
+3. Run audit for Performance
+
+**Target Scores:**
+- Performance: > 90
+- Accessibility: > 90
+- Best Practices: > 90
+- SEO: > 90
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend Issues
+
+**Issue: API returns 500 error**
+
+**Debug steps:**
+1. Check Render logs for errors
+2. Verify Firebase credentials are set
+3. Check ML model is loaded
+4. Test with simpler endpoint (`/`)
+
+**Issue: Slow response times**
+
+**Possible causes:**
+- Render free tier sleeping (first request slow)
+- Firebase rate limiting
+- Large dataset processing
+
+**Solutions:**
+- Upgrade to paid Render plan
+- Implement caching
+- Optimize database queries
+
+### Frontend Issues
+
+**Issue: Dashboard doesn't load data**
+
+**Debug steps:**
+1. Check browser console for errors
+2. Verify Firebase config in env variables
+3. Test Firebase connection directly
+4. Check CORS settings
+
+**Issue: Real-time updates not working**
+
+**Debug steps:**
+1. Verify Firebase listeners are attached
+2. Check Firebase security rules
+3. Test with Firebase Emulator locally
+4. Check browser console for Firebase errors
+
+### Firebase Issues
+
+**Issue: Permission denied errors**
+
+**Solution:**
+Update Firebase security rules to allow reads:
+```json
+{
+  "rules": {
+    "students": {
+      ".read": true,
+      ".write": "auth != null"
+    }
+  }
+}
+```
+
+**Issue: Quota exceeded**
+
+**Solution:**
+- Monitor usage in Firebase Console
+- Upgrade to paid plan if needed
+- Implement pagination to reduce reads
+
+---
+
+## ✅ Testing Checklist
+
+### Pre-Deployment Testing
+
+- [ ] All unit tests passing
+- [ ] Integration tests passing
+- [ ] Manual API testing completed
+- [ ] Frontend loads without errors
+- [ ] Firebase integration working
+- [ ] Real-time updates functional
+- [ ] All risk phases tested
+- [ ] What-if simulations working
+
+### Post-Deployment Testing
+
+- [ ] Production API health check passes
+- [ ] Student data syncs to Firebase
+- [ ] Frontend dashboard loads
+- [ ] Predictions working correctly
+- [ ] Real-time updates functional
+- [ ] Performance metrics acceptable
+- [ ] Error tracking configured
+- [ ] Monitoring dashboards set up
+
+### User Acceptance Testing
+
+- [ ] Counselors can view at-risk students
+- [ ] Dashboard filters work correctly
+- [ ] Student profiles display accurately
+- [ ] Intervention history visible
+- [ ] Notifications send properly
+- [ ] What-if simulations intuitive
+- [ ] Mobile responsive design works
+- [ ] Accessibility requirements met
+
+---
+
+## 📊 Monitoring
+
+### Key Metrics to Track
+
+**Backend:**
+- Response times (P50, P95, P99)
+- Error rates
+- Request throughput
+- ML prediction accuracy
+- Firebase write success rate
+
+**Frontend:**
+- Page load time
+- Time to interactive
+- Firebase read latency
+- Client-side errors
+- User engagement metrics
+
+**Infrastructure:**
+- Render service uptime
+- Vercel deployment status
+- Firebase quota usage
+- CDN hit rates
+
+---
+
+## 📚 Additional Resources
+
+- [API Documentation](./API.md)
+- [Setup Guide](./SETUP.md)
+- [Deployment Guide](./DEPLOYMENT.md)
+- [Contributing Guide](./CONTRIBUTING.md)
+
+---
+
+<div align="center">
+
+**Testing Complete! 🎉**
+
+Found an issue? [Report it on GitHub](https://github.com/Gaurav8302/AROHANN/issues)
+
+</div>
+
 
 **Cause:** Environment variables not loaded
 

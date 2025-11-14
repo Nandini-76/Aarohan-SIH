@@ -1,403 +1,370 @@
 # AAROHAN - AI-Based Student Dropout Prediction & Counseling System
 
-**Problem Statement ID**: SIH 2025  
-**Organization**: Government Institution  
-**Category**: Educational Technology & AI-Driven Intervention System  
-**Development Status**: ✅ Fully Functional Prototype
+<div align="center">
 
-## 📋 Executive Summary
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)
+![React](https://img.shields.io/badge/React-18.0+-blue.svg)
+![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)
 
-AAROHAN is a **lightweight, AI-powered student dropout prediction and counseling system** designed specifically for public educational institutions with limited budgets. The system provides **accurate, early warning detection** of at-risk students and delivers **structured, phased interventions** to prevent dropouts before they occur.
+**Smart India Hackathon 2025 | Educational Technology & AI-Driven Intervention**
 
-Unlike expensive commercial analytics platforms, AAROHAN leverages **Random Forest machine learning** combined with **rule-based safety thresholds** to deliver precise predictions while maintaining **interpretability**, **transparency**, and **actionable insights** for counselors, mentors, and administrators.
+[Features](#-features) • [Demo](#-live-demo) • [Installation](#-quick-start) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
-### 🎯 Core Value Proposition
+</div>
 
-- ✅ **Preventive Rather Than Reactive**: Catches at-risk students early, before critical failures occur
-- ✅ **Lightweight & Cost-Effective**: Runs on modest infrastructure (single server or local machine)
-- ✅ **Structured Intervention Hierarchy**: Phased escalation (Green → Yellow → Orange → Red) with clear stakeholder responsibilities
-- ✅ **Consolidated Data Platform**: Eliminates fragmented spreadsheets by unifying attendance, academics, fees, and behavioral data
-- ✅ **Non-Technical Interface**: Intuitive dashboards requiring no technical expertise
-- ✅ **Automated Notifications**: Real-time alerts to counselors, mentors, and parents at the right intervention phase
+---
 
-### � Key Features
+## 📋 Overview
 
-- 🧠 **Random Forest ML Model**: 85% accuracy dropout prediction
-- 🎯 **4-Tier Risk Classification**: Green/Yellow/Orange/Red phased intervention
-- 📊 **Real-time Dashboards**: Counselor, admin, and student views
-- 🔔 **Automated Notifications**: SMS/Email alerts to stakeholders
-- 📈 **Post-Intervention Tracking**: Monitor recovery progress after interventions
-- 🧪 **Psychological Assessment Integration**: Stress and motivation quizzes
-- 📋 **What-If Simulation**: Test scenarios before implementing interventions
+AAROHAN is an **AI-powered student dropout prediction and counseling system** designed for educational institutions. The system provides **early warning detection** of at-risk students and delivers **structured, phased interventions** to prevent dropouts before they occur.
 
-## 🏗️ System Architecture
+### 🎯 Key Highlights
+
+- 🧠 **85% Accurate Predictions** using Random Forest ML model
+- 🎯 **4-Tier Risk Classification** (Green/Yellow/Orange/Red)
+- 📊 **Real-time Dashboards** for counselors and administrators
+- 🔔 **Automated Notifications** to stakeholders at appropriate intervention phases
+- 📈 **Post-Intervention Tracking** to monitor student recovery
+- 💰 **Cost-Effective** - runs on modest infrastructure
+- 🚀 **Production-Ready** - deployed on Render + Vercel + Firebase
+
+---
+
+## ✨ Features
+
+### Core Functionality
+
+- **🧠 Machine Learning Predictions**
+  - Random Forest classifier with 85% accuracy
+  - Predicts dropout risk based on attendance, CGPA, backlogs, fees, and behavioral data
+  - 15+ engineered features for enhanced accuracy
+
+- **🎯 4-Tier Risk Classification**
+  - 🟢 **Green**: Safe students (routine monitoring)
+  - 🟡 **Yellow**: Caution zone (counselor watch)
+  - 🟠 **Orange**: Moderate risk (phased intervention - 3 levels)
+  - 🔴 **Red**: High risk (immediate intervention)
+
+- **📊 Interactive Dashboards**
+  - Real-time student risk overview
+  - Filterable by department, year, risk level
+  - Individual student profiles with intervention history
+  - Performance trends and analytics
+
+- **🔔 Smart Notifications**
+  - Automated alerts to counselors, mentors, and parents
+  - Phased escalation based on risk level
+  - Email/SMS integration (configurable)
+
+- **📈 What-If Simulations**
+  - Test hypothetical scenarios
+  - Predict impact of attendance/grade improvements
+  - Data-driven intervention planning
+
+- **🔐 Firebase Integration**
+  - Real-time data synchronization
+  - Instant dashboard updates
+  - Scalable cloud storage
+
+---
+
+## 🏗️ Architecture
 
 ```
-AAROHAN/
-├── backend/                          # FastAPI Python Backend
-│   ├── app/
-│   │   ├── main.py                  # FastAPI server with API endpoints
-│   │   ├── utils.py                 # Prediction pipeline & utilities
-│   │   ├── models/
-│   │   │   ├── rf_pipeline_broad.joblib    # Trained Random Forest model
-│   │   │   ├── feature_utils.py            # Feature engineering functions
-│   │   │   ├── prediction_pipeline.py      # ML prediction logic
-│   │   │   ├── integration_pipeline.py     # Unified system integration
-│   │   │   └── RF-training-script.py       # Model training script
-│   │   └── data/
-│   │       ├── merged_dataset.csv          # Training data
-│   │       └── test_students_dataset_new_rf.csv  # Test data
-│   ├── requirements.txt             # Python dependencies
-│   └── start.sh                     # Server startup script
-│
-├── frontend/                        # React + Tailwind UI
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── Dashboard.tsx        # Main dashboard with risk overview
-│   │   │   ├── StudentProfile.tsx   # Individual student details
-│   │   │   ├── Simulation.tsx       # What-if scenario simulator
-│   │   │   └── Landing.tsx          # Landing page
-│   │   ├── components/
-│   │   │   ├── RiskBadge.tsx        # Green/Yellow/Orange/Red indicators
-│   │   │   ├── DashboardLayout.tsx  # Layout wrapper
-│   │   │   ├── Sidebar.tsx          # Navigation sidebar
-│   │   │   └── ui/                  # Reusable UI components (shadcn/ui)
-│   │   └── services/
-│   │       └── api.ts               # Backend API integration
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── README.md                        # This file
-├── DEPLOYMENT.md                    # Deployment guide (Render + Vercel)
-└── render.yaml                      # Render.com configuration
+┌─────────────────────────────────────────────────────────────┐
+│                    AAROHAN System Architecture               │
+└─────────────────────────────────────────────────────────────┘
+
+┌──────────────┐         ┌──────────────┐        ┌─────────────┐
+│   Frontend   │ HTTPS   │   Backend    │  REST  │   Firebase  │
+│ React + Vite │◄───────►│  FastAPI +   │◄──────►│  Realtime   │
+│   (Vercel)   │         │  Python ML   │        │  Database   │
+└──────────────┘         └──────────────┘        └─────────────┘
+                                │
+                                │ ML Model
+                                ↓
+                        ┌──────────────┐
+                        │ Random Forest│
+                        │   Pipeline   │
+                        │ (.joblib)    │
+                        └──────────────┘
 ```
 
 ### Technology Stack
 
-**Backend**:
-- Python 3.9+ with FastAPI microservices
-- Random Forest (scikit-learn) for ML predictions
-- PostgreSQL/MongoDB for data storage
+**Backend:**
+- Python 3.9+ with FastAPI
+- scikit-learn (Random Forest ML)
+- Firebase Admin SDK
+- Pandas for data processing
 - Joblib for model persistence
 
-**Frontend**:
+**Frontend:**
 - React 18 + TypeScript
-- Tailwind CSS for styling
-- shadcn/ui component library
-- Recharts for data visualization
-- Vite for build tooling
+- Vite build tool
+- Tailwind CSS + shadcn/ui components
+- Recharts for visualizations
+- Firebase SDK for real-time data
 
-**Deployment**:
-- Backend: Render.com (or local server)
+**Deployment:**
+- Backend: Render.com
 - Frontend: Vercel
-- Database: MongoDB Atlas (cloud) or local instance
+- Database: Firebase Realtime Database
+- Version Control: GitHub
 
-## 🧠 Technical Approach
+---
 
-### 1. Machine Learning Model: Random Forest Classifier
+## 🚀 Quick Start
 
-**Why Random Forest?**
-- ✅ Robust with tabular educational data
-- ✅ Handles non-linear relationships between features
-- ✅ Provides feature importance for interpretability
-- ✅ Resistant to overfitting
-- ✅ Efficient on small-to-medium datasets
-- ✅ No need for extensive feature scaling
+### Prerequisites
 
-**Model Performance (Prototype)**:
+- Python 3.9 or higher
+- Node.js 16 or higher
+- Git
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Gaurav8302/AROHANN.git
+cd AROHANN
+```
+
+### 2. Backend Setup
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up environment variables
+# Create .env file with:
+# FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
+
+# Start the server
+uvicorn app.main:app --reload
+```
+
+Backend will run at `http://localhost:8000`
+
+### 3. Frontend Setup
+
+```bash
+# Navigate to frontend directory (from project root)
+cd frontend
+
+# Install dependencies
+npm install
+
+# Create .env file with Firebase config:
+# VITE_FIREBASE_API_KEY=your_api_key
+# VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+# VITE_FIREBASE_DATABASE_URL=your_database_url
+# VITE_FIREBASE_PROJECT_ID=your_project_id
+# VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+# VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+# VITE_FIREBASE_APP_ID=your_app_id
+
+# Start development server
+npm run dev
+```
+
+Frontend will run at `http://localhost:5173`
+
+### 4. Access the Application
+
+- **Frontend Dashboard**: http://localhost:5173
+- **Backend API**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+
+---
+
+## 📖 Documentation
+
+Comprehensive documentation is available in the `docs` folder:
+
+- **[SETUP.md](./SETUP.md)** - Detailed installation and configuration guide
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Production deployment instructions
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines
+- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Testing procedures
+
+### API Documentation
+
+The API is documented using OpenAPI/Swagger. Once the backend is running, visit:
+- Interactive API Docs: http://localhost:8000/docs
+- Alternative UI: http://localhost:8000/redoc
+
+### Key Endpoints
+
+```
+GET  /                          # Health check
+POST /api/predict               # Predict dropout risk for student
+GET  /api/students              # Get all students (writes to Firebase)
+GET  /api/students/{id}         # Get specific student data
+POST /api/simulate              # Run what-if scenarios
+GET  /api/dashboard/stats       # Get dashboard statistics
+```
+
+---
+
+## 🧠 Machine Learning Model
+
+### Model Details
+
+- **Algorithm**: Random Forest Classifier
 - **Accuracy**: 85%
 - **Precision**: 80%
 - **Recall**: 82%
 - **F1-Score**: 81%
 
-### 2. Data Sources & Key Features
-
-**Input Data**:
-- 📊 Attendance logs (percentage, streaks)
-- 📚 Academic records (CGPA, backlogs, exam attempts)
-- 💰 Fee payment history (delays, arrears)
-- ⚠️ Disciplinary incidents (suspensions)
-- 📝 Demographic data (10th/12th marks, gender)
-
-**Core Features for Prediction**:
+### Input Features
 
 | Feature | Type | Description | Importance |
 |---------|------|-------------|------------|
-| `attendance` | float | Class attendance percentage (0-100) | 🔴 High |
-| `cgpa` | float | Overall academic performance (0-10) | 🔴 High |
-| `backlogs` | int | Number of failed/pending subjects | 🔴 High |
-| `fees_flag` | binary | Fee payment status (0=paid, 1=unpaid) | 🟡 Medium |
-| `suspension_flag` | binary | Disciplinary action (0=none, 1=suspended) | 🟡 Medium |
-| `marks_10th` | float | 10th grade percentage | 🟢 Low |
-| `marks_12th` | float | 12th grade percentage | 🟢 Low |
-| `gender` | string | Student gender (M/F) | 🟢 Low |
+| `attendance` | float | Attendance percentage (0-100) | 🔴 High |
+| `cgpa` | float | CGPA (0-10 scale) | 🔴 High |
+| `backlogs` | int | Number of failed subjects | 🔴 High |
+| `fees_flag` | binary | Fee payment status | 🟡 Medium |
+| `suspension_flag` | binary | Disciplinary actions | 🟡 Medium |
+| `marks_10th` | float | 10th grade marks | 🟢 Low |
+| `marks_12th` | float | 12th grade marks | 🟢 Low |
+| `gender` | string | Student gender | 🟢 Low |
 
-### 3. Feature Engineering
+### Feature Engineering
 
-The system automatically engineers 15+ features from raw data to improve prediction accuracy:
-
-```python
-# Interaction Features
-att_cgpa_interaction = (attendance / 100) * cgpa
-backlog_pressure = backlogs / (cgpa + 1)
-att_backlog_ratio = attendance / (backlogs + 1)
-
-# Composite Risk Indicators
-risk_index = (100 - attendance) * 0.4 + (10 - cgpa) * 0.4 + backlogs * 2 + suspension_flag * 3
-
-# Threshold-based Features (for Yellow/Orange separation)
-attendance_gap = abs(attendance - 75)
-cgpa_gap = abs(cgpa - 6.5)
-yellow_zone_score = 1 if (70 ≤ attendance ≤ 79 and 5.0 ≤ cgpa ≤ 6.0) else 0
-
-# Behavioral Flags
-mild_backlog_flag = 1 if (1 ≤ backlogs ≤ 2) else 0
-discipline_academic_combo = 1 if (suspension_flag > 0 and cgpa < 6.0) else 0
-high_performer_flag = 1 if (attendance ≥ 85 and cgpa ≥ 8.0 and backlogs == 0) else 0
-```
-
-**Feature Importance Analysis** (from trained model):
-```
-1. attendance              (0.28)  # Strongest predictor
-2. cgpa                    (0.24)
-3. backlog_pressure        (0.18)  # Engineered feature
-4. risk_index              (0.15)  # Composite score
-5. att_cgpa_interaction    (0.10)
-```
+The model uses 15+ engineered features including:
+- Attendance-CGPA interaction
+- Backlog pressure index
+- Risk score composites
+- Zone-specific indicators
+- Behavioral flags
 
 ---
 
-## 🚨 Risk Classification & Intervention Hierarchy
+## 🚨 Risk Classification System
 
-AAROHAN uses a **4-tier phased intervention system** that balances ML predictions with rule-based safety thresholds.
+### Phase Matrix
 
-### Risk Phase Matrix
+| Phase | Criteria | Intervention | Stakeholders |
+|-------|----------|--------------|--------------|
+| 🟢 Green | Attendance ≥ 85%, CGPA ≥ 7.0 | Routine monitoring | None |
+| 🟡 Yellow | Attendance 70-85%, CGPA 5.0-7.0 | Counselor watch | Counselor (passive) |
+| 🟠 Orange | Attendance 60-70%, CGPA 4.0-5.0 | Phased escalation (3 levels) | Counselor → Mentor → Parents |
+| 🔴 Red | Attendance < 60%, CGPA < 4.0 | Immediate action | All stakeholders |
 
-| Phase | Risk Level | ML Criteria | Rule Override Conditions | Stakeholders Notified |
-|-------|------------|-------------|-------------------------|----------------------|
-| 🟢 **Green** | Safe | High performance | - | None (routine monitoring) |
-| 🟡 **Yellow** | Caution | Moderate signals | Declining trends | Counselor (watch) |
-| 🟠 **Orange** | Moderate Risk | Warning signs | Attendance < 70% OR CGPA < 5.0 OR Backlogs ≥ 3 | **Phase 1**: Counselor<br>**Phase 2**: Counselor + Mentor<br>**Phase 3**: Parents + Counselor + Mentor |
-| 🔴 **Red** | High Risk | Critical indicators | Attendance < 60% OR CGPA < 4.0 OR Fees unpaid + Suspension | **Immediate**: All stakeholders |
+### Orange Phase Escalation
 
-### Phase-Based Intervention Flow
-
-#### 🟢 Green Zone
-- **Condition**: Attendance ≥ 85%, CGPA ≥ 7.0, No backlogs, Fees paid
-- **Action**: Routine monitoring only
-- **Notifications**: None
-
-#### 🟡 Yellow Zone
-- **Condition**: Attendance 70-85%, CGPA 5.0-7.0, 1-2 backlogs
-- **Action**: Counselor keeps watch (no escalation)
-- **Notifications**: None (passive tracking)
-
-#### 🟠 Orange Zone (Phased Escalation)
-- **Condition**: Attendance 60-70%, CGPA 4.0-5.0, 3-5 backlogs
-
-**Phase 1** (Initial Warning):
-- Counselor notified
-- One-on-one session scheduled
-
-**Phase 2** (No Improvement):
-- Mentor engaged alongside counselor
-- Psychological quiz administered (stress/motivation)
-
-**Phase 3** (Persistent Issues):
-- Parents/guardians contacted
-- Joint intervention meeting
-
-#### 🔴 Red Zone (Immediate Action)
-- **Condition**: Attendance < 60%, CGPA < 4.0, 6+ backlogs, Fees unpaid, Suspended
-- **Action**:
-  - Immediate high-priority alerts to all stakeholders
-  - Urgent intervention meeting
-  - Academic probation consideration
-  - Intensive support program
-
-## � API Endpoints
-
-### 1. Health Check
-```http
-GET /
-```
-**Response**:
-```json
-{
-  "status": "ok",
-  "message": "AAROHAN API is running",
-  "version": "2.0",
-  "ml_model_loaded": true
-}
-```
+1. **Phase 1**: Counselor notification + one-on-one session
+2. **Phase 2**: Mentor engaged + psychological assessment
+3. **Phase 3**: Parents contacted + joint intervention meeting
 
 ---
 
-### 2. Student Risk Prediction
-```http
-POST /api/predict
-```
-**Request Body**:
-```json
-{
-  "enrollment_no": "2023CSE045",
-  "attendance": 55.0,
-  "cgpa": 5.2,
-  "backlogs": 3,
-  "marks_10th": 75,
-  "marks_12th": 78,
-  "fees_flag": 0,
-  "suspension_flag": 0,
-  "gender": "F"
-}
-```
+## 🎥 Live Demo
 
-**Response**:
-```json
-{
-  "enrollment_no": "2023CSE045",
-  "name": "Kavya Reddy",
-  "model_phase": "Yellow",
-  "final_phase": "Orange",
-  "rule_override": true,
-  "override_reason": "Attendance below 60% threshold (55.0%) - elevated to Orange",
-  "ml_probability": 0.42,
-  "confidence": 0.85,
-  "notification_message": "Alert sent to Counselor for Orange Phase 1 intervention",
-  "recommendations": [
-    "Schedule counseling session within 48 hours",
-    "Assess attendance barriers"
-  ]
-}
-```
+**Production URL**: [https://aarohan.vercel.app](https://aarohan.vercel.app)
 
----
+**Backend API**: [https://arohann.onrender.com](https://arohann.onrender.com)
 
-### 3. What-If Simulation
-```http
-POST /api/simulate
-```
-**Description**: Test hypothetical scenarios by adjusting student parameters
-
-**Request**: Same as `/api/predict`
-
-**Response**: Includes simulation metadata and comparison with current state
-
----
-
-### 4. Student Profile
-```http
-GET /api/students/{enrollment_no}
-```
-
-**Response**:
-```json
-{
-  "enrollment_no": "2023CSE045",
-  "name": "Kavya Reddy",
-  "department": "Computer Science",
-  "current_phase": "Orange",
-  "intervention_history": [
-    {
-      "date": "2025-09-15",
-      "phase": "Orange",
-      "action_taken": "Counselor notified"
-    }
-  ],
-  "performance_trend": {
-    "cgpa_history": [7.2, 6.8, 6.0, 5.2],
-    "attendance_history": [78, 72, 65, 55]
-  }
-}
-```
-
----
-
-### 5. Dashboard Statistics
-```http
-GET /api/dashboard/stats
-```
-
-**Response**:
-```json
-{
-  "total_students": 1500,
-  "risk_distribution": {
-    "Green": 850,
-    "Yellow": 420,
-    "Orange": 180,
-    "Red": 50
-  },
-  "intervention_outcomes": {
-    "improved": 135,
-    "declined": 25
-  }
-}
-```
-
-
-
----
-
-## 📚 Documentation
-
-- **[README.md](./README.md)** (this file): Project overview and setup
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)**: Production deployment guide
-- **[NEW_RF_MODEL_IMPLEMENTATION.md](./NEW_RF_MODEL_IMPLEMENTATION.md)**: ML model technical details
+**Test Credentials** (if authentication is enabled):
+- Username: `demo@aarohan.edu`
+- Password: `demo123`
 
 ---
 
 ## 🤝 Contributing
 
-AAROHAN is designed for educational institutions and government deployment. Contributions are welcome!
+We welcome contributions! Please see our [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
 
-### Development Setup
+### Quick Contribution Guide
+
 1. Fork the repository
-2. Create feature branch: `git checkout -b feature/your-feature`
-3. Commit changes: `git commit -m "Add your feature"`
-4. Push to branch: `git push origin feature/your-feature`
-5. Open Pull Request
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow PEP 8 for Python code
+- Use TypeScript for all React components
+- Write tests for new features
+- Update documentation as needed
+- Ensure code passes linting checks
+
+---
+
+## 🧪 Testing
+
+Run the test suite:
+
+```bash
+# Backend tests
+cd backend
+pytest
+
+# Frontend tests
+cd frontend
+npm test
+```
+
+See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive testing procedures.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see [LICENSE](./LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
 ---
 
-## � Team
+## 👥 Team
 
-**Development Team**: AAROHAN SIH 2025 Team  
-**Problem Statement**: Student Dropout Prevention System  
-**Target Users**: Educational Institutions, Government Bodies, Counselors, Faculty
+**AAROHAN Development Team** - Smart India Hackathon 2025
+
+**Repository**: [github.com/Gaurav8302/AROHANN](https://github.com/Gaurav8302/AROHANN)
 
 ---
 
 ## 📞 Support
 
-For technical support or deployment assistance:
 - **Issues**: [GitHub Issues](https://github.com/Gaurav8302/AROHANN/issues)
-- **Documentation**: See project documentation files
-- **Repository**: [GitHub Repository](https://github.com/Gaurav8302/AROHANN)
+- **Discussions**: [GitHub Discussions](https://github.com/Gaurav8302/AROHANN/discussions)
+- **Email**: support@aarohan.edu (replace with actual support email)
 
 ---
 
-## � Acknowledgments
+## 🙏 Acknowledgments
 
-- Smart India Hackathon 2025
-- Government institutions and educational partners
-- Open-source ML community (scikit-learn, FastAPI, React)
-- Students and counselors who provided valuable feedback
+- Smart India Hackathon 2025 organizers
+- Educational institutions that provided feedback
+- Open-source community (scikit-learn, FastAPI, React)
+- Students and counselors who helped shape this system
+
+---
+
+## 🏷️ Keywords
+
+`AI` `Machine Learning` `Education Technology` `Dropout Prediction` `Student Analytics` `Early Warning System` `FastAPI` `React` `Firebase` `Python` `TypeScript` `Smart India Hackathon` `Government Project`
 
 ---
 
-## 🏷️ Technical Tags
-
-`AI` `Machine Learning` `Random Forest` `Educational Technology` `Dropout Prediction` `Student Analytics` `FastAPI` `React` `MongoDB` `Python` `TypeScript` `Counseling System` `Early Warning System` `Government Project` `SIH 2025`
-
----
+<div align="center">
 
 **Built with ❤️ for accessible, equitable education**
 
 *AAROHAN - Empowering institutions to prevent dropouts through intelligent intervention*
+
+</div>
