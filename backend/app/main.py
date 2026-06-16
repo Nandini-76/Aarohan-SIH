@@ -179,7 +179,7 @@ app = FastAPI(
 )
 
 # CORS middleware for frontend integration - enhanced for local and production
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000,http://localhost:5173,https://arohann.vercel.app,https://aarohan.vercel.app")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000,http://localhost:5173,https://arohann.vercel.app,https://aarohan.vercel.app,https://aarohan-sih.vercel.app")
 FRONTEND_URL_REGEX = os.getenv("FRONTEND_URL_REGEX")
 
 # Comprehensive allowed origins for all environments
@@ -196,6 +196,7 @@ default_origins = [
     # Production Vercel deployments
     "https://arohann.vercel.app",
     "https://aarohan.vercel.app",
+    "https://aarohan-sih.vercel.app",
     # Add any additional production domains
 ]
 
